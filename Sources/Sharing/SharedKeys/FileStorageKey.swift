@@ -1,4 +1,4 @@
-#if canImport(Dispatch)
+#if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Dependencies
   @preconcurrency import Dispatch
 

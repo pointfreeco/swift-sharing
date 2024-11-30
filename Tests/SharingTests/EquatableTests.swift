@@ -20,7 +20,7 @@ struct EquatableTests {
 
   @Test func comparePersistedAndNonPersisted() {
     @Shared(value: 0) var lhs
-    @Shared(.appStorage("rhs")) var rhs = 0
+    @Shared(.inMemory("rhs")) var rhs = 0
     #expect(lhs == rhs)
     #expect($lhs == $rhs)
 
