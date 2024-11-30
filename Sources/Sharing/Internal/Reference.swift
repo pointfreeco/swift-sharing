@@ -264,7 +264,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   }
 }
 
-final class _ManagedReference<Key: SharedReaderKey>: Reference {
+final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
   private let base: _PersistentReference<Key>
 
   init(_ base: _PersistentReference<Key>) {
@@ -324,7 +324,7 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
 
 final class _AppendKeyPathReference<
   Base: Reference, Value, Path: KeyPath<Base.Value, Value> & Sendable
->: Reference {
+>: Reference, Observable {
   private let base: Base
   private let keyPath: Path
 
@@ -386,6 +386,7 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
 
 final class _OptionalReference<Base: Reference<Value?>, Value>:
   Reference,
+  Observable,
   @unchecked Sendable
 {
   private let base: Base
