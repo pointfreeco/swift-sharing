@@ -16,11 +16,23 @@
     /// - Parameter base: A shared reference to a value.
     @MainActor
     public init(_ base: Shared<Value>) {
-      func open(_ reference: some MutableReference<Value>) -> Binding<Value> {
-        @PerceptionCore.Bindable var reference = reference
-        return $reference._wrappedValue
+      if #available(iOS 17, macOS 14, tvOS 17, watchOS 10, *),
+        // NB: We can't do 'any MutableReference<Value> & Observable' and must force-cast, instead.
+        //     https://github.com/swiftlang/swift/pull/76705
+        let reference = base.reference as? any MutableReference & Observable
+      {
+        func open<V>(_ reference: some MutableReference<V> & Observable) -> Binding<Value> {
+          @SwiftUI.Bindable var reference = reference
+          return $reference._wrappedValue as! Binding<Value>
+        }
+        self = open(reference)
+      } else {
+        func open(_ reference: some MutableReference<Value>) -> Binding<Value> {
+          @PerceptionCore.Bindable var reference = reference
+          return $reference._wrappedValue
+        }
+        self = open(base.reference)
       }
-      self = open(base.reference)
     }
   }
 
