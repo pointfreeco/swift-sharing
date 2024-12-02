@@ -2,4 +2,4 @@ version: 1
 builder:
   configs:
   - scheme: Sharing
-  - documentation_targets: [Sharing]
+    documentation_targets: [Sharing]
