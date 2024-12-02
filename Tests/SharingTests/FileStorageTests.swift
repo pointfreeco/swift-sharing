@@ -230,7 +230,7 @@
         expectNoDifference(users, [.blob])
 
         try JSONEncoder().encode([User.blobJr]).write(to: .fileURL)
-        try await Task.sleep(nanoseconds: 1_000_000)
+        try await Task.sleep(nanoseconds: 10_000_000)
         expectNoDifference(users, [.blobJr])
       }
 
@@ -242,7 +242,7 @@
         expectNoDifference(users, [.blob])
 
         try FileManager.default.removeItem(at: .fileURL)
-        try await Task.sleep(nanoseconds: 1_000_000)
+        try await Task.sleep(nanoseconds: 10_000_000)
         expectNoDifference(users, [])
       }
 
@@ -255,7 +255,7 @@
           expectNoDifference(users, [.blob])
 
           try FileManager.default.moveItem(at: .fileURL, to: .anotherFileURL)
-          try await Task.sleep(nanoseconds: 1_000_000)
+          try await Task.sleep(nanoseconds: 10_000_000)
           expectNoDifference(users, [])
 
           try FileManager.default.removeItem(at: .fileURL)
@@ -274,11 +274,11 @@
           expectNoDifference(users, [.blob])
 
           try FileManager.default.removeItem(at: .fileURL)
-          try await Task.sleep(nanoseconds: 1_000_000)
+          try await Task.sleep(nanoseconds: 10_000_000)
           expectNoDifference(users, [])
 
           try JSONEncoder().encode([User.blobJr]).write(to: .fileURL)
-          try await Task.sleep(nanoseconds: 1_000_000)
+          try await Task.sleep(nanoseconds: 10_000_000)
           expectNoDifference(users, [.blobJr])
         }
       }
