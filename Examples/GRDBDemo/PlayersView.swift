@@ -124,7 +124,9 @@ struct AddPlayerView: View {
   }
 }
 
-#Preview {
+#Preview(
+  traits: .dependency(\.defaultDatabase, .appDatabase)
+) {
   @Dependency(\.defaultDatabase) var databaseQueue
   let _ = try! databaseQueue.write { db in
     for index in 0...9 {

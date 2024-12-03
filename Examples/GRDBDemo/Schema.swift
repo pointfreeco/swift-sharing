@@ -73,3 +73,24 @@ struct PlayersRequest: GRDBQuery {
       .fetchAll(db)
   }
 }
+
+extension DatabaseQueue {
+  static var appDatabase: DatabaseQueue {
+    let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
+    print("open", path)
+    var configuration = Configuration()
+    configuration.prepareDatabase { db in
+      db.trace { event in
+        print(event)
+      }
+    }
+    let databaseQueue: DatabaseQueue
+    if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == nil {
+      databaseQueue = try! DatabaseQueue(path: path, configuration: configuration)
+    } else {
+      databaseQueue = try! DatabaseQueue(configuration: configuration)
+    }
+    try! databaseQueue.migrate()
+    return databaseQueue
+  }
+}
