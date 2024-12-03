@@ -10,9 +10,9 @@ protocol GRDBQuery<Value>: Hashable, Sendable {
 
 extension SharedReaderKey {
   /// A shared key that can query for data in a SQLite database.
-  static func grdbQuery<Query>(_ query: Query, animation: Animation? = nil) -> Self
+  static func grdbQuery<Query>(_ query: Query, db: DatabaseQueue, animation: Animation? = nil) -> Self
   where Self == GRDBQueryKey<Query> {
-    GRDBQueryKey(query: query, animation: animation)
+    GRDBQueryKey(query: query, db: db, animation: animation)
   }
 }
 
@@ -28,8 +28,11 @@ where Query.Value: Sendable {
 
   var id: ID { ID(rawValue: query) }
 
-  init(query: Query, animation: Animation? = nil) {
-    @Dependency(\.database) var databaseQueue
+  init(
+    query: Query,
+    db databaseQueue: DatabaseQueue,
+    animation: Animation? = nil
+  ) {
     self.animation = animation
     self.databaseQueue = databaseQueue
     self.query = query
