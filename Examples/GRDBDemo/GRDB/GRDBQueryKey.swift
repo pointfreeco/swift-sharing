@@ -9,7 +9,27 @@ extension DependencyValues {
     set { self[GRDBDatabaseKey.self] = newValue }
   }
 
-  private enum GRDBDatabaseKey: TestDependencyKey {
+  private enum GRDBDatabaseKey: DependencyKey {
+    static var liveValue: DatabaseQueue {
+      reportIssue("""
+        A blank, in-memory database is being used for the app. To set the database that is used by \
+        the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
+        launches, such as in the entry point:
+        
+        @main
+        struct EntryPoint: App {
+          init() {
+            prepareDependencies {
+              $0.defaultDatabase = DatabaseQueue(…)
+            }
+          }
+        
+          // ...
+        }
+        """)
+      return try! DatabaseQueue()
+    }
+
     static var testValue: DatabaseQueue {
       try! DatabaseQueue()
     }
