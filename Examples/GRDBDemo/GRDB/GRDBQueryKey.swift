@@ -3,6 +3,19 @@ import GRDB
 import Sharing
 import SwiftUI
 
+extension DependencyValues {
+  public var defaultDatabase: DatabaseQueue {
+    get { self[GRDBDatabaseKey.self] }
+    set { self[GRDBDatabaseKey.self] = newValue }
+  }
+
+  private enum GRDBDatabaseKey: TestDependencyKey {
+    static var testValue: DatabaseQueue {
+      try! DatabaseQueue()
+    }
+  }
+}
+
 protocol GRDBQuery<Value>: Hashable, Sendable {
   associatedtype Value
   func fetch(_ db: Database) throws -> Value
@@ -29,7 +42,7 @@ where Query.Value: Sendable {
   var id: ID { ID(rawValue: query) }
 
   init(query: Query, animation: Animation? = nil) {
-    @Dependency(\.database) var databaseQueue
+    @Dependency(\.defaultDatabase) var databaseQueue
     self.animation = animation
     self.databaseQueue = databaseQueue
     self.query = query
