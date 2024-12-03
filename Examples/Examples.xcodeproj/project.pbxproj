@@ -832,8 +832,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-dependencies";
 			requirement = {
-				branch = "fix-prepare-dependencies";
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.2;
 			};
 		};
 		CA93A51D2CD27A8C00E420A6 /* XCRemoteSwiftPackageReference "swift-navigation" */ = {
