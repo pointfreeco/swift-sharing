@@ -830,10 +830,10 @@
 /* Begin XCRemoteSwiftPackageReference section */
 		CA7641682CF4EDCC00C1CE55 /* XCRemoteSwiftPackageReference "swift-dependencies" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/pointfreeco/swift-dependencies.git";
+			repositoryURL = "https://github.com/pointfreeco/swift-dependencies";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.6.1;
+				minimumVersion = 1.6.2;
 			};
 		};
 		CA93A51D2CD27A8C00E420A6 /* XCRemoteSwiftPackageReference "swift-navigation" */ = {

@@ -3,6 +3,39 @@ import GRDB
 import Sharing
 import SwiftUI
 
+extension DependencyValues {
+  public var defaultDatabase: DatabaseQueue {
+    get { self[GRDBDatabaseKey.self] }
+    set { self[GRDBDatabaseKey.self] = newValue }
+  }
+
+  private enum GRDBDatabaseKey: DependencyKey {
+    static var liveValue: DatabaseQueue {
+      reportIssue("""
+        A blank, in-memory database is being used for the app. To set the database that is used by \
+        the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
+        launches, such as in the entry point:
+        
+        @main
+        struct EntryPoint: App {
+          init() {
+            prepareDependencies {
+              $0.defaultDatabase = DatabaseQueue(…)
+            }
+          }
+        
+          // ...
+        }
+        """)
+      return try! DatabaseQueue()
+    }
+
+    static var testValue: DatabaseQueue {
+      try! DatabaseQueue()
+    }
+  }
+}
+
 protocol GRDBQuery<Value>: Hashable, Sendable {
   associatedtype Value
   func fetch(_ db: Database) throws -> Value
@@ -29,7 +62,7 @@ where Query.Value: Sendable {
   var id: ID { ID(rawValue: query) }
 
   init(query: Query, animation: Animation? = nil) {
-    @Dependency(\.database) var databaseQueue
+    @Dependency(\.defaultDatabase) var databaseQueue
     self.animation = animation
     self.databaseQueue = databaseQueue
     self.query = query

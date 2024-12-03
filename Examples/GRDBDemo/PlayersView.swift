@@ -15,7 +15,7 @@ private let readMe: LocalizedStringKey = """
   """
 
 struct PlayersView: View {
-  @Dependency(\.database) private var database
+  @Dependency(\.defaultDatabase) private var database
   @SharedReader private var players: [Player]
   @Shared(.appStorage("order")) private var order = PlayerOrder.name
   @State private var addPlayerIsPresented = false
@@ -97,7 +97,7 @@ struct PlayersView: View {
 }
 
 struct AddPlayerView: View {
-  @Dependency(\.database) private var database
+  @Dependency(\.defaultDatabase) private var databaseQueue
   @Environment(\.dismiss) var dismiss
   @State var player = Player()
 
@@ -111,7 +111,7 @@ struct AddPlayerView: View {
       .toolbar {
         Button("Save") {
           do {
-            try database.write { db in
+            try databaseQueue.write { db in
               _ = try player.inserted(db)
             }
           } catch {
@@ -124,9 +124,11 @@ struct AddPlayerView: View {
   }
 }
 
-#Preview {
-  @Dependency(\.database) var database
-  let _ = try! database.write { db in
+#Preview(
+  traits: .dependency(\.defaultDatabase, .appDatabase)
+) {
+  @Dependency(\.defaultDatabase) var databaseQueue
+  let _ = try! databaseQueue.write { db in
     for index in 0...9 {
       _ = try Player(name: "Blob \(index)", isInjured: index.isMultiple(of: 3))
         .inserted(db)
