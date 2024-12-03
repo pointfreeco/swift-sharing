@@ -16,16 +16,16 @@ extension DependencyValues {
         the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
         launches, such as in the entry point:
         
-        @main
-        struct EntryPoint: App {
-          init() {
-            prepareDependencies {
-              $0.defaultDatabase = DatabaseQueue(…)
+            @main
+            struct EntryPoint: App {
+              init() {
+                prepareDependencies {
+                  $0.defaultDatabase = DatabaseQueue(…)
+                }
+              }
+
+              // ...
             }
-          }
-        
-          // ...
-        }
         """)
       return try! DatabaseQueue()
     }
