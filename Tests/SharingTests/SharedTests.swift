@@ -13,6 +13,48 @@ import Testing
         @Shared(.inMemory("count")) var count: Int = { fatalError() }()
       }
     }
+
+    @Test func nesting() {
+      struct C: Equatable {}
+      struct B {
+        @Shared(.inMemory("c")) var c = C()
+      }
+      struct A {
+        @Shared(.inMemory("b")) var b = B()
+      }
+
+      let a = A()
+      #expect(a.b.c == C())
+    }
+
+    @Test func recursiveNesting() {
+      struct B {
+        @Shared(.inMemory("a")) var a = A()
+      }
+      struct A {
+        @Shared(.inMemory("b")) var b = B()
+      }
+
+      let a = A()
+    }
+
+    @Test func recursiveNesting2() {
+      struct B: Equatable {
+        @Shared var a: A
+        init() {
+          self._a = Shared(wrappedValue: A(), .inMemory("a"))
+        }
+      }
+      struct A: Equatable {
+        @Shared var b: B
+        init() {
+          self._b = Shared(wrappedValue: B(), .inMemory("b"))
+        }
+      }
+
+      let a = A()
+      #expect(a.b.a == a)
+    }
   }
 
   @Suite struct BoxReference {
