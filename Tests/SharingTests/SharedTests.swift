@@ -13,6 +13,19 @@ import Testing
         @Shared(.inMemory("count")) var count: Int = { fatalError() }()
       }
     }
+
+    @Test func nesting() {
+      struct C: Equatable {}
+      struct B {
+        @Shared(.inMemory("c")) var c = C()
+      }
+      struct A {
+        @Shared(.inMemory("b")) var b = B()
+      }
+
+      let a = A()
+      #expect(a.b.c == C())
+    }
   }
 
   @Suite struct BoxReference {

@@ -2,7 +2,7 @@ import Dependencies
 import Foundation
 import PerceptionCore
 
-final class PersistentReferences: Sendable, DependencyKey {
+final class PersistentReferences: @unchecked Sendable, DependencyKey {
   static var liveValue: PersistentReferences { PersistentReferences() }
   static var testValue: PersistentReferences { PersistentReferences() }
 
@@ -11,13 +11,14 @@ final class PersistentReferences: Sendable, DependencyKey {
     var reference: _PersistentReference<Key>?
   }
 
-  private let storage = Mutex<[AnyHashable: Any]>([:])
+  private var storage: [AnyHashable: Any] = [:]
+  private let lock = NSRecursiveLock()
 
   func value<Key: SharedReaderKey>(
     forKey key: Key,
     default value: @autoclosure () throws -> Key.Value
   ) rethrows -> _ManagedReference<Key> {
-    try storage.withLock { storage in
+    try lock.withLock {
       guard var pair = storage[key.id] as? Pair<Key> else {
         let value = try value()
         let persistentReference = _PersistentReference(key: key, value: value)
@@ -35,10 +36,10 @@ final class PersistentReferences: Sendable, DependencyKey {
   }
 
   func removeReference<Key: SharedReaderKey>(forKey key: Key) {
-    storage.withLock {
-      guard var pair = $0[key.id] as? Pair<Key> else { return }
+    lock.withLock {
+      guard var pair = storage[key.id] as? Pair<Key> else { return }
       pair.reference = nil
-      $0[key.id] = pair
+      storage[key.id] = pair
     }
   }
 }
