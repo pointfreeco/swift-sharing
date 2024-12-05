@@ -56,6 +56,22 @@
       #expect(date == Date(timeIntervalSince1970: 0))
     }
 
+    @Test func customCastableArray() throws {
+      @Shared(.appStorage("custom-castable-array")) var array: [String] = ["Blob, Jr.", "Blob Sr"]
+      let storeArray = try #require(store.object(forKey: "custom-castable-array") as? [String])
+      #expect(storeArray == ["Blob, Jr.", "Blob Sr"])
+      store.set(["Blob, Jr."], forKey: "custom-castable-array")
+      #expect(array == ["Blob, Jr."])
+    }
+
+    @Test func customCastableDictionary() throws {
+      @Shared(.appStorage("custom-castable-dictionary")) var dictionary: [String: String] = ["1": "Blob, Jr.", "2": "Blob Sr"]
+      let storeDictionary = try #require(store.object(forKey: "custom-castable-dictionary") as? [String: String])
+      #expect(storeDictionary == ["1": "Blob, Jr.", "2": "Blob Sr"])
+      store.set(["2": "Blob, Jr."], forKey: "custom-castable-dictionary")
+      #expect(dictionary == ["2": "Blob, Jr."])
+    }
+
     @Test func rawRepresentableInt() {
       struct ID: RawRepresentable {
         var rawValue: Int
