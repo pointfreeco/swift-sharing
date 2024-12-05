@@ -54,9 +54,10 @@ That small change will guarantee that all changes to `count` are persisted and w
 automatically loaded the next time the application launches.
 
 This form of persistence only works for simple data types because that is what works best with
-`UserDefaults`. This includes strings, booleans, integers, doubles, URLs, data, and more. If you
-need to store more complex data, such as custom data types serialized to bytes, then you will want
-to use the [`.fileStorage`](<doc:PersistenceStrategies#File-storage>) strategy or a 
+`UserDefaults`. This includes strings, booleans, integers, doubles, URLs, data, and more
+([See Apple Documentation](https://developer.apple.com/documentation/foundation/userdefaults/1414067-set#discussion).
+If you need to store more complex data, such as custom data types serialized to bytes, then you will want
+to use the [`.fileStorage`](<doc:PersistenceStrategies#File-storage>) strategy or a
 [custom persistence](<doc:PersistenceStrategies#Custom-persistence>) strategy.
 
 ### File system
