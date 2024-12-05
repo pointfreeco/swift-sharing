@@ -76,6 +76,16 @@
       AppStorageKey(key)
     }
 
+    /// Creates a shared key that can read and write to a user default as any Value that can be casted to UserDefaults Any object
+    /// See Apple documentation for supported types: https://developer.apple.com/documentation/foundation/userdefaults/1414067-set#discussion.
+    ///
+    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value>(_ key: String) -> Self
+    where Value: Sendable, Self == AppStorageKey<Value> {
+      AppStorageKey(key)
+    }
+
     /// Creates a shared key that can read and write to an integer user default, transforming
     /// that to a `RawRepresentable` data type.
     ///
@@ -156,6 +166,16 @@
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String) -> Self
     where Self == AppStorageKey<Date?> {
+      AppStorageKey(key)
+    }
+
+    /// Creates a shared key that can read and write to a user default as any optional Value that can be casted to UserDefaults Any optional object
+    /// See Apple documentation for supported types: https://developer.apple.com/documentation/foundation/userdefaults/1414067-set#discussion.
+    ///
+    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value>(_ key: String) -> Self
+    where Value: Sendable, Self == AppStorageKey<Value?> {
       AppStorageKey(key)
     }
 
