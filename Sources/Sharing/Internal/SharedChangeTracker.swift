@@ -7,8 +7,12 @@ public struct SharedChangeTracker: Hashable, Sendable {
   fileprivate final class Changes: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     private var storage: [ObjectIdentifier: any AnyChange] = [:]
+    private let reportUnassertedChanges: Bool
+    init(reportUnassertedChanges: Bool) {
+      self.reportUnassertedChanges = reportUnassertedChanges
+    }
     deinit {
-      guard isTesting else { return }
+      guard reportUnassertedChanges else { return }
       forEach { change in
         reportIssue(
           """
@@ -116,11 +120,13 @@ public struct SharedChangeTracker: Hashable, Sendable {
     return sharedChangeTracker
   }
 
-  fileprivate let changes = Changes()
+  fileprivate let changes: Changes
 
   public var hasChanges: Bool { changes.hasChanges }
 
-  public init() {}
+  public init(reportUnassertedChanges: Bool = isTesting) {
+    self.changes = Changes(reportUnassertedChanges: reportUnassertedChanges)
+  }
 
   public func track(_ dependencies: inout DependencyValues) {
     dependencies[SharedChangeTrackersKey.self].insert(self)
