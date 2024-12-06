@@ -95,37 +95,13 @@ extension SharedReader {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
   public init(_ key: _SharedKeyDefault<some SharedReaderKey<Value>>) {
-    self.init(wrappedValue: key.defaultValue(), key.base)
+    self.init(wrappedValue: key.defaultValue(), key)
   }
 
   @_disfavoredOverload
   @_documentation(visibility: private)
   public init(_ key: _SharedKeyDefault<some SharedKey<Value>>) {
-    self.init(wrappedValue: key.defaultValue(), key.base)
-  }
-
-  /// Creates a shared reference to a read-only value using a shared key by overriding its
-  /// default value.
-  ///
-  /// - Parameters:
-  ///   - wrappedValue: A default value that is used when no value can be returned from the
-  ///     shared key.
-  ///   - key: A shared key associated with the shared reference. It is responsible for loading
-  ///     and saving the shared reference's value from some external source.
-  public init(
-    wrappedValue: @autoclosure () -> Value,
-    _ key: _SharedKeyDefault<some SharedReaderKey<Value>>
-  ) {
-    self.init(wrappedValue: wrappedValue(), key.base)
-  }
-
-  @_disfavoredOverload
-  @_documentation(visibility: private)
-  public init(
-    wrappedValue: @autoclosure () -> Value,
-    _ key: _SharedKeyDefault<some SharedKey<Value>>
-  ) {
-    self.init(wrappedValue: wrappedValue(), key.base)
+    self.init(wrappedValue: key.defaultValue(), key)
   }
 
   /// Creates a shared reference to a read-only value using a shared key.
