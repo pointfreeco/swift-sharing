@@ -7,7 +7,7 @@ your own custom strategies.
 
 When using `@Shared` you can supply an optional persistence strategy to represent that the state
 you are holding onto is being shared with an external system. The library ships with 3 kinds of
-strategies: [`appStorage`](<doc:SharedReaderKey/appStorage(_:)-4227j>), 
+strategies: [`appStorage`](<doc:SharedReaderKey/appStorage(_:)-4227j>),
 [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), and
 [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>). These strategies are defined as conformances to
 the ``SharedKey`` protocol, and it is possible for you to provide your own conformances for sharing
@@ -50,14 +50,46 @@ be used when there is no value in the user defaults:
 @Shared(.appStorage("count")) var count = 0
 ```
 
-That small change will guarantee that all changes to `count` are persisted and will be 
+That small change will guarantee that all changes to `count` are persisted and will be
 automatically loaded the next time the application launches.
 
 This form of persistence only works for simple data types because that is what works best with
 `UserDefaults`. This includes strings, booleans, integers, doubles, URLs, data, and more. If you
 need to store more complex data, such as custom data types serialized to bytes, then you will want
-to use the [`.fileStorage`](<doc:PersistenceStrategies#File-storage>) strategy or a 
+to use the [`.fileStorage`](<doc:PersistenceStrategies#File-storage>) strategy or a
 [custom persistence](<doc:PersistenceStrategies#Custom-persistence>) strategy.
+
+Alternatively you can use our extension to provide custom conversion between UserDefault object and expected value
+For simple values that are supported natively by UserDefaults and compatible with Property List format you can just
+write custom [type safe key][<doc:TypeSafeKeys>]:
+
+```swift
+extension SharedReaderKey where Self == AppStorageKey<[String]> {
+  static var lastWatchedIds: Self {
+    .appStorage("lastWatchedIds", wrap: { $0 }, unwrap: { $0 as? [String] })
+  }
+}
+```
+
+If you need more advanced usage like store of Codables you can also use that approach like this:
+
+```swift
+struct User: Codable {
+  let name: String
+}
+
+extension SharedReaderKey where Self == AppStorageKey<User> {
+  static var user: Self {
+    .appStorage("currentUser", wrap: { value in
+      try? JSONEncoder().encode(value)
+    }, unwrap: { data -> CustomCastable? in
+      guard let data = data as? Data else { return nil }
+      return try? JSONDecoder().decode(User.self, from: data)
+    })
+  }
+}
+```
+
 
 ### File system
 
@@ -89,7 +121,7 @@ public final class CustomSharedKey: SharedKey {
 ```
 
 > Note: Often `SharedKey` conformances will be classes because it will need to manage internal
-> state, but that is not always the case. For example, ``FileStorageKey`` is a class, but 
+> state, but that is not always the case. For example, ``FileStorageKey`` is a class, but
 > ``AppStorageKey`` and ``InMemoryKey`` are structs.
 
 In order to conform to ``Shared`` you will need to provide 4 main requirements:
@@ -100,7 +132,7 @@ In order to conform to ``Shared`` you will need to provide 4 main requirements:
     in order to play back to the `@Shared` value.
   * And finally, an `id` that uniquely identifies the state held in the external storage system.
 
-Once that is done it is customary to also define a static function helper on the ``SharedKey`` 
+Once that is done it is customary to also define a static function helper on the ``SharedKey``
 protocol for providing a simple API to use your new persistence strategy with `@Shared`:
 
 ```swift
@@ -112,7 +144,7 @@ extension SharedKey {
 }
 ```
 
-With those steps done you can make use of the strategy in the same way one does for 
+With those steps done you can make use of the strategy in the same way one does for
 `appStorage` and `fileStorage`:
 
 ```swift
