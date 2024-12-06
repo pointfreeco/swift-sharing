@@ -154,10 +154,16 @@ import Testing
   }
 
   @Suite struct StringRepresentations {
-    @Test func description() {
+    @Test func valueDescription() {
       @Shared(value: 0) var count
 
-      #expect($count.description == "Shared<Int>(0)")
+      #expect($count.description == "Shared<Int>(value: 0)")
+    }
+
+    @Test func appStorageDescription() {
+      @Shared(.appStorage("count")) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.appStorage("count"))"#)
     }
 
     @Test func customDump() {

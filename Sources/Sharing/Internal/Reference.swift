@@ -144,7 +144,7 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   var description: String {
-    "Shared(value: \(String(reflecting: wrappedValue))"
+    "Shared<\(Value.self)>(value: \(String(reflecting: wrappedValue)))"
   }
 }
 
@@ -251,7 +251,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 
   var description: String {
-    "Shared(\(String(reflecting: key)))"
+    "Shared\(key is any SharedKey ? "" : "Reader")<\(Key.Value.self)>(\(String(reflecting: key)))"
   }
 }
 

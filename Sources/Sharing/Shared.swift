@@ -329,7 +329,7 @@ public struct Shared<Value> {
 
 extension Shared: CustomStringConvertible {
   public var description: String {
-    "\(Self.self)(\(reference))"
+    (reference.description)
   }
 }
 
