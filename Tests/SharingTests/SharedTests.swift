@@ -1,3 +1,4 @@
+import Foundation
 import IdentifiedCollections
 import PerceptionCore
 import Sharing
@@ -168,6 +169,18 @@ import Testing
       #expect($count.description == #"Shared<Int>(.appStorage("count"))"#)
 
       #expect(SharedReader($count).description == #"SharedReader<Int>(.appStorage("count"))"#)
+    }
+
+    @Test func fileStorageDescription() {
+      @Shared(.fileStorage(URL(filePath: "/"))) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.fileStorage(file:///))"#)
+    }
+
+    @Test func inMemory() {
+      @Shared(.inMemory("count")) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.inMemory("count"))"#)
     }
 
     @Test func customDump() {

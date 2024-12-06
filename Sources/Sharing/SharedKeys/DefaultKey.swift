@@ -66,7 +66,7 @@ extension _SharedKeyDefault: SharedKey where Base: SharedKey {
 extension _SharedKeyDefault: CustomStringConvertible {
   public var description: String {
     """
-    \(typeName(type(of: base), genericsAbbreviated: true))\
+    \(typeName(type(of: base), genericsAbbreviated: false))\
     .Default[\(base), default: \(defaultValue())]
     """
   }
