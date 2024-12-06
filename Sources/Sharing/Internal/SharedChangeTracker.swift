@@ -12,12 +12,12 @@ public struct SharedChangeTracker: Hashable, Sendable {
         reportIssue(
           """
           Tracked unasserted changes to '\(String(reflecting: change.key))': \
-          \(change.value) → \(change.key.wrappedValue)
-          """ //,
-          // fileID: fileID,
-          // filePath: filePath,
-          // line: line,
-          // column: column
+          \(String(reflecting: change.value)) → \(String(reflecting: change.key.wrappedValue))
+          """,
+          fileID: change.fileID,
+          filePath: change.filePath,
+          line: change.line,
+          column: change.column
         )
       }
     }
@@ -27,30 +27,31 @@ public struct SharedChangeTracker: Hashable, Sendable {
     func hasChanges(for key: some MutableReference) -> Bool {
       self[key] != nil
     }
-    subscript<Value>(key: some MutableReference<Value>) -> Value? {
-      _read {
-        lock.lock()
-        defer { lock.unlock() }
-        let change = storage[ObjectIdentifier(key)] as? Change<Value>
-        yield change?.value
+    subscript<Value>(
+      key: some MutableReference<Value>
+    ) -> Value? {
+      lock.withLock {
+        (storage[ObjectIdentifier(key)] as? Change<Value>)?.value
       }
-      _modify {
-        lock.lock()
-        defer { lock.unlock() }
-        var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
-        var value: Value? = change.value
-        yield &value
-        guard let value else { return }
+    }
+    func track<Value>(
+      key: some MutableReference<Value>,
+      value: Value,
+      fileID: StaticString,
+      filePath: StaticString,
+      line: UInt,
+      column: UInt
+    ) {
+      lock.withLock {
+        var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(
+          reference: key,
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
+        defer { storage[ObjectIdentifier(key)] = change }
         change.value = value
-        storage[ObjectIdentifier(key)] = change
-      }
-      set {
-        lock.withLock {
-          guard let newValue else { return }
-          var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
-          defer { storage[ObjectIdentifier(key)] = change }
-          change.value = newValue
-        }
       }
     }
     func forEach(_ body: (any AnyChange) -> Void) {
@@ -72,10 +73,24 @@ public struct SharedChangeTracker: Hashable, Sendable {
     let reference: any MutableReference<Value>
     var shouldAssert = true
     var value: Value
+    let fileID: StaticString
+    let filePath: StaticString
+    let line: UInt
+    let column: UInt
 
-    init(reference: any MutableReference<Value>) {
+    init(
+      reference: any MutableReference<Value>,
+      fileID: StaticString,
+      filePath: StaticString,
+      line: UInt,
+      column: UInt
+    ) {
       self.reference = reference
       self.value = reference.wrappedValue
+      self.fileID = fileID
+      self.filePath = filePath
+      self.line = line
+      self.column = column
     }
 
     var key: any MutableReference {
@@ -144,6 +159,10 @@ fileprivate protocol AnyChange<Value> {
   var key: any MutableReference { get }
   var value: Value { get }
   var shouldAssert: Bool { get set }
+  var fileID: StaticString { get }
+  var filePath: StaticString { get }
+  var line: UInt { get }
+  var column: UInt { get }
 }
 
 extension DependencyValues {
@@ -167,14 +186,36 @@ struct Snapshots: Sendable {
   }
 
   subscript<Value>(key: some MutableReference<Value>) -> Value? {
-    get { sharedChangeTracker?.changes[key] }
-    nonmutating set {
-      if let sharedChangeTracker {
-        sharedChangeTracker.changes[key] = newValue
-      } else {
-        for sharedChangeTracker in sharedChangeTrackers {
-          sharedChangeTracker.changes[key] = newValue
-        }
+    sharedChangeTracker?.changes[key]
+  }
+
+  func save<Value>(
+    key: some MutableReference<Value>,
+    value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    if let sharedChangeTracker {
+      sharedChangeTracker.changes.track(
+        key: key,
+        value: value,
+        fileID: fileID,
+        filePath: filePath,
+        line: line,
+        column: column
+      )
+    } else {
+      for sharedChangeTracker in sharedChangeTrackers {
+        sharedChangeTracker.changes.track(
+          key: key,
+          value: value,
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
       }
     }
   }
