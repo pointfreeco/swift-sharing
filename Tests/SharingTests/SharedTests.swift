@@ -158,12 +158,16 @@ import Testing
       @Shared(value: 0) var count
 
       #expect($count.description == "Shared<Int>(value: 0)")
+
+      #expect(SharedReader($count).description == "SharedReader<Int>(value: 0)")
     }
 
     @Test func appStorageDescription() {
       @Shared(.appStorage("count")) var count = 0
 
       #expect($count.description == #"Shared<Int>(.appStorage("count"))"#)
+
+      #expect(SharedReader($count).description == #"SharedReader<Int>(.appStorage("count"))"#)
     }
 
     @Test func customDump() {

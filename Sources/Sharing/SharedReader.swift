@@ -217,7 +217,7 @@ public struct SharedReader<Value> {
 
 extension SharedReader: CustomStringConvertible {
   public var description: String {
-    "\(Self.self)(\(wrappedValue))"
+    "\(Self.self)(\(reference.description))"
   }
 }
 
