@@ -223,6 +223,12 @@
     }
   }
 
+  extension FileStorageKey: CustomStringConvertible {
+    public var description: String {
+      ".fileStorage(\(String(reflecting: url)))"
+    }
+  }
+
   public struct FileStorageKeyID: Hashable {
     fileprivate let url: URL
     fileprivate let storage: FileStorage

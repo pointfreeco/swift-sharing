@@ -10,7 +10,10 @@ public struct SharedChangeTracker: Hashable, Sendable {
     deinit {
       forEach { change in
         reportIssue(
-          "Tracked unasserted changes to \(String(reflecting: change.key))" // ,
+          """
+          Tracked unasserted changes to '\(String(reflecting: change.key))': \
+          \(change.value) → \(change.key.wrappedValue)
+          """ //,
           // fileID: fileID,
           // filePath: filePath,
           // line: line,
@@ -35,11 +38,15 @@ public struct SharedChangeTracker: Hashable, Sendable {
         lock.lock()
         defer { lock.unlock() }
         var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
-        defer { storage[ObjectIdentifier(key)] = change }
-        yield &change.value
+        var value: Value? = change.value
+        yield &value
+        guard let value else { return }
+        change.value = value
+        storage[ObjectIdentifier(key)] = change
       }
       set {
         lock.withLock {
+          guard let newValue else { return }
           var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
           defer { storage[ObjectIdentifier(key)] = change }
           change.value = newValue
@@ -64,7 +71,12 @@ public struct SharedChangeTracker: Hashable, Sendable {
   fileprivate struct Change<Value>: AnyChange {
     let reference: any MutableReference<Value>
     var shouldAssert = true
-    var value: Value?
+    var value: Value
+
+    init(reference: any MutableReference<Value>) {
+      self.reference = reference
+      self.value = reference.wrappedValue
+    }
 
     var key: any MutableReference {
       func open(_ reference: some MutableReference) -> any MutableReference {
@@ -127,8 +139,10 @@ public struct SharedChangeTracker: Hashable, Sendable {
   }
 }
 
-fileprivate protocol AnyChange {
+fileprivate protocol AnyChange<Value> {
+  associatedtype Value
   var key: any MutableReference { get }
+  var value: Value { get }
   var shouldAssert: Bool { get set }
 }
 

@@ -24,12 +24,6 @@ protocol Reference<Value>:
   #endif
 }
 
-extension Reference {
-  public var description: String {
-    "\(wrappedValue)"
-  }
-}
-
 protocol MutableReference<Value>: Reference, Equatable {
   var snapshot: Value? { get set }
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R
@@ -128,6 +122,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
         return try mutation()
       }
     #endif
+  }
+
+  var description: String {
+    "Shared(value: \(String(reflecting: wrappedValue))"
   }
 }
 
@@ -232,6 +230,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     #endif
   }
+
+  var description: String {
+    "Shared(\(String(reflecting: key)))"
+  }
 }
 
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
@@ -297,6 +299,10 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
       base.publisher
     }
   #endif
+
+  var description: String {
+    base.description
+  }
 }
 
 extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
@@ -357,6 +363,10 @@ final class _AppendKeyPathReference<
       return open(base.publisher)
     }
   #endif
+
+  var description: String {
+    "\(base.description)[dynamicMember: \(keyPath)]"
+  }
 }
 
 extension _AppendKeyPathReference: MutableReference, Equatable
@@ -424,6 +434,10 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
       return open(base.publisher)
     }
   #endif
+
+  var description: String {
+    "Shared(\(base.description))!"
+  }
 }
 
 extension _OptionalReference: MutableReference, Equatable where Base: MutableReference {
@@ -502,6 +516,10 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
 
     func resetCache() {
       cachedValue = wrappedValue
+    }
+
+    var description: String {
+      base.description
     }
   }
 
