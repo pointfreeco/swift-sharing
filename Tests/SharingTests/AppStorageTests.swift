@@ -76,6 +76,24 @@
       #expect(id == ID(rawValue: "Blob, Jr."))
     }
 
+    @Test func customCastableObjectSupportedByUserDefaults() throws {
+      @Shared(.array) var array: [String] = ["Blob, Jr.", "Blob Sr"]
+      let storeArray = try #require(store.object(forKey: "custom-castable-array") as? [String])
+      #expect(storeArray == ["Blob, Jr.", "Blob Sr"])
+      store.set(["Blob, Jr."], forKey: "custom-castable-array")
+      #expect(array == ["Blob, Jr."])
+    }
+
+    @Test func customCastableObjectUnupportedByUserDefaults() throws {
+      @Shared(.customCastable) var customCastable: CustomCastable = .init(name: "Blob, Jr.")
+      let storeData = try #require(store.object(forKey: "custom-castable-codable") as? Data)
+      let storeValue = try #require(try JSONDecoder().decode(CustomCastable.self, from: storeData))
+      #expect(storeValue == customCastable)
+      let valueToSave = CustomCastable(name: "Blob Sr")
+      store.set(try #require(try JSONEncoder().encode(valueToSave)), forKey: "custom-castable-codable")
+      #expect(valueToSave == customCastable)
+    }
+
     @Test func optional() {
       @Shared(.appStorage("bool")) var bool: Bool?
       #expect(store.value(forKey: "bool") == nil)
@@ -198,4 +216,26 @@
       #expect(123 == persistenceKey.load(initialValue: nil))
     }
   }
+
+  extension SharedReaderKey where Self == AppStorageKey<[String]> {
+    static var array: Self {
+      .appStorage("custom-castable-array", wrap: { $0 }, unwrap: { $0 as? [String] })
+    }
+  }
+
+  struct CustomCastable: Equatable, Codable {
+    let name: String
+  }
+
+  extension SharedReaderKey where Self == AppStorageKey<CustomCastable> {
+    static var customCastable: Self {
+      .appStorage("custom-castable-codable", wrap: { value in
+        try? JSONEncoder().encode(value)
+      }, unwrap: { data -> CustomCastable? in
+        guard let data = data as? Data else { return nil }
+        return try? JSONDecoder().decode(CustomCastable.self, from: data)
+      })
+    }
+  }
+
 #endif
