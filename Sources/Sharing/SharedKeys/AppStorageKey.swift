@@ -178,6 +178,31 @@
     where Value.RawValue == String, Self == AppStorageKey<Value?> {
       AppStorageKey(key)
     }
+
+    /// Creates a shared key that can read and write to a user default any custom object.
+    ///
+    /// For example for property lists convertible objects:
+    ///
+    /// ```swift
+    /// extension SharedReaderKey where Self == AppStorageKey<[String]> {
+    ///    static var lastWatchedIds: Self {
+    ///       .appStorage("lastWatchedIds", wrap: { $0 }, unwrap: { $0 as? [String] })
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - wrap:wrap object passed to shared property into something that could be stored in UserDafaults
+    ///   - unwrap: unwrap Value from stored object inside UserDefaults
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value>(
+      _ key: String,
+      wrap: @Sendable @escaping (Value?) -> Any? = { $0 },
+      unwrap: @Sendable @escaping (Any?) -> Value? = { $0 as? Value }
+    ) -> Self where Value: Sendable, Self == AppStorageKey<Value> {
+      AppStorageKey(lookup: CastableLookup(wrap: wrap, unwrap: unwrap), key: key)
+    }
   }
 
   /// A type defining a user defaults persistence strategy.
@@ -445,17 +470,25 @@
   }
 
   private struct CastableLookup<Value: Sendable>: Lookup {
+    let wrap: @Sendable (Value?) -> Any?
+    let unwrap: @Sendable (Any?) -> Value?
+
+    init(wrap: @Sendable @escaping (Value?) -> Any? = { $0 }, unwrap: @Sendable @escaping (Any?) -> Value? = { $0 as? Value }) {
+      self.wrap = wrap
+      self.unwrap = unwrap
+    }
+
     func loadValue(
       from store: UserDefaults,
       at key: String,
       default defaultValue: Value?
     ) -> Value? {
-      guard let value = store.object(forKey: key) as? Value
+      guard let value = unwrap(store.object(forKey: key))
       else {
         guard !SharedAppStorageLocals.isSetting
         else { return defaultValue }
         SharedAppStorageLocals.$isSetting.withValue(true) {
-          store.set(defaultValue, forKey: key)
+          store.set(wrap(defaultValue), forKey: key)
         }
         return defaultValue
       }
@@ -464,7 +497,7 @@
 
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       SharedAppStorageLocals.$isSetting.withValue(true) {
-        store.set(newValue, forKey: key)
+        store.set(wrap(newValue), forKey: key)
       }
     }
   }
