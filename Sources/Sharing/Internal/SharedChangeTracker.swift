@@ -8,6 +8,7 @@ public struct SharedChangeTracker: Hashable, Sendable {
     private let lock = NSRecursiveLock()
     private var storage: [ObjectIdentifier: any AnyChange] = [:]
     deinit {
+      guard isTesting else { return }
       forEach { change in
         reportIssue(
           """
