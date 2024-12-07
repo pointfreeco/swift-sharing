@@ -40,8 +40,37 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   private let _$perceptionRegistrar = PerceptionRegistrar(isPerceptionCheckingEnabled: false)
   private let lock = NSRecursiveLock()
 
+  private var value: Value {
+    @storageRestrictions(initializes: _value)
+    init(initialValue) {
+      _value = initialValue
+    }
+    get { _value }
+    set {
+      if let current = value as? any _MutationSkippableSharedValue {
+        func open<T: _MutationSkippableSharedValue>(_ current: T) {
+          guard 
+            let new = newValue as? T,
+            !current.shouldCallWithMutation(newValue: new)
+          else {
+            withMutation(keyPath: \.value) {
+              _value = newValue
+            }
+            return
+          }
+          _value = newValue
+        }
+        open(current)
+      } else {
+        withMutation(keyPath: \.value) {
+          _value = newValue
+        }
+      }
+    }
+  }
+
   #if canImport(Combine)
-    private var value: Value {
+    private var _value: Value {
       willSet {
         subject.send(newValue)
       }
@@ -52,7 +81,7 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
       subject.prepend(lock.withLock { value })
     }
   #else
-    private var value: Value
+    private var _value: Value
   #endif
 
   init(wrappedValue: Value) {
@@ -84,8 +113,8 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R {
-    try withMutation(keyPath: \.value) {
-      try lock.withLock { try body(&value) }
+    try lock.withLock {
+      try body(&value)
     }
   }
 
@@ -138,8 +167,37 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private let key: Key
   private let lock = NSRecursiveLock()
 
+  private var value: Value {
+    @storageRestrictions(initializes: _value)
+    init(initialValue) {
+      _value = initialValue
+    }
+    get { _value }
+    set {
+      if let current = value as? any _MutationSkippableSharedValue {
+        func open<T: _MutationSkippableSharedValue>(_ current: T) {
+          guard
+            let new = newValue as? T,
+            !current.shouldCallWithMutation(newValue: new)
+          else {
+            withMutation(keyPath: \.value) {
+              _value = newValue
+            }
+            return
+          }
+          _value = newValue
+        }
+        open(current)
+      } else {
+        withMutation(keyPath: \.value) {
+          _value = newValue
+        }
+      }
+    }
+  }
+  
   #if canImport(Combine)
-    private var value: Key.Value {
+    private var _value: Key.Value {
       willSet {
         subject.send(newValue)
       }
@@ -150,7 +208,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       subject.prepend(lock.withLock { value })
     }
   #else
-    private var value: Key.Value
+    private var _value: Key.Value
   #endif
 
   private var _referenceCount = 0
@@ -247,11 +305,9 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   }
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
-    try withMutation(keyPath: \.value) {
-      defer { key.save(value, immediately: false) }
-      return try lock.withLock {
-        try body(&value)
-      }
+    defer { key.save(value, immediately: false) }
+    return try lock.withLock {
+      try body(&value)
     }
   }
 
