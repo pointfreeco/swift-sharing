@@ -54,6 +54,12 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   }
 }
 
+extension InMemoryKey: CustomStringConvertible {
+  public var description: String {
+    ".inMemory(\(String(reflecting: key)))"
+  }
+}
+
 public struct InMemoryStorage: Hashable, Sendable {
   private let id = UUID()
   fileprivate let values = Values()

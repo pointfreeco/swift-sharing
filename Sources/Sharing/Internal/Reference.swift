@@ -24,15 +24,16 @@ protocol Reference<Value>:
   #endif
 }
 
-extension Reference {
-  public var description: String {
-    "\(wrappedValue)"
-  }
-}
-
 protocol MutableReference<Value>: Reference, Equatable {
-  var snapshot: Value? { get set }
+  var snapshot: Value? { get }
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R
+  func takeSnapshot(
+    _ value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  )
   func save()
 }
 
@@ -67,14 +68,26 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   var snapshot: Value? {
-    get {
-      @Dependency(\.snapshots) var snapshots
-      return snapshots[self]
-    }
-    set {
-      @Dependency(\.snapshots) var snapshots
-      snapshots[self] = newValue
-    }
+    @Dependency(\.snapshots) var snapshots
+    return snapshots[self]
+  }
+
+  func takeSnapshot(
+    _ value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    @Dependency(\.snapshots) var snapshots
+    snapshots.save(
+      key: self,
+      value: value,
+      fileID: fileID,
+      filePath: filePath,
+      line: line,
+      column: column
+    )
   }
 
   func load() {}
@@ -128,6 +141,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
         return try mutation()
       }
     #endif
+  }
+
+  var description: String {
+    "value: \(String(reflecting: wrappedValue))"
   }
 }
 
@@ -232,18 +249,34 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     #endif
   }
+
+  var description: String {
+    String(reflecting: key)
+  }
 }
 
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
   var snapshot: Key.Value? {
-    get {
-      @Dependency(\.snapshots) var snapshots
-      return snapshots[self]
-    }
-    set {
-      @Dependency(\.snapshots) var snapshots
-      snapshots[self] = newValue
-    }
+    @Dependency(\.snapshots) var snapshots
+    return snapshots[self]
+  }
+
+  func takeSnapshot(
+    _ value: Key.Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    @Dependency(\.snapshots) var snapshots
+    snapshots.save(
+      key: self,
+      value: value,
+      fileID: fileID,
+      filePath: filePath,
+      line: line,
+      column: column
+    )
   }
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
@@ -297,6 +330,10 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
       base.publisher
     }
   #endif
+
+  var description: String {
+    base.description
+  }
 }
 
 extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
@@ -305,8 +342,17 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
   }
 
   var snapshot: Key.Value? {
-    get { base.snapshot }
-    set { base.snapshot = newValue }
+    base.snapshot
+  }
+
+  func takeSnapshot(
+    _ value: Key.Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    base.takeSnapshot(value, fileID: fileID, filePath: filePath, line: line, column: column)
   }
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
@@ -357,18 +403,28 @@ final class _AppendKeyPathReference<
       return open(base.publisher)
     }
   #endif
+
+  var description: String {
+    "\(base.description)[dynamicMember: \(keyPath)]"
+  }
 }
 
 extension _AppendKeyPathReference: MutableReference, Equatable
 where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
   var snapshot: Value? {
-    get { base.snapshot?[keyPath: keyPath] }
-    set {
-      guard let newValue else { return }
-      var snapshot = base.snapshot ?? base.wrappedValue
-      defer { base.snapshot = snapshot }
-      snapshot[keyPath: keyPath as WritableKeyPath] = newValue
-    }
+    base.snapshot?[keyPath: keyPath]
+  }
+
+  func takeSnapshot(
+    _ value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    var snapshot = base.snapshot ?? base.wrappedValue
+    snapshot[keyPath: keyPath as WritableKeyPath] = value
+    base.takeSnapshot(snapshot, fileID: fileID, filePath: filePath, line: line, column: column)
   }
 
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R {
@@ -424,12 +480,26 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
       return open(base.publisher)
     }
   #endif
+
+  var description: String {
+    "\(base.description)!"
+  }
 }
 
 extension _OptionalReference: MutableReference, Equatable where Base: MutableReference {
   var snapshot: Value? {
-    get { base.snapshot ?? nil }
-    set { base.snapshot? = newValue }
+    base.snapshot ?? nil
+  }
+
+  func takeSnapshot(
+    _ value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    guard base.snapshot != nil else { return }
+    base.takeSnapshot(value, fileID: fileID, filePath: filePath, line: line, column: column)
   }
 
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R {
@@ -503,12 +573,25 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
     func resetCache() {
       cachedValue = wrappedValue
     }
+
+    var description: String {
+      base.description
+    }
   }
 
   extension _CachedReference: MutableReference, Equatable where Base: MutableReference {
     var snapshot: Base.Value? {
-      get { base.snapshot }
-      set { base.snapshot = newValue }
+      base.snapshot
+    }
+
+    func takeSnapshot(
+      _ value: Base.Value,
+      fileID: StaticString,
+      filePath: StaticString,
+      line: UInt,
+      column: UInt
+    ) {
+      base.takeSnapshot(value, fileID: fileID, filePath: filePath, line: line, column: column)
     }
 
     func withLock<R>(_ body: (inout Base.Value) throws -> R) rethrows -> R {

@@ -441,6 +441,12 @@
     #endif
   }
 
+  extension AppStorageKey: CustomStringConvertible {
+    public var description: String {
+      ".appStorage(\(String(reflecting: key)))"
+    }
+  }
+
   public struct AppStorageKeyID: Hashable {
     fileprivate let key: String
     fileprivate let store: UserDefaults

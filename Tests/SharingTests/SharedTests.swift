@@ -1,3 +1,4 @@
+import Foundation
 import IdentifiedCollections
 import PerceptionCore
 import Sharing
@@ -154,10 +155,32 @@ import Testing
   }
 
   @Suite struct StringRepresentations {
-    @Test func description() {
+    @Test func valueDescription() {
       @Shared(value: 0) var count
 
-      #expect($count.description == "Shared<Int>(0)")
+      #expect($count.description == "Shared<Int>(value: 0)")
+
+      #expect(SharedReader($count).description == "SharedReader<Int>(value: 0)")
+    }
+
+    @Test func appStorageDescription() {
+      @Shared(.appStorage("count")) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.appStorage("count"))"#)
+
+      #expect(SharedReader($count).description == #"SharedReader<Int>(.appStorage("count"))"#)
+    }
+
+    @Test func fileStorageDescription() {
+      @Shared(.fileStorage(URL(filePath: "/"))) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.fileStorage(file:///))"#)
+    }
+
+    @Test func inMemory() {
+      @Shared(.inMemory("count")) var count = 0
+
+      #expect($count.description == #"Shared<Int>(.inMemory("count"))"#)
     }
 
     @Test func customDump() {

@@ -128,15 +128,35 @@ public struct Shared<Value> {
   /// - Parameter operation: An operation given mutable, isolated access to the underlying shared
   ///   value.
   /// - Returns: The value returned from `operation`.
-  public func withLock<R>(_ operation: (inout Value) throws -> R) rethrows -> R {
+  public func withLock<R>(
+    _ operation: (inout Value) throws -> R,
+    fileID: StaticString = #fileID,
+    filePath: StaticString = #filePath,
+    line: UInt = #line,
+    column: UInt = #column
+  ) rethrows -> R {
     try reference.withLock { value in
       @Dependency(\.snapshots) var snapshots
       if snapshots.isAsserting {
         var snapshot = reference.snapshot ?? reference.wrappedValue
-        defer { reference.snapshot = snapshot }
+        defer {
+          reference.takeSnapshot(
+            snapshot,
+            fileID: fileID,
+            filePath: filePath,
+            line: line,
+            column: column
+          )
+        }
         return try operation(&snapshot)
       } else if snapshots.isTracking, reference.snapshot == nil {
-        reference.snapshot = value
+        reference.takeSnapshot(
+          value,
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
       }
       return try operation(&value)
     }
@@ -309,7 +329,7 @@ public struct Shared<Value> {
 
 extension Shared: CustomStringConvertible {
   public var description: String {
-    "\(Self.self)(\(reference))"
+    "\(typeName(Self.self, genericsAbbreviated: false))(\(reference.description))"
   }
 }
 

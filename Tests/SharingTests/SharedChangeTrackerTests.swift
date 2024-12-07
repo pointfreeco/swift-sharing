@@ -75,4 +75,21 @@ import Testing
       #expect($stats == $stats)
     }
   }
+
+  @Test func unassertedChanges() {
+    @Shared(value: 0) var count
+
+    withKnownIssue {
+      do {
+        let tracker = SharedChangeTracker()
+        tracker.track {
+          $count.withLock { $0 += 1 }
+        }
+      }
+    } matching: {
+      $0.description == """
+        Issue recorded: Tracked unasserted changes to 'Shared<Int>(value: 1)': 0 → 1
+        """
+    }
+  }
 }
