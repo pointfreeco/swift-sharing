@@ -16,12 +16,30 @@ extension DependencyValues {
         the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
         launches, such as in the entry point:
         
+            // App-based entry point
             @main
             struct EntryPoint: App {
               init() {
                 prepareDependencies {
                   $0.defaultDatabase = DatabaseQueue(…)
                 }
+              }
+
+              // ...
+            }
+
+            // AppDelegate-based entry point
+            @main
+            class AppDelegate: UIResponder, UIApplicationDelegate {
+              func application(
+                _ application: UIApplication,
+                didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+              ) -> Bool {
+                prepareDependencies {
+                  $0.defaultDatabase = DatabaseQueue(…)
+                }
+                // Override point for customization after application launch.
+                return true
               }
 
               // ...
