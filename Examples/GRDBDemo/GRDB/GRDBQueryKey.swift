@@ -11,7 +11,8 @@ extension DependencyValues {
 
   private enum GRDBDatabaseKey: DependencyKey {
     static var liveValue: DatabaseQueue {
-      reportIssue("""
+      reportIssue(
+        """
         A blank, in-memory database is being used for the app. To set the database that is used by \
         the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
         launches, such as in the entry point:
@@ -20,13 +21,14 @@ extension DependencyValues {
             struct EntryPoint: App {
               init() {
                 prepareDependencies {
-                  $0.defaultDatabase = DatabaseQueue(…)
+                  $0.defaultDatabase = try! DatabaseQueue(/* ... */)
                 }
               }
 
               // ...
             }
-        """)
+        """
+      )
       return try! DatabaseQueue()
     }
 
@@ -96,7 +98,7 @@ struct GRDBQueryID: Hashable {
   }
 }
 
-struct AnimatedScheduler: ValueObservationScheduler {
+private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
   func immediateInitialValue() -> Bool { true }
   func schedule(_ action: @escaping @Sendable () -> Void) {
