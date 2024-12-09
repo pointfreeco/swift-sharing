@@ -47,7 +47,7 @@ extension DatabaseWriter {
 
 enum PlayerOrder: String { case name, isInjured }
 
-extension SharedReaderKey where Self == GRDBQueryKey<PlayersRequest>.Default {
+extension SharedReaderKey where Self == GRDBQueryKey<[Player]>.Default {
   static func players(order: PlayerOrder = .name) -> Self {
     Self[
       .grdbQuery(PlayersRequest(order: order), animation: .default),

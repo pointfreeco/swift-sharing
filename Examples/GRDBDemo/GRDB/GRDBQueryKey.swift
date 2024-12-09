@@ -43,38 +43,35 @@ protocol GRDBQuery<Value>: Hashable, Sendable {
 
 extension SharedReaderKey {
   /// A shared key that can query for data in a SQLite database.
-  static func grdbQuery<Query>(_ query: Query, animation: Animation? = nil) -> Self
-  where Self == GRDBQueryKey<Query> {
+  static func grdbQuery<Value>(_ query: some GRDBQuery<Value>, animation: Animation? = nil) -> Self
+  where Self == GRDBQueryKey<Value> {
     GRDBQueryKey(query: query, animation: animation)
   }
 }
 
-struct GRDBQueryKey<Query: GRDBQuery>: SharedReaderKey
-where Query.Value: Sendable {
-  typealias Value = Query.Value
-
+struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
   let animation: Animation?
   let databaseQueue: DatabaseQueue
-  let query: Query
+  let query: any GRDBQuery<Value>
 
   typealias ID = GRDBQueryID
 
   var id: ID { ID(rawValue: query) }
 
-  init(query: Query, animation: Animation? = nil) {
+  init(query: some GRDBQuery<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var databaseQueue
     self.animation = animation
     self.databaseQueue = databaseQueue
     self.query = query
   }
 
-  func load(initialValue: Query.Value?) -> Query.Value? {
+  func load(initialValue: Value?) -> Value? {
     (try? databaseQueue.read(query.fetch)) ?? initialValue
   }
 
   func subscribe(
-    initialValue: Query.Value?,
-    didSet receiveValue: @escaping @Sendable (Query.Value?) -> Void
+    initialValue: Value?,
+    didSet receiveValue: @escaping @Sendable (Value?) -> Void
   ) -> SharedSubscription {
     let observation = ValueObservation.tracking(query.fetch)
     let cancellable = observation.start(
