@@ -3,19 +3,16 @@
 Instantly share state among your app's features and external persistence layers, including user
 defaults, the file system, and more.
 
-<!-- [![CI](https://github.com/pointfreeco/swift-sharing/workflows/CI/badge.svg)](https://github.com/pointfreeco/swift-sharing/actions?query=workflow%3ACI) -->
-<!-- [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fpointfreeco%2Fswift-sharing%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/pointfreeco/swift-sharing) -->
-<!-- [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fpointfreeco%2Fswift-sharing%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/pointfreeco/swift-sharing) -->
+[![CI](https://github.com/pointfreeco/swift-sharing/workflows/CI/badge.svg)](https://github.com/pointfreeco/swift-sharing/actions?query=workflow%3ACI)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fpointfreeco%2Fswift-sharing%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/pointfreeco/swift-sharing)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fpointfreeco%2Fswift-sharing%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/pointfreeco/swift-sharing)
 
   * [Learn more](#learn-more)
   * [Overview](#overview)
-  * [Quick start](#quick-start)
-  * [Examples](#examples)
+  * [Demos](#demos)
   * [Documentation](#documentation)
   * [Installation](#installation)
   * [Community](#community)
-  * [Extensions](#extensions)
-  * [Alternatives](#alternatives)
   * [License](#license)
 
 ## Learn more
@@ -64,7 +61,7 @@ If either model makes a change to `meetings`, the other model will instantly see
 And further, if the file on disk changes from an external write, both instances of `@Shared` will
 also update to hold the freshest data.
 
-## Automatic persistence
+### Automatic persistence
 
 The [`@Shared`][shared-article] property wrapper gives you a succinct and consistent way to persist
 any kind of data in your application. The library comes with 3 strategies:
@@ -105,7 +102,7 @@ strategies that come with the library, as well as creating your own strategies.
 
 [persistence-docs]: https://swiftpackageindex.com/pointfreeco/swift-sharing/main/documentation/sharing/persistencestrategies
 
-## Use anywhere
+### Use anywhere
 
 It is possible to use `@Shared` state essentially anywhere, including observable models, SwiftUI
 views, UIKit view controllers, and more. For example, if you have a simple view that needs access
@@ -140,7 +137,7 @@ library. See  ["Observing changes"][observation-docs] for more information.
 [swift-navigation]: http://github.com/pointfreeco/swift-navigation
 [observation-docs]: https://swiftpackageindex.com/pointfreeco/swift-sharing/main/documentation/sharing/observingchanges
 
-## Testing shared state
+### Testing shared state
 
 Features using the `@Shared` property wrapper remain testable even though they interact with outside
 storage systems, such as user defaults and the file system. This is possible because each test gets
