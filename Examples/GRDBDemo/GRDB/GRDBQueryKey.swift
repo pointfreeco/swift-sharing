@@ -80,7 +80,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
       in: databaseQueue,
       scheduling: .animation(animation)
     ) { error in
-
+      reportIssue(error)
     } onChange: { newValue in
       receiveValue(newValue)
     }
