@@ -3,6 +3,14 @@ import GRDB
 import Sharing
 import SwiftUI
 
+extension SharedReaderKey {
+  /// A shared key that can query for data in a SQLite database.
+  static func grdbQuery<Value>(_ query: some GRDBQuery<Value>, animation: Animation? = nil) -> Self
+  where Self == GRDBQueryKey<Value> {
+    GRDBQueryKey(query: query, animation: animation)
+  }
+}
+
 extension DependencyValues {
   public var defaultDatabase: DatabaseQueue {
     get { self[GRDBDatabaseKey.self] }
@@ -41,14 +49,6 @@ extension DependencyValues {
 protocol GRDBQuery<Value>: Hashable, Sendable {
   associatedtype Value
   func fetch(_ db: Database) throws -> Value
-}
-
-extension SharedReaderKey {
-  /// A shared key that can query for data in a SQLite database.
-  static func grdbQuery<Value>(_ query: some GRDBQuery<Value>, animation: Animation? = nil) -> Self
-  where Self == GRDBQueryKey<Value> {
-    GRDBQueryKey(query: query, animation: animation)
-  }
 }
 
 struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
