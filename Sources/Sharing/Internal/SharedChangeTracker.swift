@@ -7,14 +7,23 @@ public struct SharedChangeTracker: Hashable, Sendable {
   fileprivate final class Changes: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     private var storage: [ObjectIdentifier: any AnyChange] = [:]
+    private let reportUnassertedChanges: Bool
+    init(reportUnassertedChanges: Bool) {
+      self.reportUnassertedChanges = reportUnassertedChanges
+    }
     deinit {
+      guard reportUnassertedChanges else { return }
       forEach { change in
         reportIssue(
-          "Tracked unasserted changes to \(String(reflecting: change.key))" // ,
-          // fileID: fileID,
-          // filePath: filePath,
-          // line: line,
-          // column: column
+          """
+          Tracked unasserted changes to \
+          'Shared<\(typeName(type(of: change.value)))>(\(String(reflecting: change.key)))': \
+          \(String(reflecting: change.value)) → \(String(reflecting: change.key.wrappedValue))
+          """,
+          fileID: change.fileID,
+          filePath: change.filePath,
+          line: change.line,
+          column: change.column
         )
       }
     }
@@ -24,26 +33,31 @@ public struct SharedChangeTracker: Hashable, Sendable {
     func hasChanges(for key: some MutableReference) -> Bool {
       self[key] != nil
     }
-    subscript<Value>(key: some MutableReference<Value>) -> Value? {
-      _read {
-        lock.lock()
-        defer { lock.unlock() }
-        let change = storage[ObjectIdentifier(key)] as? Change<Value>
-        yield change?.value
+    subscript<Value>(
+      key: some MutableReference<Value>
+    ) -> Value? {
+      lock.withLock {
+        (storage[ObjectIdentifier(key)] as? Change<Value>)?.value
       }
-      _modify {
-        lock.lock()
-        defer { lock.unlock() }
-        var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
+    }
+    func track<Value>(
+      key: some MutableReference<Value>,
+      value: Value,
+      fileID: StaticString,
+      filePath: StaticString,
+      line: UInt,
+      column: UInt
+    ) {
+      lock.withLock {
+        var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(
+          reference: key,
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
         defer { storage[ObjectIdentifier(key)] = change }
-        yield &change.value
-      }
-      set {
-        lock.withLock {
-          var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(reference: key)
-          defer { storage[ObjectIdentifier(key)] = change }
-          change.value = newValue
-        }
+        change.value = value
       }
     }
     func forEach(_ body: (any AnyChange) -> Void) {
@@ -64,7 +78,26 @@ public struct SharedChangeTracker: Hashable, Sendable {
   fileprivate struct Change<Value>: AnyChange {
     let reference: any MutableReference<Value>
     var shouldAssert = true
-    var value: Value?
+    var value: Value
+    let fileID: StaticString
+    let filePath: StaticString
+    let line: UInt
+    let column: UInt
+
+    init(
+      reference: any MutableReference<Value>,
+      fileID: StaticString,
+      filePath: StaticString,
+      line: UInt,
+      column: UInt
+    ) {
+      self.reference = reference
+      self.value = reference.wrappedValue
+      self.fileID = fileID
+      self.filePath = filePath
+      self.line = line
+      self.column = column
+    }
 
     var key: any MutableReference {
       func open(_ reference: some MutableReference) -> any MutableReference {
@@ -88,11 +121,13 @@ public struct SharedChangeTracker: Hashable, Sendable {
     return sharedChangeTracker
   }
 
-  fileprivate let changes = Changes()
+  fileprivate let changes: Changes
 
   public var hasChanges: Bool { changes.hasChanges }
 
-  public init() {}
+  public init(reportUnassertedChanges: Bool = isTesting) {
+    self.changes = Changes(reportUnassertedChanges: reportUnassertedChanges)
+  }
 
   public func track(_ dependencies: inout DependencyValues) {
     dependencies[SharedChangeTrackersKey.self].insert(self)
@@ -127,9 +162,15 @@ public struct SharedChangeTracker: Hashable, Sendable {
   }
 }
 
-fileprivate protocol AnyChange {
+fileprivate protocol AnyChange<Value> {
+  associatedtype Value
   var key: any MutableReference { get }
+  var value: Value { get }
   var shouldAssert: Bool { get set }
+  var fileID: StaticString { get }
+  var filePath: StaticString { get }
+  var line: UInt { get }
+  var column: UInt { get }
 }
 
 extension DependencyValues {
@@ -153,14 +194,36 @@ struct Snapshots: Sendable {
   }
 
   subscript<Value>(key: some MutableReference<Value>) -> Value? {
-    get { sharedChangeTracker?.changes[key] }
-    nonmutating set {
-      if let sharedChangeTracker {
-        sharedChangeTracker.changes[key] = newValue
-      } else {
-        for sharedChangeTracker in sharedChangeTrackers {
-          sharedChangeTracker.changes[key] = newValue
-        }
+    sharedChangeTracker?.changes[key]
+  }
+
+  func save<Value>(
+    key: some MutableReference<Value>,
+    value: Value,
+    fileID: StaticString,
+    filePath: StaticString,
+    line: UInt,
+    column: UInt
+  ) {
+    if let sharedChangeTracker {
+      sharedChangeTracker.changes.track(
+        key: key,
+        value: value,
+        fileID: fileID,
+        filePath: filePath,
+        line: line,
+        column: column
+      )
+    } else {
+      for sharedChangeTracker in sharedChangeTrackers {
+        sharedChangeTracker.changes.track(
+          key: key,
+          value: value,
+          fileID: fileID,
+          filePath: filePath,
+          line: line,
+          column: column
+        )
       }
     }
   }

@@ -62,3 +62,12 @@ extension _SharedKeyDefault: SharedKey where Base: SharedKey {
     base.save(value, immediately: immediately)
   }
 }
+
+extension _SharedKeyDefault: CustomStringConvertible {
+  public var description: String {
+    """
+    \(typeName(type(of: base), genericsAbbreviated: false))\
+    .Default[\(base), default: \(defaultValue())]
+    """
+  }
+}
