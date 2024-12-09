@@ -17,7 +17,7 @@ public struct SharedChangeTracker: Hashable, Sendable {
         reportIssue(
           """
           Tracked unasserted changes to \
-          'Shared<\(type(of: change.value))>(\(String(reflecting: change.key)))': \
+          'Shared<\(typeName(type(of: change.value)))>(\(String(reflecting: change.key)))': \
           \(String(reflecting: change.value)) → \(String(reflecting: change.key.wrappedValue))
           """,
           fileID: change.fileID,

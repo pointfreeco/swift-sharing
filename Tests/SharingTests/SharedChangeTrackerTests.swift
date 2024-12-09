@@ -92,4 +92,13 @@ import Testing
         """
     }
   }
+
+  @Test func unreportedChanges() {
+    @Shared(value: 0) var count
+
+    let tracker = SharedChangeTracker(reportUnassertedChanges: false)
+    tracker.track {
+      $count.withLock { $0 += 1 }
+    }
+  }
 }
