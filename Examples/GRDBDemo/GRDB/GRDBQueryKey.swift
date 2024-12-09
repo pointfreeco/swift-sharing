@@ -5,13 +5,17 @@ import SwiftUI
 
 extension SharedReaderKey {
   /// A shared key that can query for data in a SQLite database.
-  static func grdbQuery<Value>(_ query: some GRDBQuery<Value>, animation: Animation? = nil) -> Self
+  static func grdbQuery<Value>(
+    _ query: some GRDBQuery<Value>,
+    animation: Animation? = nil
+  ) -> Self
   where Self == GRDBQueryKey<Value> {
     GRDBQueryKey(query: query, animation: animation)
   }
 }
 
 extension DependencyValues {
+  /// The default database used by ``Sharing/SharedReaderKey/grdbQuery(_:animation:)``.
   public var defaultDatabase: DatabaseQueue {
     get { self[GRDBDatabaseKey.self] }
     set { self[GRDBDatabaseKey.self] = newValue }
@@ -115,7 +119,7 @@ private struct AnimatedScheduler: ValueObservationScheduler {
 }
 
 extension ValueObservationScheduler where Self == AnimatedScheduler {
-  static func animation(_ animation: Animation?) -> Self {
+  fileprivate static func animation(_ animation: Animation?) -> Self {
     AnimatedScheduler(animation: animation)
   }
 }
