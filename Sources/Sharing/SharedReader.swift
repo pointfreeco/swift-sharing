@@ -207,7 +207,7 @@ public struct SharedReader<Value> {
         _ = state.wrappedValue
         func open(_ publisher: some Publisher<Value, Never>) -> AnyCancellable {
           publisher.dropFirst().sink { _ in
-            state.wrappedValue += 1
+            state.wrappedValue &+= 1
           }
         }
         let cancellable = open(_reference.publisher)
