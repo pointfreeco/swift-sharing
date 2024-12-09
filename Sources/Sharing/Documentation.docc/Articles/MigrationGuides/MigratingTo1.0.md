@@ -103,13 +103,13 @@ If you wish to skip this initial value, use Combine's `dropFirst` operator:
 A number of APIs have been renamed for the 1.0 release with the old names deprecated with fix-its
 where possible:
 
-| 0.1                               | 1.0                      |
-| --------------------------------- | ------------------------ |
-| `shared = …`                      | `$shared.withLock { … }` |
-| `PersistenceKey`                  | `SharedKey`              |
-| `PersistenceReaderKey`            | `SharedReaderKey`        |
-| `PersistenceKeyDefault`           | `SharedKey.Default`      |
-| `Shared(_:)`                      | `Shared(value:)`         |
-| `try Shared(_:)`                  | `try Shared(require:)`   |
-| `$shared.reader`                  | `SharedReader($shared)`  |
-| `ForEach($shared.elements) { … }` | `ForEach($shared) { … }` |
+| 0.1                               | 1.0                             |
+| --------------------------------- | ------------------------------- |
+| `shared = …`                      | `$shared.withLock { … }`        |
+| `PersistenceKey`                  | `SharedKey`                     |
+| `PersistenceReaderKey`            | `SharedReaderKey`               |
+| `PersistenceKeyDefault`           | `SharedKey.Default`             |
+| `Shared(_:)`                      | `Shared(value:)`                |
+| `try Shared(_:)`                  | `try Shared(require:)`          |
+| `$shared.reader`                  | `SharedReader($shared)`         |
+| `ForEach($shared.elements) { … }` | `ForEach(Array($shared)) { … }` |
