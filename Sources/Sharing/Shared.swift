@@ -318,9 +318,12 @@ public struct Shared<Value> {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
         _ = state.wrappedValue
         lock.withLock {
-          cancellable = _reference.publisher.sink { _ in
-            state.wrappedValue += 1
+          func open(_ publisher: some Publisher<Value, Never>) -> AnyCancellable {
+            publisher.dropFirst().sink { _ in
+              state.wrappedValue += 1
+            }
           }
+          cancellable = open(_reference.publisher)
         }
       }
     #endif
