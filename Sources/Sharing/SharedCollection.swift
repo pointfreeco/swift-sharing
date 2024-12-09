@@ -1,6 +1,37 @@
 import IdentifiedCollections
 import IssueReporting
 
+// TODO: Generalize to 'RangeReplaceableCollection' when deprecations become 'unavailable'
+extension Array {
+  public init<Value: _MutableIdentifiedCollection>(
+    _ shared: Shared<Value>
+  ) where Element == Shared<Value.Element>, Value.Index == Value.IDs.Index {
+    self.init()
+    let value = shared.wrappedValue
+    self.reserveCapacity(value.count)
+    for id in value.ids {
+      self.append(Shared(shared[id: id])!)
+    }
+  }
+
+  public init<Value: _IdentifiedCollection>(
+    _ shared: SharedReader<Value>
+  ) where Element == SharedReader<Value.Element>, Value.Index == Value.IDs.Index {
+    self.init()
+    let value = shared.wrappedValue
+    self.reserveCapacity(value.count)
+    for id in value.ids {
+      self.append(SharedReader(shared[id: id])!)
+    }
+  }
+}
+
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension Shared: Collection, Sequence
 where Value: _MutableIdentifiedCollection, Value.Index == Value.IDs.Index {
   public var startIndex: Value.Index { wrappedValue.startIndex }
@@ -28,6 +59,12 @@ where Value: _MutableIdentifiedCollection, Value.Index == Value.IDs.Index {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension Shared: BidirectionalCollection
 where
   Value: _MutableIdentifiedCollection & BidirectionalCollection,
@@ -36,12 +73,24 @@ where
   public func index(before i: Value.Index) -> Value.Index { wrappedValue.index(before: i) }
 }
 
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension Shared: RandomAccessCollection
 where
   Value: _MutableIdentifiedCollection & RandomAccessCollection,
   Value.Index == Value.IDs.Index
 {}
 
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension SharedReader: Collection, Sequence
 where Value: _IdentifiedCollection, Value.Index == Value.IDs.Index {
   public var startIndex: Value.Index { wrappedValue.startIndex }
@@ -66,10 +115,22 @@ where Value: _IdentifiedCollection, Value.Index == Value.IDs.Index {
   }
 }
 
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension SharedReader: BidirectionalCollection
 where Value: _IdentifiedCollection & BidirectionalCollection, Value.Index == Value.IDs.Index {
   public func index(before i: Value.Index) -> Value.Index { wrappedValue.index(before: i) }
 }
 
+@available(
+  *,
+  deprecated,
+  message:
+    "Derive shared elements from a stable subscript, like '$array[id:]' on 'IdentifiedArray', or pass 'Array($array)' to a 'ForEach' view."
+)
 extension SharedReader: RandomAccessCollection
 where Value: _IdentifiedCollection & RandomAccessCollection, Value.Index == Value.IDs.Index {}
