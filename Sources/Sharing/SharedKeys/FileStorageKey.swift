@@ -165,7 +165,7 @@
             try? storage.createDirectory(url.deletingLastPathComponent(), true)
             try? storage.save(Data(), url)
           }
-          let writeCancellable = storage.fileSystemSource(url, [.write]) { [weak self] in
+          let writeCancellable = try? storage.fileSystemSource(url, [.write]) { [weak self] in
             guard let self else { return }
             state.withValue { state in
               let modificationDate =
@@ -184,7 +184,7 @@
               receiveValue(self.load(data: data, initialValue: initialValue))
             }
           }
-          let deleteCancellable = storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
+          let deleteCancellable = try? storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
             guard let self else { return }
             state.withValue { state in
               state.workItem?.cancel()
@@ -194,8 +194,8 @@
             setUpSources()
           }
           $0 = SharedSubscription {
-            writeCancellable.cancel()
-            deleteCancellable.cancel()
+            writeCancellable?.cancel()
+            deleteCancellable?.cancel()
           }
         }
       }
@@ -320,7 +320,7 @@
     let createDirectory: @Sendable (URL, Bool) throws -> Void
     let fileExists: @Sendable (URL) -> Bool
     let fileSystemSource:
-      @Sendable (URL, DispatchSource.FileSystemEvent, @escaping @Sendable () -> Void) ->
+      @Sendable (URL, DispatchSource.FileSystemEvent, @escaping @Sendable () -> Void) throws ->
         SharedSubscription
     let load: @Sendable (URL) throws -> Data
     @_spi(Internals) public let save: @Sendable (Data, URL) throws -> Void
@@ -340,8 +340,13 @@
       },
       fileExists: { FileManager.default.fileExists(atPath: $0.path) },
       fileSystemSource: {
+        let fileDescriptor = open($0.path, O_EVTONLY)
+        guard fileDescriptor != -1 else {
+          struct FileDescriptorError: Error {}
+          throw FileDescriptorError()
+        }
         let source = DispatchSource.makeFileSystemObjectSource(
-          fileDescriptor: open($0.path, O_EVTONLY),
+          fileDescriptor: fileDescriptor,
           eventMask: $1,
           queue: DispatchQueue.main
         )
