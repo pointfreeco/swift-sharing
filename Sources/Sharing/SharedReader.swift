@@ -205,14 +205,13 @@ public struct SharedReader<Value> {
       func subscribe(state: State<Int>) {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
         _ = state.wrappedValue
-        lock.withLock {
-          func open(_ publisher: some Publisher<Value, Never>) -> AnyCancellable {
-            publisher.dropFirst().sink { _ in
-              state.wrappedValue += 1
-            }
+        func open(_ publisher: some Publisher<Value, Never>) -> AnyCancellable {
+          publisher.dropFirst().sink { _ in
+            state.wrappedValue += 1
           }
-          cancellable = open(_reference.publisher)
         }
+        let cancellable = open(_reference.publisher)
+        lock.withLock { self.cancellable = cancellable }
       }
     #endif
   }
