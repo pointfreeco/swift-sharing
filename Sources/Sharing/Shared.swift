@@ -262,6 +262,10 @@ public struct Shared<Value> {
     SharedReader(self)[dynamicMember: keyPath]
   }
 
+  public var loadError: (any Error)? {
+    reference.loadError
+  }
+
   /// Requests an up-to-date value from an external source.
   ///
   /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
@@ -273,7 +277,7 @@ public struct Shared<Value> {
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
   public func load() {
-    reference.load()
+    try? reference.load()
   }
 
   /// Requests the underlying value be persisted to an external source.

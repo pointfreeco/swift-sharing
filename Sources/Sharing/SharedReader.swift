@@ -163,6 +163,10 @@ public struct SharedReader<Value> {
     return open(reference)
   }
 
+  public var loadError: (any Error)? {
+    reference.loadError
+  }
+
   /// Requests an up-to-date value from an external source.
   ///
   /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
@@ -174,7 +178,7 @@ public struct SharedReader<Value> {
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
   public func load() {
-    reference.load()
+    try? reference.load()
   }
 
   private final class Box: @unchecked Sendable {

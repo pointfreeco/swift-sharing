@@ -63,7 +63,7 @@ extension Shared {
   ///   loading and saving the shared reference's value from some external source.
   public init(require key: some SharedKey<Value>) throws {
     let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
+      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
       return value
     }
     try self.init(rethrowing: value(), key)

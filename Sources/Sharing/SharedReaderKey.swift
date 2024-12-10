@@ -30,7 +30,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///
   /// - Parameter initialValue: An initial value assigned to the `@Shared` property.
   /// - Returns: An initial value provided by an external system, or `nil`.
-  func load(initialValue: Value?) -> Value?
+  func load(initialValue: Value?) throws -> Value?
 
   /// Subscribes to external updates.
   ///
@@ -40,9 +40,38 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///     if the external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
+  @available(*, deprecated)
   func subscribe(
     initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
   ) -> SharedSubscription
+
+  func subscribe(
+    initialValue: Value?,
+    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
+  ) -> SharedSubscription
+}
+
+extension SharedReaderKey {
+  public func subscribe(
+    initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
+  ) -> SharedSubscription {
+    subscribe(initialValue: initialValue) { result in
+      switch result {
+      case .failure:
+        break
+      case let .success(newValue):
+        receiveValue(newValue)
+      }
+    }
+  }
+
+  @available(*, deprecated)
+  public func subscribe(
+    initialValue: Value?,
+    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
+  ) -> SharedSubscription {
+    subscribe(initialValue: initialValue) { value in callback(.success(value)) }
+  }
 }
 
 extension SharedReaderKey where ID == Self {
@@ -113,7 +142,7 @@ extension SharedReader {
   ///   loading and saving the shared reference's value from some external source.
   public init(require key: some SharedReaderKey<Value>) throws {
     let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
+      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
       return value
     }
     try self.init(rethrowing: value(), key)
@@ -123,7 +152,7 @@ extension SharedReader {
   @_documentation(visibility: private)
   public init(require key: some SharedKey<Value>) throws {
     let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
+      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
       return value
     }
     try self.init(rethrowing: value(), key)

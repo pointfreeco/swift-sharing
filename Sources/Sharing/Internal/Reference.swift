@@ -16,8 +16,9 @@ protocol Reference<Value>:
   associatedtype Value
 
   var id: ObjectIdentifier { get }
+  var loadError: (any Error)? { get }
   var wrappedValue: Value { get }
-  func load()
+  func load() throws
   func touch()
   #if canImport(Combine)
     var publisher: any Publisher<Value, Never> { get }
@@ -61,6 +62,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
+
+  var loadError: (any Error)? {
+    nil
+  }
 
   var wrappedValue: Value {
     access(keyPath: \.value)
@@ -175,25 +180,53 @@ final class _PersistentReference<Key: SharedReaderKey>:
 
   init(key: Key, value initialValue: Key.Value) {
     self.key = key
-    self.value = key.load(initialValue: initialValue) ?? initialValue
-    self.subscription = key.subscribe(initialValue: initialValue) { [weak self] newValue in
+    do {
+      self.value = try key.load(initialValue: initialValue) ?? initialValue
+    } catch {
+      self.loadError = error
+      self.value = initialValue
+    }
+    self.subscription = key.subscribe(initialValue: initialValue) { [weak self] result in
       guard let self else { return }
-      self.withMutation(keyPath: \.value) {
-        self.lock.withLock { self.value = newValue ?? initialValue }
+      switch result {
+      case let .failure(error):
+        self.withMutation(keyPath: \.loadError) {
+          self.lock.withLock { self.loadError = error }
+        }
+      case let .success(newValue):
+        self.withMutation(keyPath: \.loadError) {
+          self.lock.withLock { self.loadError = nil }
+        }
+        self.withMutation(keyPath: \.value) {
+          self.lock.withLock { self.value = newValue ?? initialValue }
+        }
       }
     }
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
+  private(set) var loadError: (any Error)?
+
   var wrappedValue: Key.Value {
     access(keyPath: \.value)
     return lock.withLock { value }
   }
 
-  func load() {
-    withMutation(keyPath: \.value) {
-      value = key.load(initialValue: nil) ?? value
+  func load() throws {
+    do {
+      withMutation(keyPath: \.loadError) {
+        lock.withLock { loadError = nil }
+      }
+      guard let newValue = try key.load(initialValue: nil)
+      else { return }
+      withMutation(keyPath: \.value) {
+        lock.withLock { value = newValue }
+      }
+    } catch {
+      withMutation(keyPath: \.loadError) {
+        lock.withLock { loadError = error }
+      }
     }
   }
 
@@ -313,12 +346,16 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Key.Value {
     base.wrappedValue
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -383,12 +420,16 @@ final class _AppendKeyPathReference<
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Value {
     base.wrappedValue[keyPath: keyPath]
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -458,14 +499,18 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Value {
     guard let wrappedValue = base.wrappedValue else { return lock.withLock { cachedValue } }
     lock.withLock { cachedValue = wrappedValue }
     return wrappedValue
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -552,12 +597,16 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       base.id
     }
 
+    var loadError: (any Error)? {
+      base.loadError
+    }
+
     var wrappedValue: Base.Value {
       base.wrappedValue
     }
 
-    func load() {
-      base.load()
+    func load() throws {
+      try base.load()
     }
 
     func touch() {

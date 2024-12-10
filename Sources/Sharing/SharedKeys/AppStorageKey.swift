@@ -326,119 +326,113 @@
 
     public func subscribe(
       initialValue: Value?,
-      didSet receiveValue: @escaping @Sendable (_ newValue: Value?) -> Void
+      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
     ) -> SharedSubscription {
-      #if os(WASI)
-        return SharedSubscription {}
-      #else
-        let previousValue = LockIsolated(initialValue)
-        let removeObserver: @Sendable () -> Void
-        let keyContainsPeriod = key.contains(".")
-        if keyContainsPeriod || key.hasPrefix("@") {
-          @Dependency(\.appStorageKeyFormatWarningEnabled) var appStorageKeyFormatWarningEnabled
-          if appStorageKeyFormatWarningEnabled {
-            let character = keyContainsPeriod ? "." : "@"
-            reportIssue(
-              """
-              A Shared app storage key (\(key.debugDescription)) contains an invalid character \
-              (\(character.debugDescription)) for key-value observation. External updates will be \
-              observed less efficiently and accurately via notification center, instead.
+      let previousValue = LockIsolated(initialValue)
+      let removeObserver: @Sendable () -> Void
+      let keyContainsPeriod = key.contains(".")
+      if keyContainsPeriod || key.hasPrefix("@") {
+        @Dependency(\.appStorageKeyFormatWarningEnabled) var appStorageKeyFormatWarningEnabled
+        if appStorageKeyFormatWarningEnabled {
+          let character = keyContainsPeriod ? "." : "@"
+          reportIssue(
+            """
+            A Shared app storage key (\(key.debugDescription)) contains an invalid character \
+            (\(character.debugDescription)) for key-value observation. External updates will be \
+            observed less efficiently and accurately via notification center, instead.
 
-              Please reformat this key by removing invalid characters in order to ensure efficient, \
-              cross-process observation.
+            Please reformat this key by removing invalid characters in order to ensure efficient, \
+            cross-process observation.
 
-              If you cannot control the format of this key and would like to silence this warning, \
-              override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
-              your application. For example:
+            If you cannot control the format of this key and would like to silence this warning, \
+            override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
+            your application. For example:
 
-                  + import Dependencies
+                + import Dependencies
 
-                    @main
-                    struct MyApp: App {
-                      init() {
-                  +     prepareDependencies {
-                  +       $0.appStorageKeyFormatWarningEnabled = false
-                  +     }
-                        // ...
-                      }
+                  @main
+                  struct MyApp: App {
+                    init() {
+                +     prepareDependencies {
+                +       $0.appStorageKeyFormatWarningEnabled = false
+                +     }
+                      // ...
+                    }
 
-                      var body: some Scene { /* ... */ }
-                    }
-              """
-            )
-          }
-          let userDefaultsDidChange = NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification,
-            object: store.wrappedValue,
-            queue: nil
-          ) { _ in
-            let newValue = load(initialValue: initialValue)
-            defer { previousValue.withValue { $0 = newValue } }
-            func isEqual<T>(_ lhs: T, _ rhs: T) -> Bool? {
-              func open<U: Equatable>(_ lhs: U) -> Bool {
-                lhs == rhs as? U
-              }
-              guard let lhs = lhs as? any Equatable else { return nil }
-              return open(lhs)
+                    var body: some Scene { /* ... */ }
+                  }
+            """
+          )
+        }
+        let userDefaultsDidChange = NotificationCenter.default.addObserver(
+          forName: UserDefaults.didChangeNotification,
+          object: store.wrappedValue,
+          queue: nil
+        ) { _ in
+          let newValue = load(initialValue: initialValue)
+          defer { previousValue.withValue { $0 = newValue } }
+          func isEqual<T>(_ lhs: T, _ rhs: T) -> Bool? {
+            func open<U: Equatable>(_ lhs: U) -> Bool {
+              lhs == rhs as? U
             }
-            guard
-              !(isEqual(newValue, previousValue.value) ?? false)
-                || (isEqual(newValue, initialValue) ?? true)
-            else {
-              return
-            }
-            guard !SharedAppStorageLocals.isSetting
-            else { return }
-            DispatchQueue.main.async { receiveValue(newValue) }
+            guard let lhs = lhs as? any Equatable else { return nil }
+            return open(lhs)
           }
-          removeObserver = { NotificationCenter.default.removeObserver(userDefaultsDidChange) }
-        } else {
-          let observer = Observer {
-            guard !SharedAppStorageLocals.isSetting
-            else { return }
-            receiveValue(load(initialValue: initialValue))
+          guard
+            !(isEqual(newValue, previousValue.value) ?? false)
+              || (isEqual(newValue, initialValue) ?? true)
+          else {
+            return
           }
-          store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
-          removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
+          guard !SharedAppStorageLocals.isSetting
+          else { return }
+          DispatchQueue.main.async { callback(.success(newValue)) }
         }
-        let willEnterForeground: (any NSObjectProtocol)?
-        if let willEnterForegroundNotificationName {
-          willEnterForeground = NotificationCenter.default.addObserver(
-            forName: willEnterForegroundNotificationName,
-            object: nil,
-            queue: .main
-          ) { _ in
-            receiveValue(load(initialValue: initialValue))
-          }
-        } else {
-          willEnterForeground = nil
+        removeObserver = { NotificationCenter.default.removeObserver(userDefaultsDidChange) }
+      } else {
+        let observer = Observer {
+          guard !SharedAppStorageLocals.isSetting
+          else { return }
+          callback(.success(load(initialValue: initialValue)))
         }
-        return SharedSubscription {
-          removeObserver()
-          if let willEnterForeground {
-            NotificationCenter.default.removeObserver(willEnterForeground)
-          }
+        store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
+        removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
+      }
+      let willEnterForeground: (any NSObjectProtocol)?
+      if let willEnterForegroundNotificationName {
+        willEnterForeground = NotificationCenter.default.addObserver(
+          forName: willEnterForegroundNotificationName,
+          object: nil,
+          queue: .main
+        ) { _ in
+          callback(.success(load(initialValue: initialValue)))
         }
-      #endif
-    }
-
-    #if !os(WASI)
-      private final class Observer: NSObject, Sendable {
-        let didChange: @Sendable () -> Void
-        init(didChange: @escaping @Sendable () -> Void) {
-          self.didChange = didChange
-          super.init()
-        }
-        override func observeValue(
-          forKeyPath keyPath: String?,
-          of object: Any?,
-          change: [NSKeyValueChangeKey: Any]?,
-          context: UnsafeMutableRawPointer?
-        ) {
-          self.didChange()
+      } else {
+        willEnterForeground = nil
+      }
+      return SharedSubscription {
+        removeObserver()
+        if let willEnterForeground {
+          NotificationCenter.default.removeObserver(willEnterForeground)
         }
       }
-    #endif
+    }
+
+    private final class Observer: NSObject, Sendable {
+      let didChange: @Sendable () -> Void
+      init(didChange: @escaping @Sendable () -> Void) {
+        self.didChange = didChange
+        super.init()
+      }
+      override func observeValue(
+        forKeyPath keyPath: String?,
+        of object: Any?,
+        change: [NSKeyValueChangeKey: Any]?,
+        context: UnsafeMutableRawPointer?
+      ) {
+        self.didChange()
+      }
+    }
   }
 
   extension AppStorageKey: CustomStringConvertible {

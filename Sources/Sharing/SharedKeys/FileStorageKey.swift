@@ -96,16 +96,12 @@
       self.encode = encode
     }
 
-    public func load(initialValue: Value?) -> Value? {
-      try? load(data: storage.load(url), initialValue: initialValue)
+    public func load(initialValue: Value?) throws -> Value? {
+      try load(data: storage.load(url), initialValue: initialValue)
     }
 
-    private func load(data: Data, initialValue: Value?) -> Value? {
-      do {
-        return try decode(data)
-      } catch {
-        return initialValue
-      }
+    private func load(data: Data, initialValue: Value?) throws -> Value? {
+      try decode(data)
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
@@ -153,49 +149,57 @@
 
     public func subscribe(
       initialValue: Value?,
-      didSet receiveValue: @escaping @Sendable (_ newValue: Value?) -> Void
+      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
     ) -> SharedSubscription {
       let cancellable = LockIsolated<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
         cancellable.withValue { [weak self] in
           $0?.cancel()
           guard let self else { return }
-          // NB: Make sure there is a file to create a source for.
-          if !storage.fileExists(url) {
-            try? storage.createDirectory(url.deletingLastPathComponent(), true)
-            try? storage.save(Data(), url)
-          }
-          let writeCancellable = try? storage.fileSystemSource(url, [.write]) { [weak self] in
-            guard let self else { return }
-            state.withValue { state in
-              let modificationDate =
+          do {
+            // NB: Make sure there is a file to create a source for.
+            if !storage.fileExists(url) {
+              try storage.createDirectory(url.deletingLastPathComponent(), true)
+              try storage.save(Data(), url)
+            }
+            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                let modificationDate =
                 (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate] as? Date)
                 ?? Date.distantPast
-              guard
-                !state.modificationDates.contains(modificationDate)
-              else {
-                state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                return
+                guard
+                  !state.modificationDates.contains(modificationDate)
+                else {
+                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                  return
+                }
+                guard
+                  state.workItem == nil,
+                  let data = try? self.storage.load(self.url)
+                else { return }
+                callback(
+                  Result {
+                    try self.load(data: data, initialValue: initialValue)
+                  }
+                )
               }
-              guard
-                state.workItem == nil,
-                let data = try? self.storage.load(self.url)
-              else { return }
-              receiveValue(self.load(data: data, initialValue: initialValue))
             }
-          }
-          let deleteCancellable = try? storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
-            guard let self else { return }
-            state.withValue { state in
-              state.workItem?.cancel()
-              state.workItem = nil
+            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                state.workItem?.cancel()
+                state.workItem = nil
+              }
+              callback(.success(try? self.load(initialValue: initialValue) ?? initialValue))
+              setUpSources()
             }
-            receiveValue(self.load(initialValue: initialValue))
-            setUpSources()
-          }
-          $0 = SharedSubscription {
-            writeCancellable?.cancel()
-            deleteCancellable?.cancel()
+            $0 = SharedSubscription {
+              writeCancellable.cancel()
+              deleteCancellable.cancel()
+            }
+          } catch {
+            callback(.failure(error))
           }
         }
       }
