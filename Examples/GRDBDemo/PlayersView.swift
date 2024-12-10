@@ -97,7 +97,7 @@ struct PlayersView: View {
 }
 
 struct AddPlayerView: View {
-  @Dependency(\.defaultDatabase) private var databaseQueue
+  @Dependency(\.defaultDatabase) private var database
   @Environment(\.dismiss) var dismiss
   @State var player = Player()
 
@@ -111,7 +111,7 @@ struct AddPlayerView: View {
       .toolbar {
         Button("Save") {
           do {
-            try databaseQueue.write { db in
+            try database.write { db in
               _ = try player.inserted(db)
             }
           } catch {
@@ -127,8 +127,8 @@ struct AddPlayerView: View {
 #Preview(
   traits: .dependency(\.defaultDatabase, .appDatabase)
 ) {
-  @Dependency(\.defaultDatabase) var databaseQueue
-  let _ = try! databaseQueue.write { db in
+  @Dependency(\.defaultDatabase) var database
+  let _ = try! database.write { db in
     for index in 0...9 {
       _ = try Player(name: "Blob \(index)", isInjured: index.isMultiple(of: 3))
         .inserted(db)
