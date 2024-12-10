@@ -15,168 +15,222 @@
   extension SharedReaderKey {
     /// Creates a shared key that can read and write to a boolean user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Bool> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an integer user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Int> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a double user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Double> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a string user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<String> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a URL user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<URL> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a user default as data.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Data> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a date user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Date> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an integer user default, transforming
     /// that to a `RawRepresentable` data type.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage<Value: RawRepresentable<Int>>(_ key: String) -> Self
+    public static func appStorage<Value: RawRepresentable<Int>>(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Value> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a string user default, transforming
     /// that to a `RawRepresentable` data type.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage<Value: RawRepresentable<String>>(_ key: String) -> Self
+    public static func appStorage<Value: RawRepresentable<String>>(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Value> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional boolean user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Bool?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional integer user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Int?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional double user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Double?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional string user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<String?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional URL user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<URL?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to a user default as optional data.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Data?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional date user default.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage(_ key: String) -> Self
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Date?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional integer user default,
     /// transforming that to a `RawRepresentable` data type.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage<Value: RawRepresentable>(_ key: String) -> Self
+    public static func appStorage<Value: RawRepresentable>(_ key: String, store: UserDefaults? = nil) -> Self
     where Value.RawValue == Int, Self == AppStorageKey<Value?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
 
     /// Creates a shared key that can read and write to an optional string user default,
     /// transforming that to a `RawRepresentable` data type.
     ///
-    /// - Parameter key: The key to read and write the value to in the user defaults store.
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - userDefaults: The user defaults store to read and write to.
+    ///   A value of `nil` will use the user default store from dependencies.
     /// - Returns: A user defaults shared key.
-    public static func appStorage<Value: RawRepresentable>(_ key: String) -> Self
+    public static func appStorage<Value: RawRepresentable>(_ key: String, store: UserDefaults? = nil) -> Self
     where Value.RawValue == String, Self == AppStorageKey<Value?> {
-      AppStorageKey(key)
+      AppStorageKey(key, store: store)
     }
   }
 
@@ -190,130 +244,130 @@
       AppStorageKeyID(key: key, store: store.wrappedValue)
     }
 
-    fileprivate init(_ key: String) where Value == Bool {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Bool {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Int {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Int {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Double {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Double {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == String {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == String {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == URL {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == URL {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = URLLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Data {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Data {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Date {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Date {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = CastableLookup()
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value: RawRepresentable<Int> {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<Int> {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = RawRepresentableLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value: RawRepresentable<String> {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<String> {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = RawRepresentableLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Bool? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Bool? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Int? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Int? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Double? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Double? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == String? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == String? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == URL? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == URL? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: URLLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Data? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Data? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init(_ key: String) where Value == Date? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == Date? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init<R: RawRepresentable<Int>>(_ key: String) where Value == R? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init<R: RawRepresentable<Int>>(_ key: String, store: UserDefaults?) where Value == R? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: RawRepresentableLookup(base: CastableLookup()))
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    fileprivate init<R: RawRepresentable<String>>(_ key: String) where Value == R? {
-      @Dependency(\.defaultAppStorage) var store
+    fileprivate init<R: RawRepresentable<String>>(_ key: String, store: UserDefaults?) where Value == R? {
+      @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: RawRepresentableLookup(base: CastableLookup()))
       self.key = key
-      self.store = UncheckedSendable(store)
+      self.store = UncheckedSendable(store ?? defaultStore)
     }
 
     public func load(initialValue: Value?) -> Value? {
