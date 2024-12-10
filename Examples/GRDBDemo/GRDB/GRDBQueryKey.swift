@@ -16,13 +16,13 @@ extension SharedReaderKey {
 
 extension DependencyValues {
   /// The default database used by ``Sharing/SharedReaderKey/grdbQuery(_:animation:)``.
-  public var defaultDatabase: DatabaseQueue {
+  public var defaultDatabase: any DatabaseWriter {
     get { self[GRDBDatabaseKey.self] }
     set { self[GRDBDatabaseKey.self] = newValue }
   }
 
   private enum GRDBDatabaseKey: DependencyKey {
-    static var liveValue: DatabaseQueue {
+    static var liveValue: any DatabaseWriter {
       reportIssue(
         """
         A blank, in-memory database is being used for the app. To set the database that is used by \
@@ -44,7 +44,7 @@ extension DependencyValues {
       return try! DatabaseQueue()
     }
 
-    static var testValue: DatabaseQueue {
+    static var testValue: any DatabaseWriter {
       try! DatabaseQueue()
     }
   }
@@ -57,7 +57,7 @@ protocol GRDBQuery<Value>: Hashable, Sendable {
 
 struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
   let animation: Animation?
-  let databaseQueue: DatabaseQueue
+  let databaseQueue: any DatabaseWriter
   let query: any GRDBQuery<Value>
 
   typealias ID = GRDBQueryID

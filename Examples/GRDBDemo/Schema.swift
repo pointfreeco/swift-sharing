@@ -74,8 +74,8 @@ struct PlayersRequest: GRDBQuery {
   }
 }
 
-extension DatabaseQueue {
-  static var appDatabase: DatabaseQueue {
+extension DatabaseWriter where Self == DatabaseQueue {
+  static var appDatabase: Self {
     let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
     print("open", path)
     var configuration = Configuration()
@@ -85,7 +85,8 @@ extension DatabaseQueue {
       }
     }
     let databaseQueue: DatabaseQueue
-    if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == nil {
+    @Dependency(\.context) var context
+    if context == .live {
       databaseQueue = try! DatabaseQueue(path: path, configuration: configuration)
     } else {
       databaseQueue = try! DatabaseQueue(configuration: configuration)
