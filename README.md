@@ -153,7 +153,7 @@ See ["Testing"][testing-docs] for more information on how to test your features 
 The documentation for releases and `main` are available here:
 
 * [`main`](https://swiftpackageindex.com/pointfreeco/swift-sharing/main/documentation/sharing/)
-* [1.0.0](https://swiftpackageindex.com/pointfreeco/swift-sharing/1.0.0/documentation/sharing/)
+* [1.0.4](https://swiftpackageindex.com/pointfreeco/swift-sharing/1.0.4/documentation/sharing/)
 
 ### Articles
 
