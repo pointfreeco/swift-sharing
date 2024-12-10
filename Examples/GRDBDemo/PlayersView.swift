@@ -7,22 +7,24 @@ import SwiftUI
 @MainActor
 private let readMe: LocalizedStringKey = """
   This app demonstrates a simple way to persist data with GRDB. It introduces a new \
-  `SharedReaderKey` conformance, `grdbQuery`, which queries a database for populating state. When \
-  the database is updated the state will automatically be refreshed.
+  `SharedReaderKey` conformance, `query`, which queries a database for populating state. When the \
+  database is updated the state will automatically be refreshed.
 
-  A list of players is powered by `grdbQuery`. The demo also shows how to perform a dynamic \
-  query on the players in the form of sorting the list by name or their injury status.
+  A list of players is powered by `query`. The demo also shows how to perform a dynamic query on \
+  the players in the form of sorting the list by name or their injury status.
   """
 
 struct PlayersView: View {
-  @Dependency(\.defaultDatabase) private var database
-  @SharedReader private var players: [Player]
-  @Shared(.appStorage("order")) private var order = PlayerOrder.name
-  @State private var addPlayerIsPresented = false
   @State private var aboutIsPresented = false
+  @State private var addPlayerIsPresented = false
+  @Dependency(\.defaultDatabase) private var database
+  @Shared(.appStorage("order")) private var order: Players.Order = .name
+  @SharedReader private var players: [Player]
+  @SharedReader(.fetchOne(sql: #"SELECT count(*) FROM "players" WHERE "isInjured" = 0"#))
+  private var uninjuredCount = 0
 
   init() {
-    _players = SharedReader(.players(order: _order.wrappedValue))
+    _players = SharedReader(.query(Players(order: _order.wrappedValue)))
   }
 
   var body: some View {
@@ -41,6 +43,8 @@ struct PlayersView: View {
               }
             }
             .onDelete(perform: deleteItems)
+          } header: {
+            Text("^[\(uninjuredCount) player](inflect: true) are available")
           }
         }
       }
@@ -49,8 +53,8 @@ struct PlayersView: View {
         ToolbarItem {
           Picker("Sort", selection: Binding($order)) {
             Section {
-              Text("Name").tag(PlayerOrder.name)
-              Text("Is injured?").tag(PlayerOrder.isInjured)
+              Text("Name").tag(Players.Order.name)
+              Text("Is injured?").tag(Players.Order.isInjured)
             } header: {
               Text("Sort by:")
             }
@@ -71,7 +75,7 @@ struct PlayersView: View {
       }
     }
     .onChange(of: order) {
-      $players = SharedReader(.players(order: order))
+      $players = SharedReader(.query(Players(order: order)))
     }
     .sheet(isPresented: $addPlayerIsPresented) {
       AddPlayerView()
@@ -92,6 +96,28 @@ struct PlayersView: View {
       }
     } catch {
       reportIssue(error)
+    }
+  }
+
+  struct Players: GRDBQuery {
+    enum Order: String { case name, isInjured }
+    let order: Order
+    init(order: Order = .name) {
+      self.order = order
+    }
+    func fetch(_ db: Database) throws -> [Player] {
+      let ordering: any SQLOrderingTerm =
+        switch order {
+        case .name:
+          Column("name")
+        case .isInjured:
+          Column("isInjured").desc
+        }
+      return
+        try Player
+        .all()
+        .order(ordering)
+        .fetchAll(db)
     }
   }
 }

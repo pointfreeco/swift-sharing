@@ -5,12 +5,41 @@ import SwiftUI
 
 extension SharedReaderKey {
   /// A shared key that can query for data in a SQLite database.
-  static func grdbQuery<Value>(
+  static func query<Value>(
     _ query: some GRDBQuery<Value>,
     animation: Animation? = nil
   ) -> Self
   where Self == GRDBQueryKey<Value> {
     GRDBQueryKey(query: query, animation: animation)
+  }
+
+  /// A shared key that can query for data in a SQLite database.
+  static func query<Value: RangeReplaceableCollection>(
+    _ query: some GRDBQuery<Value>,
+    animation: Animation? = nil
+  ) -> Self
+  where Self == GRDBQueryKey<Value>.Default {
+    Self[.query(query, animation: animation), default: Value()]
+  }
+
+  /// A shared key that can query for data in a SQLite database.
+  static func fetchAll<Value: FetchableRecord>(
+    sql: String,
+    arguments: StatementArguments = StatementArguments(),
+    animation: Animation? = nil
+  ) -> Self
+  where Self == GRDBQueryKey<[Value]>.Default {
+    Self[.query(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
+  }
+
+  /// A shared key that can query for data in a SQLite database.
+  static func fetchOne<Value: DatabaseValueConvertible>(
+    sql: String,
+    arguments: StatementArguments = StatementArguments(),
+    animation: Animation? = nil
+  ) -> Self
+  where Self == GRDBQueryKey<Value> {
+    .query(FetchOne(sql: sql, arguments: arguments), animation: animation)
   }
 }
 
@@ -97,9 +126,28 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
 struct GRDBQueryID: Hashable {
   fileprivate let rawValue: AnyHashableSendable
 
-  init(rawValue: some GRDBQuery) {
+  init(rawValue: any GRDBQuery) {
     self.rawValue = AnyHashableSendable(rawValue)
   }
+}
+
+private struct FetchAll<Element: FetchableRecord>: GRDBQuery {
+  var sql: String
+  var arguments: StatementArguments = StatementArguments()
+  func fetch(_ db: Database) throws -> [Element] {
+    try Element.fetchAll(db, sql: sql, arguments: arguments)
+  }
+}
+
+private struct FetchOne<Value: DatabaseValueConvertible>: GRDBQuery {
+  var sql: String
+  var arguments: StatementArguments = StatementArguments()
+  func fetch(_ db: Database) throws -> Value {
+    guard let value = try Value.fetchOne(db, sql: sql, arguments: arguments)
+    else { throw NotFound() }
+    return value
+  }
+  struct NotFound: Error {}
 }
 
 private struct AnimatedScheduler: ValueObservationScheduler {

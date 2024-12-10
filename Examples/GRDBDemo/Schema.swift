@@ -45,35 +45,6 @@ extension DatabaseWriter {
   }
 }
 
-enum PlayerOrder: String { case name, isInjured }
-
-extension SharedReaderKey where Self == GRDBQueryKey<[Player]>.Default {
-  static func players(order: PlayerOrder = .name) -> Self {
-    Self[
-      .grdbQuery(PlayersRequest(order: order), animation: .default),
-      default: []
-    ]
-  }
-}
-
-struct PlayersRequest: GRDBQuery {
-  let order: PlayerOrder
-  func fetch(_ db: Database) throws -> [Player] {
-    let ordering: any SQLOrderingTerm =
-      switch order {
-      case .name:
-        Column("name")
-      case .isInjured:
-        Column("isInjured").desc
-      }
-    return
-      try Player
-      .all()
-      .order(ordering)
-      .fetchAll(db)
-  }
-}
-
 extension DatabaseWriter where Self == DatabaseQueue {
   static var appDatabase: Self {
     let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
