@@ -40,7 +40,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///     if the external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  @available(*, deprecated)
+  @available(*, deprecated, message: "Call 'subscribe(initialValue:didReceive:)' instead")
   func subscribe(
     initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
   ) -> SharedSubscription
@@ -65,7 +65,7 @@ extension SharedReaderKey {
     }
   }
 
-  @available(*, deprecated)
+  @available(*, deprecated, message: "Implement this method explicitly")
   public func subscribe(
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
