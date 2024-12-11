@@ -138,6 +138,7 @@ See <doc:Testing> for more information on how to test your features when using `
 
 ### SwiftUI integration
 
+- ``Swift/Array``
 - ``SwiftUICore/Binding``
 
 ### Combine integration
