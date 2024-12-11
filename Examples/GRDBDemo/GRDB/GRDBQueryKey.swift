@@ -56,18 +56,8 @@ extension DependencyValues {
         """
         A blank, in-memory database is being used for the app. To set the database that is used by \
         the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
-        launches, such as in the entry point:
-        
-            @main
-            struct EntryPoint: App {
-              init() {
-                prepareDependencies {
-                  $0.defaultDatabase = try! DatabaseQueue(/* ... */)
-                }
-              }
-
-              // ...
-            }
+        launches. Documentation for usage can be found in the following URL:
+          - https://swiftpackageindex.com/pointfreeco/swift-dependencies/main/documentation/dependencies/preparedependencies(_:)
         """
       )
       return try! DatabaseQueue()
