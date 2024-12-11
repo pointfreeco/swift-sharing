@@ -339,10 +339,6 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
 }
 
 extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
-  var wrappedValue: Key.Value {
-    base.wrappedValue
-  }
-
   var snapshot: Key.Value? {
     base.snapshot
   }
