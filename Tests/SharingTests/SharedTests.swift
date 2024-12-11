@@ -33,6 +33,25 @@ import Testing
       #expect($count.loadError != nil)
     }
 
+    @Test func subscribeError() {
+      struct Key<Value: Sendable>: Hashable, Sendable, SharedReaderKey {
+        struct LoadError: Error {}
+        func load(initialValue: Value?) throws -> Value? {
+          nil
+        }
+        func subscribe(
+          initialValue: Value?,
+          didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+        ) -> SharedSubscription {
+          callback(.failure(LoadError()))
+          return SharedSubscription {}
+        }
+      }
+
+      @SharedReader(Key()) var count = 0
+      #expect($count.loadError != nil)
+    }
+
     @Test func nesting() {
       struct C: Equatable {}
       struct B {

@@ -97,7 +97,8 @@
     }
 
     public func load(initialValue: Value?) throws -> Value? {
-      try load(data: storage.load(url), initialValue: initialValue)
+      guard let data = try? storage.load(url) else { return nil }
+      return try load(data: data, initialValue: initialValue)
     }
 
     private func load(data: Data, initialValue: Value?) throws -> Value? {

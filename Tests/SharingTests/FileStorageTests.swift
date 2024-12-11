@@ -16,6 +16,7 @@
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: .immediate)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
+        #expect($users.loadError == nil)
         expectNoDifference(fileSystem.value, [.fileURL: Data()])
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -27,6 +28,7 @@
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: .immediate)
       } operation: {
         @Shared(.utf8String) var string = ""
+        #expect($string.loadError == nil)
         expectNoDifference(fileSystem.value, [.utf8StringURL: Data()])
         $string.withLock { $0 = "hello" }
         expectNoDifference(
@@ -124,6 +126,21 @@
       }
     }
 
+    @Test func decodeFailure() async throws {
+      let fileSystem = LockIsolated<[URL: Data]>(
+        [.fileURL: Data("corrupt".utf8)]
+      )
+      try withDependencies {
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
+      } operation: {
+        @Shared(.fileStorage(.fileURL)) var users = [User]()
+        let loadError = try #require($users.loadError)
+        #expect(loadError is DecodingError)
+        $users.withLock { $0.append(User(id: 1, name: "Blob")) }
+        #expect($users.loadError == nil)
+      }
+    }
+
     @Test func writeFileWhileThrottling() throws {
       let fileStorage = FileStorage.inMemory(
         fileSystem: fileSystem,
@@ -202,6 +219,7 @@
 
       @Test func basics() async throws {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
+        #expect($users.loadError == nil)
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(
