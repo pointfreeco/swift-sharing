@@ -196,8 +196,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 
   func load() {
+    guard let newValue = key.load(initialValue: nil)
+    else { return }
     withMutation(keyPath: \.value) {
-      value = key.load(initialValue: nil) ?? value
+      lock.withLock { value = newValue }
     }
   }
 
@@ -293,7 +295,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   }
 
   func save() {
-    key.save(value, immediately: true)
+    key.save(lock.withLock { value }, immediately: true)
   }
 
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
