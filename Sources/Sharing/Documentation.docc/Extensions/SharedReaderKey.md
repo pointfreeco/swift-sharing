@@ -12,7 +12,7 @@
 
 - ``SharedSubscription``
 
-### Identifying a key
+### Key hashability
 
 - ``ID``
 - ``id``

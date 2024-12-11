@@ -7,11 +7,15 @@ behavior of certain tools.
 
 ### Mutating shared state
 
-The most visible change to `@Shared` in its 1.0 release is the way in which the underlying value is mutated.
+The most visible change to `@Shared` in its 1.0 release is the way in which the underlying value is
+mutated.
 
-Prior to version 1.0 of the library, it was possible to synchronously mutate `@Shared` values directly. This API has been removed in order to minimize potential data races when shared state is written to in parallel across multiple threads.
+Prior to version 1.0 of the library, it was possible to synchronously mutate `@Shared` values
+directly. This API has been removed in order to minimize potential data races when shared state is
+written to in parallel across multiple threads.
 
-Instead, exclusively use the [`withLock`](<doc:Shared/withLock(_:)>) method to mutate shared state with isolated access:
+Instead, exclusively use the [`withLock`](<doc:Shared/withLock(_:fileID:filePath:line:column:)>)
+method to mutate shared state with isolated access:
 
 @Row {
   @Column {
@@ -32,17 +36,24 @@ Instead, exclusively use the [`withLock`](<doc:Shared/withLock(_:)>) method to m
 
 > Note:
 >
-> Prior to 1.0, the `withLock` method was isolated to the `@MainActor` and thus needed to be `await`ed. In 1.0 this actor isolation has been removed and `withLock` can be synchronously called from any thread.
+> Prior to 1.0, the `withLock` method was isolated to the `@MainActor` and thus needed to be
+`await`ed. In 1.0 this actor isolation has been removed and `withLock` can be synchronously called
+from any thread.
 
 For more information on this change, see <doc:MutatingSharedState>.
 
 ### App storage uses key-value observation
 
-The ``AppStorageKey`` persistence strategy now uses key-value observation (KVO) instead of notification center to observe external changes to user defaults when possible. KVO is more efficient and supports cross-process observation, _e.g._ in widgets and other extensions, and does not require a main thread hop to process updates.
+The ``AppStorageKey`` persistence strategy now uses key-value observation (KVO) instead of
+notification center to observe external changes to user defaults when possible. KVO is more
+efficient and supports cross-process observation, _e.g._ in widgets and other extensions, and does
+not require a main thread hop to process updates.
 
 > Important:
 >
-> It is not possible to use KVO when the user default key contains a period (`.`) or starts with an at sign (`@`). These are reserved characters in KVO, and observation will fall back to the firehose notification, instead. For example:
+> It is not possible to use KVO when the user default key contains a period (`.`) or starts with an
+at sign (`@`). These are reserved characters in KVO, and observation will fall back to the firehose
+notification, instead. For example:
 >
 > ```swift
 > @Shared(.appStorage("co.pointfree.haptics-enabled"))
@@ -51,7 +62,9 @@ The ``AppStorageKey`` persistence strategy now uses key-value observation (KVO) 
 >
 > By default, the library will emit a warning when it encounters a KVO-incompatible key.
 >
-> To silence this warning, set the ``Dependencies/DependencyValues/appStorageKeyFormatWarningEnabled`` dependency to `false`, _e.g._ at the entry point of your application:
+> To silence this warning, set the
+> ``Dependencies/DependencyValues/appStorageKeyFormatWarningEnabled`` dependency to `false`, _e.g._
+> at the entry point of your application:
 >
 > ```swift
 > @main
@@ -67,17 +80,23 @@ The ``AppStorageKey`` persistence strategy now uses key-value observation (KVO) 
 
 ### File storage no longer saves on resignation/termination
 
-Before 1.0, ``FileStorageKey`` subscribed to resignation and termination notifications in order to eagerly flush any unwritten changes to disk.
+Before 1.0, ``FileStorageKey`` subscribed to resignation and termination notifications in order to
+eagerly flush any unwritten changes to disk.
 
-In 1.0, these extra subscriptions have been eliminated in favor of simply waiting for the write to happen on the existing debounce mechanism.
+In 1.0, these extra subscriptions have been eliminated in favor of simply waiting for the write to
+happen on the existing debounce mechanism.
 
-In practice this should not behave differently in applications running in the wild, but you may lose a write to disk when terminating the simulator too quickly after a mutation, similar to the behavior of user defaults, which can lose updates when terminated in a similar way.
+In practice this should not behave differently in applications running in the wild, but you may lose
+a write to disk when terminating the simulator too quickly after a mutation, similar to the behavior
+of user defaults, which can lose updates when terminated in a similar way.
 
 ### Shared publishers now immediately emit the current value
 
-Before 1.0, a `$shared.publisher` subscription would wait for the shared value to be written to before emitting a value, similar to a passthrough subject.
+Before 1.0, a `$shared.publisher` subscription would wait for the shared value to be written to
+before emitting a value, similar to a passthrough subject.
 
-In 1.0, `$shared.publisher` behaves like a current value subject (as well as `@Published` properties), and _immediately_ emits the current value when first subscribed to.
+In 1.0, `$shared.publisher` behaves like a current value subject (as well as `@Published`
+properties), and _immediately_ emits the current value when first subscribed to.
 
 If you wish to skip this initial value, use Combine's `dropFirst` operator:
 

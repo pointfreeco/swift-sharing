@@ -17,8 +17,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Bool> {
@@ -29,7 +29,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Int> {
@@ -40,7 +41,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Double> {
@@ -51,7 +53,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<String> {
@@ -62,7 +65,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<URL> {
@@ -73,7 +77,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Data> {
@@ -84,7 +89,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Date> {
@@ -96,7 +102,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable<Int>>(
       _ key: String, store: UserDefaults? = nil
@@ -110,7 +117,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable<String>>(
       _ key: String, store: UserDefaults? = nil
@@ -123,7 +131,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Bool?> {
@@ -134,7 +143,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Int?> {
@@ -145,7 +155,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Double?> {
@@ -156,7 +167,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<String?> {
@@ -167,7 +179,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<URL?> {
@@ -178,7 +191,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Data?> {
@@ -189,7 +203,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
     where Self == AppStorageKey<Date?> {
@@ -201,7 +216,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///     the user default store from dependencies.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable>(
       _ key: String, store: UserDefaults? = nil
@@ -215,7 +231,8 @@
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
-    ///   - userDefaults: The user defaults store to read and write to. A value of `nil` will use
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable>(
       _ key: String, store: UserDefaults? = nil
