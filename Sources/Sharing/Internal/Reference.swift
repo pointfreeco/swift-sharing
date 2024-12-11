@@ -175,6 +175,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
     private var value: Key.Value
   #endif
 
+  private var _loadError: (any Error)?
   private var _referenceCount = 0
   private var subscription: SharedSubscription?
 
@@ -206,35 +207,48 @@ final class _PersistentReference<Key: SharedReaderKey>:
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
-  private(set) var loadError: (any Error)?
+  var loadError: (any Error)? {
+    get {
+      access(keyPath: \._loadError)
+      return lock.withLock { _loadError }
+    }
+    set {
+      withMutation(keyPath: \._loadError) {
+        lock.withLock { _loadError = newValue }
+      }
+    }
+  }
 
   var wrappedValue: Key.Value {
-    access(keyPath: \.value)
-    return lock.withLock { value }
+    get {
+      access(keyPath: \.value)
+      return lock.withLock { value }
+    }
+    set {
+      withMutation(keyPath: \.value) {
+        lock.withLock { value = newValue }
+      }
+    }
   }
 
   func load() throws {
     do {
-      withMutation(keyPath: \.loadError) {
-        lock.withLock { loadError = nil }
-      }
+      loadError = nil
       guard let newValue = try key.load(initialValue: nil)
       else {
         // TODO: Should we keep track of the initial value and reassign it here?
         return
       }
-      withMutation(keyPath: \.value) {
-        lock.withLock { value = newValue }
-      }
+      wrappedValue = newValue
     } catch {
-      withMutation(keyPath: \.loadError) {
-        lock.withLock { loadError = error }
-      }
+      loadError = error
     }
   }
 
   func touch() {
     withMutation(keyPath: \.value) {}
+    // TODO: Is this needed?
+    // withMutation(keyPath: \._loadError) {}
   }
 
   func retain() {
