@@ -46,7 +46,7 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
   }
 
   public func load(initialValue: Base.Value?) -> Base.Value? {
-    base.load(initialValue: initialValue ?? defaultValue())
+    base.load(initialValue: initialValue)
   }
 
   public func subscribe(
