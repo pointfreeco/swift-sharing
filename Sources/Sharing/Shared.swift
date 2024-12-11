@@ -266,6 +266,10 @@ public struct Shared<Value> {
     reference.loadError
   }
 
+  public var saveError: (any Error)? {
+    reference.saveError
+  }
+
   /// Requests an up-to-date value from an external source.
   ///
   /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
