@@ -171,6 +171,39 @@ import Testing
       #expect(SharedReader($count).description == #"SharedReader<Int>(.appStorage("count"))"#)
     }
 
+    @Test func defaultDescription() {
+      do {
+        @Shared(AppStorageKey.Default[.appStorage("count"), default: 0]) var count
+
+        #expect(
+          $count.description == """
+            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            """
+        )
+
+        #expect(
+          SharedReader($count).description == """
+            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            """
+        )
+      }
+      do {
+        @Shared(AppStorageKey.Default[.appStorage("count"), default: 0]) var count = 0
+
+        #expect(
+          $count.description == """
+            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            """
+        )
+
+        #expect(
+          SharedReader($count).description == """
+            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            """
+        )
+      }
+    }
+
     @Test func fileStorageDescription() {
       @Shared(.fileStorage(URL(filePath: "/"))) var count = 0
 
