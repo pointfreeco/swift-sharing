@@ -50,7 +50,7 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(_ key: _SharedKeyDefault<some SharedKey<Value>>) {
+  public init(_ key: (some SharedKey<Value>).Default) {
     self.init(wrappedValue: key.defaultValue(), key)
   }
 
@@ -64,7 +64,7 @@ extension Shared {
   @_disfavoredOverload
   public init(
     wrappedValue: @autoclosure () -> Value,
-    _ key: _SharedKeyDefault<some SharedKey<Value>>
+    _ key: (some SharedKey<Value>).Default
   ) {
     self.init(wrappedValue: wrappedValue(), key)
   }
