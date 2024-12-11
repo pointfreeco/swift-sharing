@@ -171,6 +171,7 @@ extension SharedReader {
       return value
     }
     try self.init(rethrowing: value(), key)
+    if let loadError { throw loadError }
   }
 
   @_disfavoredOverload
@@ -181,6 +182,7 @@ extension SharedReader {
       return value
     }
     try self.init(rethrowing: value(), key)
+    if let loadError { throw loadError }
   }
 
   @available(*, unavailable, message: "Assign a default value")
@@ -201,5 +203,6 @@ extension SharedReader {
     @Dependency(PersistentReferences.self) var persistentReferences
     self.init(reference: try persistentReferences.value(forKey: key, default: try value()))
   }
+
   private struct LoadError: Error {}
 }
