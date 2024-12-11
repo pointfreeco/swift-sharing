@@ -4,7 +4,7 @@ import Sharing
 import SwiftUI
 
 extension SharedReaderKey {
-  /// A shared key that can query for data in a SQLite database.
+  /// A key that can query for data in a SQLite database.
   static func query<Value>(
     _ query: some GRDBQuery<Value>,
     animation: Animation? = nil
@@ -13,7 +13,7 @@ extension SharedReaderKey {
     GRDBQueryKey(query: query, animation: animation)
   }
 
-  /// A shared key that can query for data in a SQLite database.
+  /// A key that can query for a collection of data in a SQLite database.
   static func query<Value: RangeReplaceableCollection>(
     _ query: some GRDBQuery<Value>,
     animation: Animation? = nil
@@ -22,7 +22,7 @@ extension SharedReaderKey {
     Self[.query(query, animation: animation), default: Value()]
   }
 
-  /// A shared key that can query for data in a SQLite database.
+  /// A key that can query for a collection of data in a SQLite database.
   static func fetchAll<Value: FetchableRecord>(
     sql: String,
     arguments: StatementArguments = StatementArguments(),
@@ -32,7 +32,7 @@ extension SharedReaderKey {
     Self[.query(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
   }
 
-  /// A shared key that can query for data in a SQLite database.
+  /// A key that can query for a value in a SQLite database.
   static func fetchOne<Value: DatabaseValueConvertible>(
     sql: String,
     arguments: StatementArguments = StatementArguments(),
@@ -55,8 +55,8 @@ extension DependencyValues {
       reportIssue(
         """
         A blank, in-memory database is being used for the app. To set the database that is used by \
-        the 'grdbQuery' key you can use the 'prepareDependencies' tool as soon as your app \ 
-        launches, such as in your app or scene delegate in UIKit, or the app entry point in SwiftUI:
+        the 'query' key you can use the 'prepareDependencies' tool as soon as your app launches, \
+        such as in your app or scene delegate in UIKit, or the app entry point in SwiftUI:
 
             @main
             struct MyApp: App {
