@@ -180,6 +180,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
     private var value: Key.Value
   #endif
 
+  private var _didAccessLoadError = false
+  private var _didAccessSaveError = false
   private var _loadError: (any Error)?
   private var _saveError: (any Error)?
   private var _referenceCount = 0
@@ -210,11 +212,20 @@ final class _PersistentReference<Key: SharedReaderKey>:
   var loadError: (any Error)? {
     get {
       access(keyPath: \._loadError)
-      return lock.withLock { _loadError }
+      return lock.withLock {
+        _didAccessLoadError = true
+        return _loadError
+      }
     }
     set {
       withMutation(keyPath: \._loadError) {
-        lock.withLock { _loadError = newValue }
+        lock.withLock {
+          defer { _didAccessLoadError = false }
+          _loadError = newValue
+          if !_didAccessSaveError, let newValue {
+            reportIssue(newValue)
+          }
+        }
       }
     }
   }
@@ -310,11 +321,20 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   var saveError: (any Error)? {
     get {
       access(keyPath: \._saveError)
-      return lock.withLock { _saveError }
+      return lock.withLock {
+        _didAccessSaveError = true
+        return _saveError
+      }
     }
     set {
       withMutation(keyPath: \._saveError) {
-        lock.withLock { _saveError = newValue }
+        lock.withLock {
+          defer { _didAccessSaveError = false }
+          _saveError = newValue
+          if !_didAccessSaveError, let newValue {
+            reportIssue(newValue)
+          }
+        }
       }
     }
   }
