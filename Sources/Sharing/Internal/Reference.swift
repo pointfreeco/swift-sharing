@@ -192,9 +192,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 
   func load() {
+    guard let newValue = key.load(initialValue: nil)
+    else { return }
     withMutation(keyPath: \.value) {
-      let newValue = key.load(initialValue: nil)
-      lock.withLock { value = newValue ?? value }
+      lock.withLock { value = newValue }
     }
   }
 
