@@ -61,11 +61,12 @@ extension Shared {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading
   ///     and saving the shared reference's value from some external source.
+  @_disfavoredOverload
   public init(
     wrappedValue: @autoclosure () -> Value,
     _ key: _SharedKeyDefault<some SharedKey<Value>>
   ) {
-    self.init(wrappedValue: wrappedValue(), key.base)
+    self.init(wrappedValue: wrappedValue(), key)
   }
 
   /// Creates a shared reference to a value using a shared key.
