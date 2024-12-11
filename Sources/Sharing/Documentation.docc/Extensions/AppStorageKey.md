@@ -2,7 +2,7 @@
 
 A ``SharedKey`` conformance that persists simple pieces of data to user defaults, such as numbers,
 strings, booleans and URLs. It can be used with ``Shared`` by providing the 
-``SharedReaderKey/appStorage(_:)-4227j`` value and specifying a default value:
+``SharedReaderKey/appStorage(_:store:)-45ltk`` value and specifying a default value:
 
 ```swift
 @Shared(.appStorage("isOn")) var isOn = true
@@ -97,27 +97,27 @@ keys. Instead you can use other delimiting symbols, such as ":", "|", "/", etc.
 
 ### Storing a value
 
-- ``SharedReaderKey/appStorage(_:)-4227j``  <!-- Bool -->
-- ``SharedReaderKey/appStorage(_:)-6dqil``  <!-- Data -->
-- ``SharedReaderKey/appStorage(_:)-6jqfm``  <!-- Date -->
-- ``SharedReaderKey/appStorage(_:)-1tdbq``  <!-- Double -->
-- ``SharedReaderKey/appStorage(_:)-6ceu``   <!-- Int -->
-- ``SharedReaderKey/appStorage(_:)-3lg5e``  <!-- String -->
-- ``SharedReaderKey/appStorage(_:)-6yicb``  <!-- URL -->
-- ``SharedReaderKey/appStorage(_:)-9yr3n``  <!-- RawRepresentable<Int> -->
-- ``SharedReaderKey/appStorage(_:)-5jxny``  <!-- RawRepresentable<String> -->
+- ``SharedReaderKey/appStorage(_:store:)-45ltk``  <!-- Bool -->
+- ``SharedReaderKey/appStorage(_:store:)-vqgl``   <!-- Data -->
+- ``SharedReaderKey/appStorage(_:store:)-3dtm``   <!-- Date -->
+- ``SharedReaderKey/appStorage(_:store:)-7dai0``  <!-- Double -->
+- ``SharedReaderKey/appStorage(_:store:)-c6ap``   <!-- Int -->
+- ``SharedReaderKey/appStorage(_:store:)-5663z``  <!-- String -->
+- ``SharedReaderKey/appStorage(_:store:)-6msr0``  <!-- URL -->
+- ``SharedReaderKey/appStorage(_:store:)-2tp0t``  <!-- RawRepresentable<Int> -->
+- ``SharedReaderKey/appStorage(_:store:)-95ztf``  <!-- RawRepresentable<String> -->
 
 ### Storing an optional value
 
-- ``SharedReaderKey/appStorage(_:)-5vs5h``  <!-- Bool? -->
-- ``SharedReaderKey/appStorage(_:)-5saqc``  <!-- Data? -->
-- ``SharedReaderKey/appStorage(_:)-p2dw``   <!-- Date? -->
-- ``SharedReaderKey/appStorage(_:)-7kr7j``  <!-- Double? -->
-- ``SharedReaderKey/appStorage(_:)-5e8xr``  <!-- Int? -->
-- ``SharedReaderKey/appStorage(_:)-8o7uu``  <!-- String? -->
-- ``SharedReaderKey/appStorage(_:)-8qkuc``  <!-- URL? -->
-- ``SharedReaderKey/appStorage(_:)-2ucdg``  <!-- RawRepresentable<Int?> -->
-- ``SharedReaderKey/appStorage(_:)-841wb``  <!-- RawRepresentable<String?> -->
+- ``SharedReaderKey/appStorage(_:store:)-8ys3t``  <!-- Bool? -->
+- ``SharedReaderKey/appStorage(_:store:)-1vfr4``  <!-- Data? -->
+- ``SharedReaderKey/appStorage(_:store:)-8cy6a``  <!-- Date? -->
+- ``SharedReaderKey/appStorage(_:store:)-8f3hz``  <!-- Double? -->
+- ``SharedReaderKey/appStorage(_:store:)-8bf8y``  <!-- Int? -->
+- ``SharedReaderKey/appStorage(_:store:)-4la2p``  <!-- String? -->
+- ``SharedReaderKey/appStorage(_:store:)-7fd26``  <!-- URL? -->
+- ``SharedReaderKey/appStorage(_:store:)-2vfgj``  <!-- RawRepresentable<Int?> -->
+- ``SharedReaderKey/appStorage(_:store:)-2i17q``  <!-- RawRepresentable<String?> -->
 
 ### Overriding app storage
 

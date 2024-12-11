@@ -125,8 +125,12 @@ public struct Shared<Value> {
   /// 
   /// See <doc:MutatingSharedState> for more information.
   /// 
-  /// - Parameter operation: An operation given mutable, isolated access to the underlying shared
-  ///   value.
+  /// - Parameters
+  ///   - operation: An operation given mutable, isolated access to the underlying shared value.
+  ///   - fileID: The source `#fileID` associated with the lock.
+  ///   - filePath: The source `#filePath` associated with the lock.
+  ///   - line: The source `#line` associated with the lock.
+  ///   - column: The source `#column` associated with the lock.
   /// - Returns: The value returned from `operation`.
   public func withLock<R>(
     _ operation: (inout Value) throws -> R,

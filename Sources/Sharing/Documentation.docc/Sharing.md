@@ -49,11 +49,11 @@ also update to hold the freshest data.
 
 The [`@Shared`](<doc:Shared>) property wrapper gives you a succinct and consistent way to persist 
 any kind of data in your application. The library comes with 3 strategies:
-[`appStorage`](<doc:SharedReaderKey/appStorage(_:)-4227j>), 
+[`appStorage`](<doc:SharedReaderKey/appStorage(_:)-45ltk>),
 [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), and
 [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>). 
 
-The [`appStorage`](<doc:SharedReaderKey/appStorage(_:)-4227j>) strategy is useful for store small
+The [`appStorage`](<doc:SharedReaderKey/appStorage(_:)-45ltk>) strategy is useful for store small
 pieces of simple data in user defaults, such as settings:
 
 ```swift
@@ -186,7 +186,3 @@ complex problems with `@Shared`. Check out [this][examples-dir] directory to see
 ### Migration guides
 
 - <doc:MigrationGuides>
-
-### Deprecations
-
-- <doc:Deprecated>

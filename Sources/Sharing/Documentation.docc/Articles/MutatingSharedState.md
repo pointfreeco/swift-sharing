@@ -4,11 +4,11 @@ Learn how to mutate shared state in a safe manner in order to prevent race condi
 
 ## Overview
 
-Shared state cannot be mutated directly and freely. One must go through the ``Shared/withLock(_:)``
-method in order to synchronize access and mutation to the underlying shared storage for a lexical
-scope. It may seem like an unfriendly API, but it is necessary to ensure that there are not race
-conditions when mutating shared state from multiple threads. To understand this in-depth, please
-continue reading.
+Shared state cannot be mutated directly and freely. One must go through the
+``Shared/withLock(_:fileID:filePath:line:column:)`` method in order to synchronize access and
+mutation to the underlying shared storage for a lexical scope. It may seem like an unfriendly API,
+but it is necessary to ensure that there are not race conditions when mutating shared state from
+multiple threads. To understand this in-depth, please continue reading.
 
 ### Race conditions in SwiftUI's state management tools
 
@@ -112,8 +112,9 @@ that could cause data loss. While we think the potential for race conditions is 
 think it is still certain, and so if we allowed direct mutation, you would very likely ship serious
 bugs in your application without you ever knowing.
 
-So this is why we require ``Shared/withLock(_:)`` for mutating shared values. And when compared to
-what one needs to do with `@AppStorage` to ensure safety, it isn't really that different:
+So this is why we require ``Shared/withLock(_:fileID:filePath:line:column:)`` for mutating shared
+values. And when compared to what one needs to do with `@AppStorage` to ensure safety, it isn't
+really that different:
 
 ```diff
  await withTaskGroup(of: Void.self) { group in
@@ -128,10 +129,11 @@ what one needs to do with `@AppStorage` to ensure safety, it isn't really that d
  }
 ```
 
-At the end of the day, we feel that it is a fair compromise to require ``Shared/withLock(_:)``
-to mutate shared values. The benefits of `@Shared` far outweighs this one single con. You get to
-use `@Shared` [_anywhere_](<doc:Shared#Use-anywhere>) throughout your entire application, including
-UIKit and even on non-Apple platforms. _And_ it works with more 
+At the end of the day, we feel that it is a fair compromise to require
+``Shared/withLock(_:fileID:filePath:line:column:)`` to mutate shared values. The benefits of
+`@Shared` far outweighs this one single con. You get to use `@Shared`
+[_anywhere_](<doc:Shared#Use-anywhere>) throughout your entire application, including UIKit and even
+on non-Apple platforms. _And_ it works with more
 [persistence strategies](<doc:PersistenceStrategies>) than just user defaults. _And_ it is
 well-behaved in previews and [tests](<doc:Testing>), making it possible to write unit tests against
 data that is typically difficult or impossible to test. And the list goes on…

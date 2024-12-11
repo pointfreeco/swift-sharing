@@ -22,7 +22,7 @@ following:
 ### Persisted @Shared state
 
 If you are using a persistence strategy with shared state (_e.g._ 
-[`appStorage`](<doc:SharedReaderKey/appStorage(_:)-4227j>), [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>),
+[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>), [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>),
 _etc._), then the initializer should take a plain, non-`Shared` value and you will construct
 the `Shared` value in the initializer using ``Shared/init(wrappedValue:_:)-5xce4`` which takes a
 ``SharedKey`` as the second argument:
