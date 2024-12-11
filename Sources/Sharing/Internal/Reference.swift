@@ -26,6 +26,7 @@ protocol Reference<Value>:
 }
 
 protocol MutableReference<Value>: Reference, Equatable {
+  var saveError: (any Error)? { get }
   var snapshot: Value? { get }
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R
   func takeSnapshot(
@@ -35,7 +36,7 @@ protocol MutableReference<Value>: Reference, Equatable {
     line: UInt,
     column: UInt
   )
-  func save()
+  func save() throws
 }
 
 final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @unchecked Sendable {
@@ -64,6 +65,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
   var loadError: (any Error)? {
+    nil
+  }
+
+  var saveError: (any Error)? {
     nil
   }
 
@@ -176,6 +181,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
   #endif
 
   private var _loadError: (any Error)?
+  private var _saveError: (any Error)?
   private var _referenceCount = 0
   private var subscription: SharedSubscription?
 
@@ -184,23 +190,17 @@ final class _PersistentReference<Key: SharedReaderKey>:
     do {
       self.value = try key.load(initialValue: initialValue) ?? initialValue
     } catch {
-      self.loadError = error
+      self._loadError = error
       self.value = initialValue
     }
     self.subscription = key.subscribe(initialValue: initialValue) { [weak self] result in
       guard let self else { return }
       switch result {
       case let .failure(error):
-        self.withMutation(keyPath: \.loadError) {
-          self.lock.withLock { self.loadError = error }
-        }
+        loadError = error
       case let .success(newValue):
-        self.withMutation(keyPath: \.loadError) {
-          self.lock.withLock { self.loadError = nil }
-        }
-        self.withMutation(keyPath: \.value) {
-          self.lock.withLock { self.value = newValue ?? initialValue }
-        }
+        loadError = nil
+        wrappedValue = newValue ?? initialValue
       }
     }
   }
@@ -249,6 +249,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
     withMutation(keyPath: \.value) {}
     // TODO: Is this needed?
     // withMutation(keyPath: \._loadError) {}
+    // withMutation(keyPath: \._saveError) {}
   }
 
   func retain() {
@@ -306,6 +307,18 @@ final class _PersistentReference<Key: SharedReaderKey>:
 }
 
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
+  var saveError: (any Error)? {
+    get {
+      access(keyPath: \._saveError)
+      return lock.withLock { _saveError }
+    }
+    set {
+      withMutation(keyPath: \._saveError) {
+        lock.withLock { _saveError = newValue }
+      }
+    }
+  }
+
   var snapshot: Key.Value? {
     @Dependency(\.snapshots) var snapshots
     return snapshots[self]
@@ -331,15 +344,25 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
     try withMutation(keyPath: \.value) {
-      defer { key.save(value, immediately: false) }
+      saveError = nil
+      defer {
+        do {
+          try key.save(value, immediately: false)
+          loadError = nil
+        } catch {
+          saveError = error
+        }
+      }
       return try lock.withLock {
         try body(&value)
       }
     }
   }
 
-  func save() {
-    key.save(lock.withLock { value }, immediately: true)
+  func save() throws {
+    saveError = nil
+    try key.save(lock.withLock { value }, immediately: true)
+    loadError = nil
   }
 
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
@@ -391,8 +414,8 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
 }
 
 extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
-  var wrappedValue: Key.Value {
-    base.wrappedValue
+  var saveError: (any Error)? {
+    base.saveError
   }
 
   var snapshot: Key.Value? {
@@ -413,8 +436,8 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
     try base.withLock(body)
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _ManagedReference, rhs: _ManagedReference) -> Bool {
@@ -469,6 +492,10 @@ final class _AppendKeyPathReference<
 
 extension _AppendKeyPathReference: MutableReference, Equatable
 where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
+  var saveError: (any Error)? {
+    base.saveError
+  }
+
   var snapshot: Value? {
     base.snapshot?[keyPath: keyPath]
   }
@@ -489,8 +516,8 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
     try base.withLock { try body(&$0[keyPath: keyPath as WritableKeyPath]) }
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _AppendKeyPathReference, rhs: _AppendKeyPathReference) -> Bool {
@@ -549,6 +576,10 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
 }
 
 extension _OptionalReference: MutableReference, Equatable where Base: MutableReference {
+  var saveError: (any Error)? {
+    base.saveError
+  }
+
   var snapshot: Value? {
     base.snapshot ?? nil
   }
@@ -575,8 +606,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
     }
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _OptionalReference, rhs: _OptionalReference) -> Bool {
@@ -646,6 +677,10 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
   }
 
   extension _CachedReference: MutableReference, Equatable where Base: MutableReference {
+    var saveError: (any Error)? {
+      base.saveError
+    }
+
     var snapshot: Base.Value? {
       base.snapshot
     }
@@ -667,8 +702,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       }
     }
 
-    func save() {
-      base.save()
+    func save() throws {
+      try base.save()
     }
 
     static func == (lhs: _CachedReference, rhs: _CachedReference) -> Bool {

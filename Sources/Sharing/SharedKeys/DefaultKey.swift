@@ -58,8 +58,8 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
 }
 
 extension _SharedKeyDefault: SharedKey where Base: SharedKey {
-  public func save(_ value: Value, immediately: Bool) {
-    base.save(value, immediately: immediately)
+  public func save(_ value: Value, immediately: Bool) throws {
+    try base.save(value, immediately: immediately)
   }
 }
 

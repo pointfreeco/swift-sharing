@@ -100,22 +100,22 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     self.query = query
   }
 
-  func load(initialValue: Value?) -> Value? {
-    (try? databaseQueue.read(query.fetch)) ?? initialValue
+  func load(initialValue: Value?) throws -> Value? {
+    try databaseQueue.read(query.fetch)
   }
 
   func subscribe(
     initialValue: Value?,
-    didSet receiveValue: @escaping @Sendable (Value?) -> Void
+    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) -> SharedSubscription {
     let observation = ValueObservation.tracking(query.fetch)
     let cancellable = observation.start(
       in: databaseQueue,
       scheduling: .animation(animation)
     ) { error in
-      reportIssue(error)
+      callback(.failure(error))
     } onChange: { newValue in
-      receiveValue(newValue)
+      callback(.success(newValue))
     }
     return SharedSubscription {
       cancellable.cancel()

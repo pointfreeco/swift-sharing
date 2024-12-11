@@ -18,7 +18,7 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     by default to delay writing to an external source in some way, for example throttling or
   ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
   ///     delays.
-  func save(_ value: Value, immediately: Bool)
+  func save(_ value: Value, immediately: Bool) throws
 }
 
 extension Shared {
