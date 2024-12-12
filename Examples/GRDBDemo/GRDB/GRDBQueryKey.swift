@@ -44,19 +44,20 @@ extension SharedReaderKey {
 }
 
 extension DependencyValues {
-  /// The default database used by ``Sharing/SharedReaderKey/grdbQuery(_:animation:)``.
+  /// The default database used by ``Sharing/SharedReaderKey/query(_:animation:)``.
   public var defaultDatabase: any DatabaseWriter {
     get { self[GRDBDatabaseKey.self] }
     set { self[GRDBDatabaseKey.self] = newValue }
   }
 
   private enum GRDBDatabaseKey: DependencyKey {
-    static var liveValue: any DatabaseWriter {
+    static var liveValue: any DatabaseWriter { testValue }
+    static var testValue: any DatabaseWriter {
       reportIssue(
         """
-        A blank, in-memory database is being used for the app. To set the database that is used by \
-        the 'query' key you can use the 'prepareDependencies' tool as soon as your app launches, \
-        such as in your app or scene delegate in UIKit, or the app entry point in SwiftUI:
+        A blank, in-memory database is being used. To set the database that is used by the 'query' \
+        key you can use the 'prepareDependencies' tool as soon as your app launches, such as in \
+        your app or scene delegate in UIKit, or the app entry point in SwiftUI:
 
             @main
             struct MyApp: App {
@@ -71,10 +72,6 @@ extension DependencyValues {
         """
       )
       return try! DatabaseQueue()
-    }
-
-    static var testValue: any DatabaseWriter {
-      try! DatabaseQueue()
     }
   }
 }

@@ -136,6 +136,11 @@ See <doc:Testing> for more information on how to test your features when using `
 - ``load()``
 - ``save()``
 
+### Error handling
+
+- ``loadError``
+- ``saveError``
+
 ### SwiftUI integration
 
 - ``Swift/Array``

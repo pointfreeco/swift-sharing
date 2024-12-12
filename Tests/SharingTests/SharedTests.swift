@@ -16,40 +16,143 @@ import Testing
     }
 
     @Test func loadError() {
-      struct Key<Value: Sendable>: Hashable, Sendable, SharedReaderKey {
-        struct LoadError: Error {}
-        func load(initialValue: Value?) throws -> Value? {
+      struct Key: Hashable, Sendable, SharedReaderKey {
+        let id = UUID()
+        func load(initialValue: Int?) throws -> Int? {
           throw LoadError()
         }
         func subscribe(
-          initialValue: Value?,
-          didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
         ) -> SharedSubscription {
           SharedSubscription {}
         }
+        struct LoadError: Error {}
       }
 
-      @SharedReader(Key()) var count = 0
-      #expect($count.loadError != nil)
+      withKnownIssue {
+        @SharedReader(Key()) var count = 0
+        #expect($count.loadError != nil)
+      } matching: {
+        $0.description == "Caught error: LoadError()"
+      }
     }
 
     @Test func subscribeError() {
-      struct Key<Value: Sendable>: Hashable, Sendable, SharedReaderKey {
-        struct LoadError: Error {}
-        func load(initialValue: Value?) throws -> Value? {
+      class Key: SharedReaderKey, @unchecked Sendable {
+        let id = UUID()
+        var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
+        func load(initialValue: Int?) throws -> Int? {
           nil
         }
         func subscribe(
-          initialValue: Value?,
-          didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+          initialValue: Int?,
+          didReceive callback: @escaping @Sendable (Result<Int?, any Error>) -> Void
         ) -> SharedSubscription {
-          callback(.failure(LoadError()))
+          self.callback = callback
           return SharedSubscription {}
         }
+        struct LoadError: Error {}
       }
 
-      @SharedReader(Key()) var count = 0
+      let key = Key()
+      @SharedReader(key) var count = 0
+      withKnownIssue {
+        key.callback?(.failure(Key.LoadError()))
+      } matching: {
+        $0.description == "Caught error: LoadError()"
+      }
       #expect($count.loadError != nil)
+
+      key.callback?(.success(1))
+      #expect(count == 1)
+      #expect($count.loadError == nil)
+    }
+
+    @Test func saveError() {
+      struct Key: SharedKey {
+        let id = UUID()
+        func load(initialValue: Int?) throws -> Int? {
+          nil
+        }
+        func subscribe(
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+        ) -> SharedSubscription {
+          SharedSubscription {}
+        }
+        func save(_ value: Int, immediately: Bool) throws {
+          if value < 0 { throw SaveError() }
+        }
+        struct SaveError: Error {}
+      }
+
+      @Shared(Key()) var count = 0
+      withKnownIssue {
+        $count.withLock { $0 -= 1 }
+      } matching: {
+        $0.description == "Caught error: SaveError()"
+      }
+      #expect($count.saveError != nil)
+
+      $count.withLock { $0 += 1 }
+      #expect($count.saveError == nil)
+    }
+
+    @Test func saveErrorLoadErrorInterplay() {
+      class Key: SharedKey, @unchecked Sendable {
+        let id = UUID()
+        var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
+        func load(initialValue: Int?) throws -> Int? {
+          nil
+        }
+        func subscribe(
+          initialValue: Int?,
+          didReceive callback: @escaping @Sendable (Result<Int?, any Error>) -> Void
+        ) -> SharedSubscription {
+          self.callback = callback
+          return SharedSubscription {}
+        }
+        func save(_ value: Int, immediately: Bool) throws {
+          if value < 0 { throw SaveError() }
+        }
+        struct LoadError: Error {}
+        struct SaveError: Error {}
+      }
+
+      let key = Key()
+      @Shared(key) var count = 0
+      withKnownIssue {
+        key.callback?(.failure(Key.LoadError()))
+      } matching: {
+        $0.description == "Caught error: LoadError()"
+      }
+      #expect($count.loadError != nil)
+
+      withKnownIssue {
+        $count.withLock { $0 -= 1 }
+      } matching: {
+        $0.description == "Caught error: SaveError()"
+      }
+      #expect($count.loadError != nil)
+      #expect($count.saveError != nil)
+
+      key.callback?(.success(nil))
+      #expect(count == 0)
+      #expect($count.loadError == nil)
+      #expect($count.saveError != nil)
+
+      withKnownIssue {
+        key.callback?(.failure(Key.LoadError()))
+      } matching: {
+        $0.description == "Caught error: LoadError()"
+      }
+      #expect($count.loadError != nil)
+      #expect($count.saveError != nil)
+
+      $count.withLock { $0 += 1 }
+      #expect($count.loadError == nil)
+      #expect($count.saveError == nil)
     }
 
     @Test func nesting() {

@@ -192,6 +192,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
     } catch {
       self._loadError = error
       self.value = initialValue
+      reportIssue(error)
     }
     self.subscription = key.subscribe(initialValue: initialValue) { [weak self] result in
       guard let self else { return }
@@ -215,6 +216,9 @@ final class _PersistentReference<Key: SharedReaderKey>:
     set {
       withMutation(keyPath: \._loadError) {
         lock.withLock { _loadError = newValue }
+      }
+      if let newValue {
+        reportIssue(newValue)
       }
     }
   }
@@ -315,6 +319,9 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     set {
       withMutation(keyPath: \._saveError) {
         lock.withLock { _saveError = newValue }
+      }
+      if let newValue {
+        reportIssue(newValue)
       }
     }
   }
