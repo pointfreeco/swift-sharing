@@ -133,11 +133,15 @@
       try withDependencies {
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
       } operation: {
-        @Shared(.fileStorage(.fileURL)) var users = [User]()
-        let loadError = try #require($users.loadError)
-        #expect(loadError is DecodingError)
-        $users.withLock { $0.append(User(id: 1, name: "Blob")) }
-        #expect($users.loadError == nil)
+        try withKnownIssue {
+          @Shared(.fileStorage(.fileURL)) var users = [User]()
+          let loadError = try #require($users.loadError)
+          #expect(loadError is DecodingError)
+          $users.withLock { $0.append(User(id: 1, name: "Blob")) }
+          #expect($users.loadError == nil)
+        } matching: {
+          $0.error is DecodingError
+        }
       }
     }
 
