@@ -89,9 +89,12 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
   let databaseQueue: any DatabaseWriter
   let query: any GRDBQuery<Value>
 
-  typealias ID = GRDBQueryID
+  struct ID: Hashable {
+    let animation: Animation?
+    let query: AnyHashableSendable
+  }
 
-  var id: ID { ID(rawValue: query) }
+  var id: ID { ID(animation: animation, query: AnyHashableSendable(query)) }
 
   init(query: some GRDBQuery<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var databaseQueue
@@ -120,14 +123,6 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     return SharedSubscription {
       cancellable.cancel()
     }
-  }
-}
-
-struct GRDBQueryID: Hashable {
-  fileprivate let rawValue: AnyHashableSendable
-
-  init(rawValue: any GRDBQuery) {
-    self.rawValue = AnyHashableSendable(rawValue)
   }
 }
 
