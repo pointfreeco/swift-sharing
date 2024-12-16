@@ -84,6 +84,7 @@ await withTaskGroup(of: Void.self) { group in
       await MainActor.run { 
         count += 1 
       }
+    }
   }
 }
 ```
@@ -125,6 +126,7 @@ really that different:
 +      $count.withLock { 
 +        $0 += 1 
        }
+     }
    }
  }
 ```
