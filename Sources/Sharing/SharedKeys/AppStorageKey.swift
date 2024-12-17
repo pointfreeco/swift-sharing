@@ -251,6 +251,13 @@
     public var id: AppStorageKeyID {
       AppStorageKeyID(key: key, store: store.wrappedValue)
     }
+    
+    public init(lookup: any Lookup<Value>, key: String, store: UserDefaults?) {
+      @Dependency(\.defaultAppStorage) var defaultStore
+      self.lookup = lookup
+      self.key = key
+      self.store = UncheckedSendable(store ?? defaultStore)
+    }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Bool {
       @Dependency(\.defaultAppStorage) var defaultStore
@@ -549,14 +556,16 @@
     @TaskLocal static var isSetting = false
   }
 
-  private protocol Lookup<Value>: Sendable {
+  public protocol Lookup<Value>: Sendable {
     associatedtype Value: Sendable
     func loadValue(from store: UserDefaults, at key: String, default defaultValue: Value?) -> Value?
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String)
   }
 
-  private struct CastableLookup<Value: Sendable>: Lookup {
-    func loadValue(
+  public struct CastableLookup<Value: Sendable>: Lookup {
+    public init() {}
+    
+    public func loadValue(
       from store: UserDefaults,
       at key: String,
       default defaultValue: Value?
@@ -573,7 +582,7 @@
       return value
     }
 
-    func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
+    public func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       SharedAppStorageLocals.$isSetting.withValue(true) {
         store.set(newValue, forKey: key)
       }
@@ -618,14 +627,17 @@
     }
   }
 
-  private struct OptionalLookup<Base: Lookup>: Lookup {
+  public struct OptionalLookup<Base: Lookup>: Lookup {
     let base: Base
-    func loadValue(
+    public init(base: Base) {
+      self.base = base
+    }
+    public func loadValue(
       from store: UserDefaults, at key: String, default defaultValue: Base.Value??
     ) -> Base.Value?? {
       base.loadValue(from: store, at: key, default: defaultValue ?? nil)
     }
-    func saveValue(_ newValue: Base.Value?, to store: UserDefaults, at key: String) {
+    public func saveValue(_ newValue: Base.Value?, to store: UserDefaults, at key: String) {
       if let newValue {
         base.saveValue(newValue, to: store, at: key)
       } else {
