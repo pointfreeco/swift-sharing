@@ -1,4 +1,5 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
+  import CombineSchedulers
   import Dependencies
   @preconcurrency import Dispatch
 
