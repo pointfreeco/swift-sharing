@@ -49,4 +49,14 @@ import Testing
     }
     .value
   }
+
+  @Test func `default`() {
+    do {
+      @SharedReader(.inMemory("count")) var count = 10
+    }
+    do {
+      @SharedReader(.inMemory("count")) var count = 0
+      #expect(count == 10)
+    }
+  }
 }

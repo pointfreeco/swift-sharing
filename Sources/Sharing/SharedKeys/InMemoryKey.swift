@@ -41,7 +41,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
     InMemoryKeyID(key: self.key, store: self.store)
   }
   public func load(initialValue: Value?) -> Value? {
-    store.values[key] as? Value ?? initialValue
+    store.values[key, default: initialValue] as? Value
   }
   public func subscribe(
     initialValue: Value?,
@@ -76,6 +76,13 @@ public struct InMemoryStorage: Hashable, Sendable {
     subscript(key: String) -> (any Sendable)? {
       get { storage.withLock { $0[key] } }
       set { storage.withLock { $0[key] = newValue } }
+    }
+
+    subscript(key: String, default defaultValue: (any Sendable)?) -> (any Sendable)? {
+      storage.withLock {
+        $0[key] = $0[key] ?? defaultValue
+        return $0[key]
+      }
     }
   }
 }
