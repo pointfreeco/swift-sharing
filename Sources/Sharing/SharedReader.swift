@@ -163,6 +163,33 @@ public struct SharedReader<Value> {
     return open(reference)
   }
 
+  /// An error encountered during the most recent attempt to load data.
+  ///
+  /// This value is `nil` unless a load attempt failed. It contains the latest error from the
+  /// underlying ``SharedReaderKey``. Access it from `@Shared`'s projected value:
+  ///
+  /// ```swift
+  /// @SharedReader(.fileStorage(.users)) var users: [User] = []
+  ///
+  /// var body: some View {
+  ///   if let loadError = $users.loadError {
+  ///     ContentUnavailableView {
+  ///       Label("Failed to users", systemImage: "xmark.circle")
+  ///     } description: {
+  ///       Text(loadError.localizedDescription)
+  ///     }
+  ///   } else {
+  ///     ForEach(users) { user in /* ... */ }
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// > When a load error occurs, ``wrappedValue`` retains results from the last successful fetch.
+  /// > Its value will update once a new load succeeds.
+  public var loadError: (any Error)? {
+    reference.loadError
+  }
+
   /// Requests an up-to-date value from an external source.
   ///
   /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
@@ -174,7 +201,7 @@ public struct SharedReader<Value> {
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
   public func load() {
-    reference.load()
+    try? reference.load()
   }
 
   private final class Box: @unchecked Sendable {

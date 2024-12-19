@@ -94,11 +94,14 @@ public final class CustomSharedKey: SharedKey {
 
 In order to conform to ``Shared`` you will need to provide 4 main requirements:
 
-  * A `load(initialValue:)` method for synchronously loading a value from the external storage.
-  * A `save(_:immediately:)` method for synchronously saving a value to the external storage.
-  * A `subscribe(initialValue:didSet:)` method for subscribing to changes in the external storage
-    in order to play back to the `@Shared` value.
-  * And finally, an `id` that uniquely identifies the state held in the external storage system.
+  * A ``SharedReaderKey/load(initialValue:)`` method for synchronously loading a value from the
+    external storage.
+  * A ``SharedKey/save(_:immediately:)`` method for synchronously saving a value to the external
+    storage.
+  * A ``SharedKey/subscribe(initialValue:didReceive:)`` method for subscribing to changes in the
+    external storage in order to play back to the `@Shared` value.
+  * And finally, an ``SharedReaderKey/id`` that uniquely identifies the state held in the external
+    storage system.
 
 Once that is done it is customary to also define a static function helper on the ``SharedKey`` 
 protocol for providing a simple API to use your new persistence strategy with `@Shared`:

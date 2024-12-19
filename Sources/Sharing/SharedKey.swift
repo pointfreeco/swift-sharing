@@ -18,7 +18,7 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     by default to delay writing to an external source in some way, for example throttling or
   ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
   ///     delays.
-  func save(_ value: Value, immediately: Bool)
+  func save(_ value: Value, immediately: Bool) throws
 }
 
 extension Shared {
@@ -78,10 +78,11 @@ extension Shared {
   ///   loading and saving the shared reference's value from some external source.
   public init(require key: some SharedKey<Value>) throws {
     let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
+      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
       return value
     }
     try self.init(rethrowing: value(), key)
+    if let loadError { throw loadError }
   }
 
   @available(*, unavailable, message: "Assign a default value")
@@ -95,5 +96,6 @@ extension Shared {
     @Dependency(PersistentReferences.self) var persistentReferences
     self.init(reference: try persistentReferences.value(forKey: key, default: try value()))
   }
+
   private struct LoadError: Error {}
 }

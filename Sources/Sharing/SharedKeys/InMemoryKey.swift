@@ -45,7 +45,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   }
   public func subscribe(
     initialValue: Value?,
-    didSet receiveValue: @escaping (Value?) -> Void
+    didReceive callback: @escaping (Result<Value?, any Error>) -> Void
   ) -> SharedSubscription {
     SharedSubscription {}
   }
