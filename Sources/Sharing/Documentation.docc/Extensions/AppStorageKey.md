@@ -39,8 +39,6 @@ for persisting your state. If you want to use a different user defaults, you can
 ```
 
 That will make it so that all `@Shared(.appStorage)` instances use your custom user defaults.
-The force unwrap on the `suiteName:` initializer will work if you do not use your app's main
-bundle identifier or globalDomain.
 
 In previews `@Shared` will use a temporary, ephemeral user defaults so that each run of the preview
 gets a clean slate. This makes it so that previews do not mutate each other's storage and allows
