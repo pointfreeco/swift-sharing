@@ -390,7 +390,7 @@
 
     public func subscribe(
       initialValue: Value?,
-      didSet receiveValue: @escaping @Sendable (_ newValue: Value?) -> Void
+      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
     ) -> SharedSubscription {
       let previousValue = LockIsolated(initialValue)
       let removeObserver: @Sendable () -> Void
@@ -450,14 +450,14 @@
           }
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          DispatchQueue.main.async { receiveValue(newValue) }
+          DispatchQueue.main.async { callback(.success(newValue)) }
         }
         removeObserver = { NotificationCenter.default.removeObserver(userDefaultsDidChange) }
       } else {
         let observer = Observer {
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          receiveValue(load(initialValue: initialValue))
+          callback(.success(load(initialValue: initialValue)))
         }
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
@@ -469,7 +469,7 @@
           object: nil,
           queue: .main
         ) { _ in
-          receiveValue(load(initialValue: initialValue))
+          callback(.success(load(initialValue: initialValue)))
         }
       } else {
         willEnterForeground = nil

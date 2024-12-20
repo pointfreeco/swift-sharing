@@ -6,7 +6,7 @@
 
 - ``Value``
 - ``load(initialValue:)``
-- ``subscribe(initialValue:didSet:)``
+- ``subscribe(initialValue:didReceive:)``
 
 ### Managing subscriptions
 
@@ -16,3 +16,7 @@
 
 - ``ID``
 - ``id``
+
+### Deprecations
+
+- ``subscribe(initialValue:didSet:)``
