@@ -339,6 +339,12 @@ extension Shared: CustomStringConvertible {
   }
 }
 
+extension Shared: Hashable where Value: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(wrappedValue)
+  }
+}
+
 extension Shared: Equatable where Value: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
     func open<T: MutableReference<Value>>(_ lhsReference: T) -> Bool {
