@@ -31,7 +31,7 @@ for persisting your state. If you want to use a different user defaults, you can
 @main struct EntryPoint: App {
   init() {
     prepareDependencies {
-      $0.defaultAppStorage = UserDefaults(suiteName: "co.pointfree.suite")
+      $0.defaultAppStorage = UserDefaults(suiteName: "co.pointfree.suite")!
     }
   }
   // ...

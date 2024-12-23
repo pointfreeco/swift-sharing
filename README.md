@@ -153,7 +153,7 @@ See ["Testing"][testing-docs] for more information on how to test your features 
 The documentation for releases and `main` are available here:
 
 * [`main`](https://swiftpackageindex.com/pointfreeco/swift-sharing/main/documentation/sharing/)
-* [1.0.4](https://swiftpackageindex.com/pointfreeco/swift-sharing/1.0.4/documentation/sharing/)
+* [1.1.0](https://swiftpackageindex.com/pointfreeco/swift-sharing/1.1.0/documentation/sharing/)
 
 ### Articles
 
@@ -217,7 +217,7 @@ simple as adding it to your `Package.swift`:
 
 ``` swift
 dependencies: [
-  .package(url: "https://github.com/pointfreeco/swift-sharing", from: "1.0.0")
+  .package(url: "https://github.com/pointfreeco/swift-sharing", from: "1.1.0")
 ]
 ```
 
