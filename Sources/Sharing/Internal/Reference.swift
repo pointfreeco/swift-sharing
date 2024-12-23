@@ -16,8 +16,9 @@ protocol Reference<Value>:
   associatedtype Value
 
   var id: ObjectIdentifier { get }
+  var loadError: (any Error)? { get }
   var wrappedValue: Value { get }
-  func load()
+  func load() throws
   func touch()
   #if canImport(Combine)
     var publisher: any Publisher<Value, Never> { get }
@@ -25,6 +26,7 @@ protocol Reference<Value>:
 }
 
 protocol MutableReference<Value>: Reference, Equatable {
+  var saveError: (any Error)? { get }
   var snapshot: Value? { get }
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R
   func takeSnapshot(
@@ -34,7 +36,7 @@ protocol MutableReference<Value>: Reference, Equatable {
     line: UInt,
     column: UInt
   )
-  func save()
+  func save() throws
 }
 
 final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @unchecked Sendable {
@@ -61,6 +63,14 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
+
+  var loadError: (any Error)? {
+    nil
+  }
+
+  var saveError: (any Error)? {
+    nil
+  }
 
   var wrappedValue: Value {
     access(keyPath: \.value)
@@ -170,37 +180,80 @@ final class _PersistentReference<Key: SharedReaderKey>:
     private var value: Key.Value
   #endif
 
+  private var _loadError: (any Error)?
+  private var _saveError: (any Error)?
   private var _referenceCount = 0
   private var subscription: SharedSubscription?
 
   init(key: Key, value initialValue: Key.Value) {
     self.key = key
-    self.value = key.load(initialValue: initialValue) ?? initialValue
-    self.subscription = key.subscribe(initialValue: initialValue) { [weak self] newValue in
+    do {
+      self.value = try key.load(initialValue: initialValue) ?? initialValue
+    } catch {
+      self._loadError = error
+      self.value = initialValue
+      reportIssue(error)
+    }
+    self.subscription = key.subscribe(initialValue: initialValue) { [weak self] result in
       guard let self else { return }
-      self.withMutation(keyPath: \.value) {
-        self.lock.withLock { self.value = newValue ?? initialValue }
+      switch result {
+      case let .failure(error):
+        loadError = error
+      case let .success(newValue):
+        loadError = nil
+        wrappedValue = newValue ?? initialValue
       }
     }
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
-  var wrappedValue: Key.Value {
-    access(keyPath: \.value)
-    return lock.withLock { value }
+  var loadError: (any Error)? {
+    get {
+      access(keyPath: \._loadError)
+      return lock.withLock { _loadError }
+    }
+    set {
+      withMutation(keyPath: \._loadError) {
+        lock.withLock { _loadError = newValue }
+      }
+      if let newValue {
+        reportIssue(newValue)
+      }
+    }
   }
 
-  func load() {
-    guard let newValue = key.load(initialValue: nil)
-    else { return }
-    withMutation(keyPath: \.value) {
-      lock.withLock { value = newValue }
+  var wrappedValue: Key.Value {
+    get {
+      access(keyPath: \.value)
+      return lock.withLock { value }
+    }
+    set {
+      withMutation(keyPath: \.value) {
+        lock.withLock { value = newValue }
+      }
+    }
+  }
+
+  func load() throws {
+    do {
+      loadError = nil
+      guard let newValue = try key.load(initialValue: nil)
+      else {
+        // TODO: Should we keep track of the initial value and reassign it here?
+        return
+      }
+      wrappedValue = newValue
+    } catch {
+      loadError = error
     }
   }
 
   func touch() {
     withMutation(keyPath: \.value) {}
+    // TODO: Is this needed?
+    // withMutation(keyPath: \._loadError) {}
+    // withMutation(keyPath: \._saveError) {}
   }
 
   func retain() {
@@ -258,6 +311,21 @@ final class _PersistentReference<Key: SharedReaderKey>:
 }
 
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
+  var saveError: (any Error)? {
+    get {
+      access(keyPath: \._saveError)
+      return lock.withLock { _saveError }
+    }
+    set {
+      withMutation(keyPath: \._saveError) {
+        lock.withLock { _saveError = newValue }
+      }
+      if let newValue {
+        reportIssue(newValue)
+      }
+    }
+  }
+
   var snapshot: Key.Value? {
     @Dependency(\.snapshots) var snapshots
     return snapshots[self]
@@ -283,15 +351,25 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
     try withMutation(keyPath: \.value) {
-      defer { key.save(value, immediately: false) }
+      saveError = nil
+      defer {
+        do {
+          try key.save(value, immediately: false)
+          loadError = nil
+        } catch {
+          saveError = error
+        }
+      }
       return try lock.withLock {
         try body(&value)
       }
     }
   }
 
-  func save() {
-    key.save(lock.withLock { value }, immediately: true)
+  func save() throws {
+    saveError = nil
+    try key.save(lock.withLock { value }, immediately: true)
+    loadError = nil
   }
 
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
@@ -315,12 +393,16 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Key.Value {
     base.wrappedValue
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -339,6 +421,10 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
 }
 
 extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
+  var saveError: (any Error)? {
+    base.saveError
+  }
+
   var snapshot: Key.Value? {
     base.snapshot
   }
@@ -357,8 +443,8 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
     try base.withLock(body)
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _ManagedReference, rhs: _ManagedReference) -> Bool {
@@ -381,12 +467,16 @@ final class _AppendKeyPathReference<
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Value {
     base.wrappedValue[keyPath: keyPath]
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -409,6 +499,10 @@ final class _AppendKeyPathReference<
 
 extension _AppendKeyPathReference: MutableReference, Equatable
 where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
+  var saveError: (any Error)? {
+    base.saveError
+  }
+
   var snapshot: Value? {
     base.snapshot?[keyPath: keyPath]
   }
@@ -429,8 +523,8 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
     try base.withLock { try body(&$0[keyPath: keyPath as WritableKeyPath]) }
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _AppendKeyPathReference, rhs: _AppendKeyPathReference) -> Bool {
@@ -456,14 +550,18 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
     base.id
   }
 
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
   var wrappedValue: Value {
     guard let wrappedValue = base.wrappedValue else { return lock.withLock { cachedValue } }
     lock.withLock { cachedValue = wrappedValue }
     return wrappedValue
   }
 
-  func load() {
-    base.load()
+  func load() throws {
+    try base.load()
   }
 
   func touch() {
@@ -485,6 +583,10 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
 }
 
 extension _OptionalReference: MutableReference, Equatable where Base: MutableReference {
+  var saveError: (any Error)? {
+    base.saveError
+  }
+
   var snapshot: Value? {
     base.snapshot ?? nil
   }
@@ -511,8 +613,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
     }
   }
 
-  func save() {
-    base.save()
+  func save() throws {
+    try base.save()
   }
 
   static func == (lhs: _OptionalReference, rhs: _OptionalReference) -> Bool {
@@ -550,12 +652,16 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       base.id
     }
 
+    var loadError: (any Error)? {
+      base.loadError
+    }
+
     var wrappedValue: Base.Value {
       base.wrappedValue
     }
 
-    func load() {
-      base.load()
+    func load() throws {
+      try base.load()
     }
 
     func touch() {
@@ -578,6 +684,10 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
   }
 
   extension _CachedReference: MutableReference, Equatable where Base: MutableReference {
+    var saveError: (any Error)? {
+      base.saveError
+    }
+
     var snapshot: Base.Value? {
       base.snapshot
     }
@@ -599,8 +709,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       }
     }
 
-    func save() {
-      base.save()
+    func save() throws {
+      try base.save()
     }
 
     static func == (lhs: _CachedReference, rhs: _CachedReference) -> Bool {

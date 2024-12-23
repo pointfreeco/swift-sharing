@@ -47,8 +47,6 @@ extension DatabaseWriter {
 
 extension DatabaseWriter where Self == DatabaseQueue {
   static var appDatabase: Self {
-    let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
-    print("open", path)
     var configuration = Configuration()
     configuration.prepareDatabase { db in
       db.trace { event in
@@ -58,6 +56,8 @@ extension DatabaseWriter where Self == DatabaseQueue {
     let databaseQueue: DatabaseQueue
     @Dependency(\.context) var context
     if context == .live {
+      let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
+      print("open", path)
       databaseQueue = try! DatabaseQueue(path: path, configuration: configuration)
     } else {
       databaseQueue = try! DatabaseQueue(configuration: configuration)
