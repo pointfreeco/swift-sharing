@@ -195,7 +195,7 @@
       userDefaults.set(123, forKey: "shared")
       subscription = nil
       #expect(try [1, 42] == changes.value.map { try $0.get() })
-      #expect(123 == persistenceKey.load(initialValue: nil))
+      #expect(try await 123 == persistenceKey.load(initialValue: nil))
     }
   }
 #endif

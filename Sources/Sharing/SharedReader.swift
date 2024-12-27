@@ -200,8 +200,8 @@ public struct SharedReader<Value> {
   /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
-  public func load() {
-    try? reference.load()
+  public func load() async throws {
+    try await reference.load()
   }
 
   private final class Box: @unchecked Sendable {

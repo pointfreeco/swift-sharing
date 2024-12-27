@@ -21,9 +21,8 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// the ``AppStorageKey`` uses the string key and `UserDefaults` instance to define its ID.
   var id: ID { get }
 
+  // TODO: update these docs
   /// Loads the freshest value from storage.
-  ///
-  /// // TODO: update these docs
   ///
   /// The `initialValue` provided can be used to supply a value in case the external storage has
   /// no value. This method is synchronous which means you cannot perform asynchronous work in it.
@@ -32,7 +31,10 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///
   /// - Parameter initialValue: An initial value assigned to the `@Shared` property.
   /// - Returns: An initial value provided by an external system, or `nil`.
-  func load(initialValue: Value?) throws -> Value?
+  func load(
+    initialValue: Value?,
+    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
+  )
 
   /// Subscribes to external updates.
   ///
@@ -46,6 +48,16 @@ public protocol SharedReaderKey<Value>: Sendable {
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) -> SharedSubscription
+}
+
+extension SharedReaderKey {
+  public func load(initialValue: Value?) async throws -> Value? {
+    try await withUnsafeThrowingContinuation { continuation in
+      load(initialValue: initialValue) { result in
+        continuation.resume(with: result)
+      }
+    }
+  }
 }
 
 extension SharedReaderKey where ID == Self {
@@ -132,6 +144,8 @@ extension SharedReader {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
+  // TODO: Non-async version of 'init(require:)'?
+
   /// Creates a shared reference to a read-only value using a shared key.
   ///
   /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
@@ -139,23 +153,27 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedReaderKey<Value>) throws {
-    let value = {
-      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
-      return value
+  public init(require key: some SharedReaderKey<Value>) async throws {
+    let value = try await withUnsafeThrowingContinuation { continuation in
+      key.load(initialValue: nil) { result in
+        continuation.resume(with: result)
+      }
     }
-    try self.init(rethrowing: value(), key)
+    guard let value else { throw LoadError() }
+    self.init(rethrowing: value, key)
     if let loadError { throw loadError }
   }
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init(require key: some SharedKey<Value>) throws {
-    let value = {
-      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
-      return value
+  public init(require key: some SharedKey<Value>) async throws {
+    let value = try await withUnsafeThrowingContinuation { continuation in
+      key.load(initialValue: nil) { result in
+        continuation.resume(with: result)
+      }
     }
-    try self.init(rethrowing: value(), key)
+    guard let value else { throw LoadError() }
+    self.init(rethrowing: value, key)
     if let loadError { throw loadError }
   }
 

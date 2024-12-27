@@ -97,14 +97,21 @@
       self.encode = encode
     }
 
-    public func load(initialValue: Value?) throws -> Value? {
-      if let initialValue, !storage.fileExists(url) {
-        try storage.createDirectory(url.deletingLastPathComponent(), true)
-        try save(initialValue, immediately: true)
-        return nil
+    public func load(
+      initialValue: Value?,
+      didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+    ) {
+      do {
+        if let initialValue, !storage.fileExists(url) {
+          try storage.createDirectory(url.deletingLastPathComponent(), true)
+          try save(initialValue, immediately: true)
+          callback(.success(nil))
+          return
+        }
+        try callback(.success(decode(storage.load(url))))
+      } catch {
+        callback(.failure(error))
       }
-
-      return try decode(storage.load(url))
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
@@ -195,7 +202,9 @@
                 state.workItem?.cancel()
                 state.workItem = nil
               }
-              callback(.success(try? self.load(initialValue: initialValue) ?? initialValue))
+              self.load(initialValue: initialValue) { result in
+                callback(.success(try? result.get() ?? initialValue))
+              }
               setUpSources()
             }
             $0 = SharedSubscription {

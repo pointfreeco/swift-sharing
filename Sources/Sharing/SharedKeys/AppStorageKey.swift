@@ -380,12 +380,15 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    public func load(initialValue: Value?) -> Value? {
-      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
+    public func load(
+      initialValue: Value?,
+      didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+    ) {
+      callback(.success(load(initialValue: initialValue)))
     }
 
-    public func save(_ value: Value, immediately: Bool) {
-      lookup.saveValue(value, to: store.wrappedValue, at: key)
+    private func load(initialValue: Value?) -> Value? {
+      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
     }
 
     public func subscribe(
@@ -480,6 +483,10 @@
           NotificationCenter.default.removeObserver(willEnterForeground)
         }
       }
+    }
+
+    public func save(_ value: Value, immediately: Bool) {
+      lookup.saveValue(value, to: store.wrappedValue, at: key)
     }
 
     private final class Observer: NSObject, Sendable {

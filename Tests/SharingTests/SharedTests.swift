@@ -18,8 +18,11 @@ import Testing
     @Test func loadError() {
       struct Key: Hashable, Sendable, SharedReaderKey {
         let id = UUID()
-        func load(initialValue: Int?) throws -> Int? {
-          throw LoadError()
+        func load(
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+        ) {
+          callback(.failure(LoadError()))
         }
         func subscribe(
           initialValue: Int?,
@@ -42,8 +45,11 @@ import Testing
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
         var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
-        func load(initialValue: Int?) throws -> Int? {
-          nil
+        func load(
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+        ) {
+          callback(.success(nil))
         }
         func subscribe(
           initialValue: Int?,
@@ -72,8 +78,11 @@ import Testing
     @Test func saveError() {
       struct Key: SharedKey {
         let id = UUID()
-        func load(initialValue: Int?) throws -> Int? {
-          nil
+        func load(
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+        ) {
+          callback(.success(nil))
         }
         func subscribe(
           initialValue: Int?,
@@ -103,8 +112,11 @@ import Testing
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
         var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
-        func load(initialValue: Int?) throws -> Int? {
-          nil
+        func load(
+          initialValue: Int?,
+          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+        ) {
+          callback(.success(nil))
         }
         func subscribe(
           initialValue: Int?,

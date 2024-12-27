@@ -69,6 +69,8 @@ extension Shared {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
+  // TODO: Non-async version of 'init(require:)'?
+
   /// Creates a shared reference to a value using a shared key.
   ///
   /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
@@ -76,12 +78,14 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedKey<Value>) throws {
-    let value = {
-      guard let value = try key.load(initialValue: nil) else { throw LoadError() }
-      return value
+  public init(require key: some SharedKey<Value>) async throws {
+    let value = try await withUnsafeThrowingContinuation { continuation in
+      key.load(initialValue: nil) { result in
+        continuation.resume(with: result)
+      }
     }
-    try self.init(rethrowing: value(), key)
+    guard let value else { throw LoadError() }
+    self.init(rethrowing: value, key)
     if let loadError { throw loadError }
   }
 

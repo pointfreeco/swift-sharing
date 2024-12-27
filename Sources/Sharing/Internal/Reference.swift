@@ -18,7 +18,7 @@ protocol Reference<Value>:
   var id: ObjectIdentifier { get }
   var loadError: (any Error)? { get }
   var wrappedValue: Value { get }
-  func load() throws
+  func load() async throws
   func touch()
   #if canImport(Combine)
     var publisher: any Publisher<Value, Never> { get }
@@ -36,7 +36,7 @@ protocol MutableReference<Value>: Reference, Equatable {
     line: UInt,
     column: UInt
   )
-  func save() throws
+  func save() async throws
 }
 
 final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @unchecked Sendable {
@@ -187,14 +187,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
 
   init(key: Key, value initialValue: Key.Value) {
     self.key = key
-    do {
-      self.value = try key.load(initialValue: initialValue) ?? initialValue
-    } catch {
-      self._loadError = error
-      self.value = initialValue
-      reportIssue(error)
-    }
-    self.subscription = key.subscribe(initialValue: initialValue) { [weak self] result in
+    self.value = initialValue
+    let callback: @Sendable (Result<Value?, any Error>) -> Void = { [weak self] result in
       guard let self else { return }
       switch result {
       case let .failure(error):
@@ -204,6 +198,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
         wrappedValue = newValue ?? initialValue
       }
     }
+    key.load(initialValue: initialValue, didReceive: callback)
+    self.subscription = key.subscribe(initialValue: initialValue, didReceive: callback)
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
@@ -235,13 +231,15 @@ final class _PersistentReference<Key: SharedReaderKey>:
     }
   }
 
-  func load() throws {
+  func load() async throws {
     do {
       loadError = nil
-      guard let newValue = try key.load(initialValue: nil)
-      else {
-        return
+      let newValue = try await withUnsafeThrowingContinuation { continuation in
+        key.load(initialValue: nil) { result in
+          continuation.resume(with: result)
+        }
       }
+      guard let newValue else { return }
       wrappedValue = newValue
     } catch {
       loadError = error
@@ -405,8 +403,8 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
     base.wrappedValue
   }
 
-  func load() throws {
-    try base.load()
+  func load() async throws {
+    try await base.load()
   }
 
   func touch() {
@@ -479,8 +477,8 @@ final class _AppendKeyPathReference<
     base.wrappedValue[keyPath: keyPath]
   }
 
-  func load() throws {
-    try base.load()
+  func load() async throws {
+    try await base.load()
   }
 
   func touch() {
@@ -527,8 +525,8 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
     try base.withLock { try body(&$0[keyPath: keyPath as WritableKeyPath]) }
   }
 
-  func save() throws {
-    try base.save()
+  func save() async throws {
+    try await base.save()
   }
 
   static func == (lhs: _AppendKeyPathReference, rhs: _AppendKeyPathReference) -> Bool {
@@ -564,8 +562,8 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
     return wrappedValue
   }
 
-  func load() throws {
-    try base.load()
+  func load() async throws {
+    try await base.load()
   }
 
   func touch() {
@@ -617,8 +615,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
     }
   }
 
-  func save() throws {
-    try base.save()
+  func save() async throws {
+    try await base.save()
   }
 
   static func == (lhs: _OptionalReference, rhs: _OptionalReference) -> Bool {
@@ -664,8 +662,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       base.wrappedValue
     }
 
-    func load() throws {
-      try base.load()
+    func load() async throws {
+      try await base.load()
     }
 
     func touch() {
@@ -713,8 +711,8 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       }
     }
 
-    func save() throws {
-      try base.save()
+    func save() async throws {
+      try await base.save()
     }
 
     static func == (lhs: _CachedReference, rhs: _CachedReference) -> Bool {

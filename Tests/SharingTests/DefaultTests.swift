@@ -85,9 +85,9 @@ import Testing
     }
   }
 
-  @Test func requireShouldThrow() {
-    withKnownIssue {
-      _ = try Shared(require: .isOn)
+  @Test func requireShouldThrow() async {
+    await withKnownIssue {
+      _ = try await Shared(require: .isOn)
     }
   }
 }
