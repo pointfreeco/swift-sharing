@@ -6,8 +6,7 @@
   @_spi(Internals) import Sharing
   import Testing
 
-  @Suite
-  struct FileStorageTests {
+  @Suite struct FileStorageTests {
     let fileSystem = LockIsolated<[URL: Data]>([:])
     let testScheduler = DispatchQueue.test
 
@@ -17,7 +16,7 @@
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
-        expectNoDifference(fileSystem.value, [.fileURL: Data()])
+        expectNoDifference(fileSystem.value, [.fileURL: Data("[\n\n]".utf8)])
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
       }
@@ -46,7 +45,7 @@
         )
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [])
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -84,7 +83,7 @@
         )
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [])
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -104,7 +103,7 @@
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
-        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), nil)
+        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), [])
 
         $otherUsers.withLock { $0.append(.blobJr) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -316,7 +315,10 @@
           try FileManager.default.removeItem(at: .fileURL)
           try await Task.sleep(nanoseconds: 1_200_000_000)
           expectNoDifference(users, [.blob])
-          try #expect(Data(contentsOf: .fileURL).isEmpty)
+          #expect(
+            try JSONDecoder().decode([User].self, from: Data(contentsOf: .fileURL))
+            == [.blob]
+          )
         }
       }
 

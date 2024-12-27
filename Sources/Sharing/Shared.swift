@@ -311,8 +311,8 @@ public struct Shared<Value> {
   /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
-  public func load() {
-    try? reference.load()
+  public func load() throws {
+    try reference.load()
   }
 
   /// Requests the underlying value be persisted to an external source.
@@ -324,8 +324,8 @@ public struct Shared<Value> {
   /// save to the external source immediately upon modification. Some persistence strategies,
   /// however, may choose to debounce this work, in which case it may be desirable to tell the
   /// strategy to save more eagerly.
-  public func save() {
-    try? reference.save()
+  public func save() throws {
+    try reference.save()
   }
 
   private final class Box: @unchecked Sendable {

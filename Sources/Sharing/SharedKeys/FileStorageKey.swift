@@ -98,34 +98,36 @@
     }
 
     public func load(initialValue: Value?) throws -> Value? {
-      guard let data = try? storage.load(url) else { return nil }
-      return try load(data: data, initialValue: initialValue)
-    }
+      if let initialValue, !storage.fileExists(url) {
+        try storage.createDirectory(url.deletingLastPathComponent(), true)
+        try save(initialValue, immediately: true)
+        return nil
+      }
 
-    private func load(data: Data, initialValue: Value?) throws -> Value? {
-      try decode(data)
+      return try decode(storage.load(url))
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
       try self.storage.save(data, url)
       if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
-        as? Date
+          as? Date
       {
         modificationDates.append(modificationDate)
       }
     }
 
-    public func save(_ value: Value, immediately: Bool) {
-      state.withValue { state in
+    public func save(_ value: Value, immediately: Bool) throws {
+      try state.withValue { state in
+        let data = try self.encode(value)
         if immediately {
           state.value = nil
           state.workItem?.cancel()
           state.workItem = nil
+          try self.storage.save(data, url)
+          return
         }
         if state.workItem == nil {
-          guard let data = try? self.encode(value)
-          else { return }
-          try? save(data: data, url: url, modificationDates: &state.modificationDates)
+          try save(data: data, url: url, modificationDates: &state.modificationDates)
 
           let workItem = DispatchWorkItem { [weak self] in
             guard let self else { return }
@@ -182,7 +184,7 @@
                 else { return }
                 callback(
                   Result {
-                    try self.load(data: data, initialValue: initialValue)
+                    try decode(data)
                   }
                 )
               }

@@ -23,6 +23,8 @@ public protocol SharedReaderKey<Value>: Sendable {
 
   /// Loads the freshest value from storage.
   ///
+  /// // TODO: update these docs
+  ///
   /// The `initialValue` provided can be used to supply a value in case the external storage has
   /// no value. This method is synchronous which means you cannot perform asynchronous work in it.
   /// If that is necessary to load the initial value from your external source, you can use the
@@ -36,42 +38,14 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///
   /// - Parameters:
   ///   - initialValue: An initial value assigned to the `@Shared` property.
-  ///   - receiveValue: A closure that is invoked with new values from an external system, or `nil`
-  ///     if the external system no longer holds a value.
+  ///   - callback: A closure that is invoked with new results from an external system, or
+  ///     `.success(nil)` if the external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  @available(*, deprecated, message: "Call 'subscribe(initialValue:didReceive:)' instead")
-  func subscribe(
-    initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
-  ) -> SharedSubscription
-
   func subscribe(
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) -> SharedSubscription
-}
-
-extension SharedReaderKey {
-  public func subscribe(
-    initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
-  ) -> SharedSubscription {
-    subscribe(initialValue: initialValue) { result in
-      switch result {
-      case .failure:
-        break
-      case let .success(newValue):
-        receiveValue(newValue)
-      }
-    }
-  }
-
-  @available(*, deprecated, message: "Implement this method explicitly")
-  public func subscribe(
-    initialValue: Value?,
-    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-  ) -> SharedSubscription {
-    subscribe(initialValue: initialValue) { value in callback(.success(value)) }
-  }
 }
 
 extension SharedReaderKey where ID == Self {

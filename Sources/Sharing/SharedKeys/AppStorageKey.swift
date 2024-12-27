@@ -568,7 +568,7 @@
         SharedAppStorageLocals.$isSetting.withValue(true) {
           store.set(defaultValue, forKey: key)
         }
-        return defaultValue
+        return nil
       }
       return value
     }
@@ -591,7 +591,7 @@
         SharedAppStorageLocals.$isSetting.withValue(true) {
           store.set(defaultValue, forKey: key)
         }
-        return defaultValue
+        return nil
       }
       return value
     }
@@ -611,7 +611,6 @@
     ) -> Value? {
       base.loadValue(from: store, at: key, default: defaultValue?.rawValue)
         .flatMap(Value.init(rawValue:))
-        ?? defaultValue
     }
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       base.saveValue(newValue.rawValue, to: store, at: key)

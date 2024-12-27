@@ -240,7 +240,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
       loadError = nil
       guard let newValue = try key.load(initialValue: nil)
       else {
-        // TODO: Should we keep track of the initial value and reassign it here?
         return
       }
       wrappedValue = newValue
@@ -368,7 +367,12 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   func save() throws {
     saveError = nil
-    try key.save(lock.withLock { value }, immediately: true)
+    do {
+      try key.save(lock.withLock { value }, immediately: true)
+    } catch {
+      saveError = error
+      throw error
+    }
     loadError = nil
   }
 
