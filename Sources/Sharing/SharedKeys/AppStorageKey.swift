@@ -61,6 +61,18 @@
       AppStorageKey(key, store: store)
     }
 
+    /// Creates a shared key that can read and write to a string array user default.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
+    where Self == AppStorageKey<[String]> {
+      AppStorageKey(key, store: store)
+    }
+
     /// Creates a shared key that can read and write to a URL user default.
     ///
     /// - Parameters:
@@ -175,6 +187,18 @@
       AppStorageKey(key, store: store)
     }
 
+    /// Creates a shared key that can read and write to an optional string array user default.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
+    where Self == AppStorageKey<[String]?> {
+      AppStorageKey(key, store: store)
+    }
+
     /// Creates a shared key that can read and write to an optional URL user default.
     ///
     /// - Parameters:
@@ -280,6 +304,13 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == [String] {
+      @Dependency(\.defaultAppStorage) var defaultStore
+      self.lookup = CastableLookup()
+      self.key = key
+      self.store = UncheckedSendable(store ?? defaultStore)
+    }
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL {
       @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = URLLookup()
@@ -337,6 +368,13 @@
     }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == String? {
+      @Dependency(\.defaultAppStorage) var defaultStore
+      self.lookup = OptionalLookup(base: CastableLookup())
+      self.key = key
+      self.store = UncheckedSendable(store ?? defaultStore)
+    }
+
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == [String]? {
       @Dependency(\.defaultAppStorage) var defaultStore
       self.lookup = OptionalLookup(base: CastableLookup())
       self.key = key

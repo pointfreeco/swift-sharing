@@ -35,6 +35,13 @@
       #expect(string == "Blob, Jr.")
     }
 
+    @Test func stringArray() {
+      @Shared(.appStorage("string-array")) var stringArray = ["Blob", "Blob, Sr."]
+      #expect(store.stringArray(forKey: "string-array") == ["Blob", "Blob, Sr."])
+      store.set(["Blob", "Blob, Sr.", "Blob, Jr."], forKey: "string-array")
+      #expect(stringArray == ["Blob", "Blob, Sr.", "Blob, Jr."])
+    }
+
     @Test func url() {
       @Shared(.appStorage("url")) var url = URL(fileURLWithPath: "/dev")
       #expect(store.url(forKey: "url") == URL(fileURLWithPath: "/dev"))
