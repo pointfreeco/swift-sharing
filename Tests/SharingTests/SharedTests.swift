@@ -90,8 +90,12 @@ import Testing
         ) -> SharedSubscription {
           SharedSubscription {}
         }
-        func save(_ value: Int, immediately: Bool) throws {
-          if value < 0 { throw SaveError() }
+        func save(
+          _ value: Int,
+          immediately: Bool,
+          didComplete callback: @escaping (Result<Void, any Error>) -> Void
+        ) {
+          callback(value < 0 ? .failure(SaveError()) : .success(()))
         }
         struct SaveError: Error {}
       }
@@ -125,8 +129,12 @@ import Testing
           self.callback = callback
           return SharedSubscription {}
         }
-        func save(_ value: Int, immediately: Bool) throws {
-          if value < 0 { throw SaveError() }
+        func save(
+          _ value: Int,
+          immediately: Bool,
+          didComplete callback: @escaping (Result<Void, any Error>) -> Void
+        ) {
+          callback(value < 0 ? .failure(SaveError()) : .success(()))
         }
         struct LoadError: Error {}
         struct SaveError: Error {}

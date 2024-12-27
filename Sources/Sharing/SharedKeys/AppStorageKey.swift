@@ -485,8 +485,12 @@
       }
     }
 
-    public func save(_ value: Value, immediately: Bool) {
-      lookup.saveValue(value, to: store.wrappedValue, at: key)
+    public func save(
+      _ value: Value,
+      immediately: Bool,
+      didComplete callback: @escaping (Result<Void, any Error>) -> Void
+    ) {
+      callback(.success(lookup.saveValue(value, to: store.wrappedValue, at: key)))
     }
 
     private final class Observer: NSObject, Sendable {

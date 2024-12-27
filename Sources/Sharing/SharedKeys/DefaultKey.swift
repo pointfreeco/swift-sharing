@@ -61,8 +61,12 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
 }
 
 extension _SharedKeyDefault: SharedKey where Base: SharedKey {
-  public func save(_ value: Value, immediately: Bool) throws {
-    try base.save(value, immediately: immediately)
+  public func save(
+    _ value: Base.Value,
+    immediately: Bool,
+    didComplete callback: @escaping @Sendable (Result<Void, any Error>) -> Void
+  ) {
+    base.save(value, immediately: immediately, didComplete: callback)
   }
 }
 

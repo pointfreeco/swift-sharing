@@ -99,13 +99,19 @@
 
     public func load(
       initialValue: Value?,
-      didReceive callback: @escaping (Result<Value?, any Error>) -> Void
+      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
     ) {
       do {
         if let initialValue, !storage.fileExists(url) {
           try storage.createDirectory(url.deletingLastPathComponent(), true)
-          try save(initialValue, immediately: true)
-          callback(.success(nil))
+          save(initialValue, immediately: true) { result in
+            switch result {
+            case let .failure(error):
+              callback(.failure(error))
+            case .success:
+              callback(.success(nil))
+            }
+          }
           return
         }
         try callback(.success(decode(storage.load(url))))
@@ -117,44 +123,61 @@
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
       try self.storage.save(data, url)
       if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
-          as? Date
+        as? Date
       {
         modificationDates.append(modificationDate)
       }
     }
 
-    public func save(_ value: Value, immediately: Bool) throws {
-      try state.withValue { state in
-        let data = try self.encode(value)
-        if immediately {
-          state.value = nil
-          state.workItem?.cancel()
-          state.workItem = nil
-          try self.storage.save(data, url)
-          return
-        }
-        if state.workItem == nil {
-          try save(data: data, url: url, modificationDates: &state.modificationDates)
-
-          let workItem = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.withValue { state in
-              defer {
-                state.value = nil
-                state.workItem = nil
-              }
-              guard
-                let value = state.value,
-                let data = try? self.encode(value)
-              else { return }
-              try? self.save(data: data, url: self.url, modificationDates: &state.modificationDates)
-            }
+    public func save(
+      _ value: Value,
+      immediately: Bool,
+      didComplete callback: @escaping @Sendable (Result<Void, any Error>) -> Void
+    ) {
+      do {
+        try state.withValue { state in
+          let data = try self.encode(value)
+          if immediately {
+            state.value = nil
+            state.workItem?.cancel()
+            state.workItem = nil
+            try self.storage.save(data, url)
+            callback(.success(()))
+            return
           }
-          state.workItem = workItem
-          storage.asyncAfter(.seconds(1), workItem)
-        } else {
-          state.value = value
+          if state.workItem == nil {
+            try save(data: data, url: url, modificationDates: &state.modificationDates)
+            callback(.success(()))
+            let workItem = DispatchWorkItem { [weak self] in
+              guard let self else { return }
+              self.state.withValue { state in
+                defer {
+                  state.value = nil
+                  state.workItem = nil
+                }
+                guard
+                  let value = state.value,
+                  let data = try? self.encode(value)
+                else { return }
+                callback(
+                  Result {
+                    try self.save(
+                      data: data,
+                      url: self.url,
+                      modificationDates: &state.modificationDates
+                    )
+                  }
+                )
+              }
+            }
+            state.workItem = workItem
+            storage.asyncAfter(.seconds(1), workItem)
+          } else {
+            state.value = value
+          }
         }
+      } catch {
+        callback(.failure(error))
       }
     }
 

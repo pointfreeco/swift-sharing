@@ -350,11 +350,14 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     try withMutation(keyPath: \.value) {
       saveError = nil
       defer {
-        do {
-          try key.save(value, immediately: false)
-          loadError = nil
-        } catch {
-          saveError = error
+        key.save(value, immediately: false) { [weak self] result in
+          guard let self else { return }
+          switch result {
+          case .success:
+            loadError = nil
+          case let .failure(error):
+            saveError = error
+          }
         }
       }
       return try lock.withLock {
@@ -363,10 +366,10 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     }
   }
 
-  func save() throws {
+  func save() async throws {
     saveError = nil
     do {
-      try key.save(lock.withLock { value }, immediately: true)
+      try await key.save(lock.withLock { value }, immediately: true)
     } catch {
       saveError = error
       throw error
@@ -445,8 +448,8 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
     try base.withLock(body)
   }
 
-  func save() throws {
-    try base.save()
+  func save() async throws {
+    try await base.save()
   }
 
   static func == (lhs: _ManagedReference, rhs: _ManagedReference) -> Bool {

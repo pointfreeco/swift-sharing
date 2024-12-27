@@ -18,7 +18,21 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     by default to delay writing to an external source in some way, for example throttling or
   ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
   ///     delays.
-  func save(_ value: Value, immediately: Bool) throws
+  func save(
+    _ value: Value,
+    immediately: Bool,
+    didComplete callback: @escaping @Sendable (Result<Void, any Error>) -> Void
+  )
+}
+
+extension SharedKey {
+  public func save(_ value: Value, immediately: Bool = false) async throws {
+    try await withUnsafeThrowingContinuation { continuation in
+      save(value, immediately: immediately) { result in
+        continuation.resume(with: result)
+      }
+    }
+  }
 }
 
 extension Shared {
