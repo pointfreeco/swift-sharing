@@ -97,10 +97,6 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     self.query = query
   }
 
-  func load(initialValue: Value?) throws -> Value? {
-    try databaseQueue.read(query.fetch)
-  }
-
   func load(
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void

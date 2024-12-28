@@ -64,7 +64,7 @@ struct PlayersView: View {
           Button {
             addPlayerIsPresented = true
           } label: {
-            Label("Add Item", systemImage: "plus")
+            Label("Add Player", systemImage: "plus")
           }
         }
         ToolbarItem(placement: .cancellationAction) {
