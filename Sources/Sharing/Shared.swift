@@ -266,6 +266,11 @@ public struct Shared<Value> {
     SharedReader(self)[dynamicMember: keyPath]
   }
 
+  /// Whether or not an associated shared key is loading data.
+  public var isLoading: Bool {
+    reference.isLoading
+  }
+
   /// An error encountered during the most recent attempt to load data.
   ///
   /// This value is `nil` unless a load attempt failed. It contains the latest error from the

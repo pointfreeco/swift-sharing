@@ -16,6 +16,7 @@ protocol Reference<Value>:
   associatedtype Value
 
   var id: ObjectIdentifier { get }
+  var isLoading: Bool { get }
   var loadError: (any Error)? { get }
   var wrappedValue: Value { get }
   func load() async throws
@@ -63,6 +64,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
+
+  var isLoading: Bool {
+    false
+  }
 
   var loadError: (any Error)? {
     nil
@@ -180,6 +185,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
     private var value: Key.Value
   #endif
 
+  private var _isLoading: Bool
   private var _loadError: (any Error)?
   private var _saveError: (any Error)?
   private var _referenceCount = 0
@@ -188,8 +194,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
   init(key: Key, value initialValue: Key.Value) {
     self.key = key
     self.value = initialValue
+    self._isLoading = true
     let callback: @Sendable (Result<Value?, any Error>) -> Void = { [weak self] result in
       guard let self else { return }
+      isLoading = false
       switch result {
       case let .failure(error):
         loadError = error
@@ -203,6 +211,18 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
+
+  var isLoading: Bool {
+    get {
+      access(keyPath: \._isLoading)
+      return lock.withLock { _isLoading }
+    }
+    set {
+      withMutation(keyPath: \._isLoading) {
+        lock.withLock { _isLoading = newValue }
+      }
+    }
+  }
 
   var loadError: (any Error)? {
     get {
@@ -232,6 +252,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 
   func load() async throws {
+    isLoading = true
+    defer { isLoading = false }
     do {
       loadError = nil
       let newValue = try await withUnsafeThrowingContinuation { continuation in
@@ -248,9 +270,9 @@ final class _PersistentReference<Key: SharedReaderKey>:
 
   func touch() {
     withMutation(keyPath: \.value) {}
-    // TODO: Is this needed?
-    // withMutation(keyPath: \._loadError) {}
-    // withMutation(keyPath: \._saveError) {}
+    withMutation(keyPath: \._isLoading) {}
+    withMutation(keyPath: \._loadError) {}
+    withMutation(keyPath: \._saveError) {}
   }
 
   func retain() {
@@ -398,6 +420,10 @@ final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
     base.id
   }
 
+  var isLoading: Bool {
+    base.isLoading
+  }
+
   var loadError: (any Error)? {
     base.loadError
   }
@@ -470,6 +496,10 @@ final class _AppendKeyPathReference<
 
   var id: ObjectIdentifier {
     base.id
+  }
+
+  var isLoading: Bool {
+    base.isLoading
   }
 
   var loadError: (any Error)? {
@@ -553,6 +583,10 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
 
   var id: ObjectIdentifier {
     base.id
+  }
+
+  var isLoading: Bool {
+    base.isLoading
   }
 
   var loadError: (any Error)? {
@@ -655,6 +689,10 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
 
     var id: ObjectIdentifier {
       base.id
+    }
+
+    var isLoading: Bool {
+      base.isLoading
     }
 
     var loadError: (any Error)? {

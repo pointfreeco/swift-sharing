@@ -190,8 +190,10 @@ public struct SharedReader<Value> {
     reference.loadError
   }
 
-  // $players.isLoading { … } else if $players.loadError { … } else { }
-  // TODO: public var isLoading: Bool
+  /// Whether or not an associated shared key is loading data.
+  public var isLoading: Bool {
+    reference.isLoading
+  }
 
   /// Requests an up-to-date value from an external source.
   ///
