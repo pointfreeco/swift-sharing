@@ -391,7 +391,11 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   func save() async throws {
     saveError = nil
     do {
-      try await key.save(lock.withLock { value }, immediately: true)
+      try await withUnsafeThrowingContinuation { continuation in
+        key.save(lock.withLock { value }, immediately: true) { result in
+          continuation.resume(with: result)
+        }
+      }
     } catch {
       saveError = error
       throw error

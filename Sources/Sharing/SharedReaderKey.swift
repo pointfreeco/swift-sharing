@@ -50,16 +50,6 @@ public protocol SharedReaderKey<Value>: Sendable {
   ) -> SharedSubscription
 }
 
-extension SharedReaderKey {
-  public func load(initialValue: Value?) async throws -> Value? {
-    try await withUnsafeThrowingContinuation { continuation in
-      load(initialValue: initialValue) { result in
-        continuation.resume(with: result)
-      }
-    }
-  }
-}
-
 extension SharedReaderKey where ID == Self {
   public var id: ID { self }
 }
@@ -142,32 +132,6 @@ extension SharedReader {
     _ key: (some SharedKey<Value>).Default
   ) {
     self.init(wrappedValue: wrappedValue(), key)
-  }
-
-  // TODO: Non-async version of 'init(require:)'?
-  // TODO: Chopping block for 2.0?
-
-  /// Creates a shared reference to a read-only value using a shared key.
-  ///
-  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
-  /// version of this initializer, see ``init(wrappedValue:_:)-56tir``.
-  ///
-  /// - Parameter key: A shared key associated with the shared reference. It is responsible for
-  ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedReaderKey<Value>) async throws {
-    let value = try await key.load(initialValue: nil)
-    guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key)
-    if let loadError { throw loadError }
-  }
-
-  @_disfavoredOverload
-  @_documentation(visibility: private)
-  public init(require key: some SharedKey<Value>) async throws {
-    let value = try await key.load(initialValue: nil)
-    guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key)
-    if let loadError { throw loadError }
   }
 
   @available(*, unavailable, message: "Assign a default value")

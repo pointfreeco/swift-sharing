@@ -5,7 +5,7 @@
 ### Loading and subscribing to data sources
 
 - ``Value``
-- ``load(initialValue:)``
+- ``load(initialValue:didReceive:)``
 - ``subscribe(initialValue:didReceive:)``
 
 ### Managing subscriptions
