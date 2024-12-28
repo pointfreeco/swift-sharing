@@ -101,6 +101,15 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     try databaseQueue.read(query.fetch)
   }
 
+  func load(
+    initialValue: Value?,
+    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
+  ) {
+    databaseQueue.asyncRead { result in
+      callback(result.flatMap { db in Result { try query.fetch(db) } })
+    }
+  }
+
   func subscribe(
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
