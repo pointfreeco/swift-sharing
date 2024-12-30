@@ -5,12 +5,8 @@ import Testing
   @Test func saveErrorWhenInvokingSave() async {
     struct Key: SharedKey {
       var id: some Hashable { 0 }
-      func save(
-        _ value: Int,
-        immediately: Bool,
-        didComplete callback: @escaping (Result<Void, any Error>) -> Void
-      ) {
-        callback(.failure(SaveError()))
+      func save(_ value: Int, immediately: Bool, continuation: SharedContinuation<Void>) {
+        continuation.resume(throwing: SaveError())
       }
       func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
         continuation.resume(returning: nil)

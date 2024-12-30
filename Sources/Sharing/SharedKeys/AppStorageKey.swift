@@ -482,6 +482,10 @@
       }
     }
 
+    public func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>) {
+      lookup.saveValue(value, to: store.wrappedValue, at: key)
+      continuation.resume()
+    }
     public func save(
       _ value: Value,
       immediately: Bool,

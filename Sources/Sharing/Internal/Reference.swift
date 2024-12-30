@@ -375,7 +375,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     try withMutation(keyPath: \.value) {
       saveError = nil
       defer {
-        key.save(value, immediately: false) { [weak self] result in
+        key.save(value, immediately: false, continuation: SharedContinuation { [weak self] result in
           guard let self else { return }
           switch result {
           case .success:
@@ -383,7 +383,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
           case let .failure(error):
             saveError = error
           }
-        }
+        })
       }
       return try lock.withLock {
         try body(&value)
@@ -395,9 +395,13 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     saveError = nil
     do {
       try await withUnsafeThrowingContinuation { continuation in
-        key.save(lock.withLock { value }, immediately: true) { result in
-          continuation.resume(with: result)
-        }
+        key.save(
+          lock.withLock { value },
+          immediately: true,
+          continuation: SharedContinuation { result in
+            continuation.resume(with: result)
+          }
+        )
       }
     } catch {
       saveError = error

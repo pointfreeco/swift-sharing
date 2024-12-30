@@ -76,6 +76,7 @@
     fileprivate let state = LockIsolated(State())
 
     fileprivate struct State {
+      var continuations: [SharedContinuation<Void>] = []
       var modificationDates: [Date] = []
       var value: Value?
       var workItem: DispatchWorkItem?
@@ -101,14 +102,14 @@
       do {
         if let initialValue, !storage.fileExists(url) {
           try storage.createDirectory(url.deletingLastPathComponent(), true)
-          save(initialValue, immediately: true) { result in
+          save(initialValue, immediately: true, continuation: SharedContinuation { result in
             switch result {
             case let .failure(error):
               continuation.resume(throwing: error)
             case .success:
               continuation.resume(returning: nil)
             }
-          }
+          })
           return
         }
         try continuation.resume(returning: decode(storage.load(url)))
@@ -126,11 +127,7 @@
       }
     }
 
-    public func save(
-      _ value: Value,
-      immediately: Bool,
-      didComplete callback: @escaping @Sendable (Result<Void, any Error>) -> Void
-    ) {
+    public func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>) {
       do {
         try state.withValue { state in
           let data = try self.encode(value)
@@ -139,12 +136,12 @@
             state.workItem?.cancel()
             state.workItem = nil
             try self.storage.save(data, url)
-            callback(.success(()))
+            continuation.resume()
             return
           }
           if state.workItem == nil {
             try save(data: data, url: url, modificationDates: &state.modificationDates)
-            callback(.success(()))
+            continuation.resume()
             let workItem = DispatchWorkItem { [weak self] in
               guard let self else { return }
               self.state.withValue { state in
@@ -156,25 +153,28 @@
                   let value = state.value,
                   let data = try? self.encode(value)
                 else { return }
-                callback(
-                  Result {
-                    try self.save(
-                      data: data,
-                      url: self.url,
-                      modificationDates: &state.modificationDates
-                    )
-                  }
-                )
+                let result = Result {
+                  try self.save(
+                    data: data,
+                    url: self.url,
+                    modificationDates: &state.modificationDates
+                  )
+                }
+                for continuation in state.continuations {
+                  continuation.resume(with: result)
+                }
+                state.continuations.removeAll()
               }
             }
             state.workItem = workItem
             storage.asyncAfter(.seconds(1), workItem)
           } else {
             state.value = value
+            state.continuations.append(continuation)
           }
         }
       } catch {
-        callback(.failure(error))
+        continuation.resume(throwing: error)
       }
     }
 

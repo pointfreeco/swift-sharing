@@ -72,3 +72,9 @@ public struct SharedContinuation<Value>: Sendable {
     resume(with: .failure(error))
   }
 }
+
+extension SharedContinuation where Value == Void {
+  public func resume() {
+    resume(returning: ())
+  }
+}

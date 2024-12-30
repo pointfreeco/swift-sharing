@@ -49,13 +49,9 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   ) -> SharedSubscription {
     SharedSubscription {}
   }
-  public func save(
-    _ value: Value,
-    immediately: Bool,
-    didComplete callback: @escaping (Result<Void, any Error>) -> Void
-  ) {
+  public func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>) {
     store.values[key] = value
-    callback(.success(()))
+    continuation.resume()
   }
 }
 
