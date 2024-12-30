@@ -22,8 +22,7 @@ import Testing
           continuation.resume(throwing: LoadError())
         }
         func subscribe(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+          initialValue: Int?, subscriber: SharedSubscriber<Int?>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -41,15 +40,14 @@ import Testing
     @Test func subscribeError() {
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
-        var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
+        var subscriber: SharedSubscriber<Int?>?
         func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
           continuation.resume(returning: nil)
         }
         func subscribe(
-          initialValue: Int?,
-          didReceive callback: @escaping @Sendable (Result<Int?, any Error>) -> Void
+          initialValue: Int?, subscriber: SharedSubscriber<Int?>
         ) -> SharedSubscription {
-          self.callback = callback
+          self.subscriber = subscriber
           return SharedSubscription {}
         }
         struct LoadError: Error {}
@@ -58,13 +56,13 @@ import Testing
       let key = Key()
       @SharedReader(key) var count = 0
       withKnownIssue {
-        key.callback?(.failure(Key.LoadError()))
+        key.subscriber?.yield(throwing: Key.LoadError())
       } matching: {
         $0.description == "Caught error: LoadError()"
       }
       #expect($count.loadError != nil)
 
-      key.callback?(.success(1))
+      key.subscriber?.yield(1)
       #expect(count == 1)
       #expect($count.loadError == nil)
     }
@@ -76,8 +74,7 @@ import Testing
           continuation.resume(returning: nil)
         }
         func subscribe(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
+          initialValue: Int?, subscriber: SharedSubscriber<Int?>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -102,15 +99,14 @@ import Testing
     @Test func saveErrorLoadErrorInterplay() {
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
-        var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
+        var subscriber: SharedSubscriber<Int?>?
         func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
           continuation.resume(returning: nil)
         }
         func subscribe(
-          initialValue: Int?,
-          didReceive callback: @escaping @Sendable (Result<Int?, any Error>) -> Void
+          initialValue: Int?, subscriber: SharedSubscriber<Int?>
         ) -> SharedSubscription {
-          self.callback = callback
+          self.subscriber = subscriber
           return SharedSubscription {}
         }
         func save(_ value: Int, immediately: Bool, continuation: SharedContinuation<Void>) {
@@ -123,7 +119,7 @@ import Testing
       let key = Key()
       @Shared(key) var count = 0
       withKnownIssue {
-        key.callback?(.failure(Key.LoadError()))
+        key.subscriber?.yield(throwing: Key.LoadError())
       } matching: {
         $0.description == "Caught error: LoadError()"
       }
@@ -137,13 +133,13 @@ import Testing
       #expect($count.loadError != nil)
       #expect($count.saveError != nil)
 
-      key.callback?(.success(nil))
+      key.subscriber?.yield(nil)
       #expect(count == 0)
       #expect($count.loadError == nil)
       #expect($count.saveError != nil)
 
       withKnownIssue {
-        key.callback?(.failure(Key.LoadError()))
+        key.subscriber?.yield(throwing: Key.LoadError())
       } matching: {
         $0.description == "Caught error: LoadError()"
       }

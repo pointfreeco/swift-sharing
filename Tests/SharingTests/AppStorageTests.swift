@@ -185,9 +185,12 @@
     @Test func testPersistenceKeySubscription() async throws {
       let persistenceKey: AppStorageKey<Int> = .appStorage("shared")
       let changes = LockIsolated<[Result<Int?, any Error>]>([])
-      var subscription: Optional = persistenceKey.subscribe(initialValue: nil) { value in
-        changes.withValue { $0.append(value) }
-      }
+      var subscription: Optional = persistenceKey.subscribe(
+        initialValue: nil,
+        subscriber: SharedSubscriber { value in
+          changes.withValue { $0.append(value) }
+        }
+      )
       @Dependency(\.defaultAppStorage) var userDefaults
       userDefaults.set(1, forKey: "shared")
       userDefaults.set(42, forKey: "shared")

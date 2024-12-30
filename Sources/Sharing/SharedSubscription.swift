@@ -26,3 +26,19 @@ public final class SharedSubscription: Sendable {
     }
   }
 }
+
+public struct SharedSubscriber<Value>: Sendable {
+  let callback: @Sendable (Result<Value, any Error>) -> Void
+
+  public func yield(with result: Result<Value, any Error>) {
+    callback(result)
+  }
+
+  public func yield(_ value: Value) {
+    yield(with: .success(value))
+  }
+
+  public func yield(throwing error: any Error) {
+    yield(with: .failure(error))
+  }
+}

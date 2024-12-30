@@ -50,10 +50,9 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
   }
 
   public func subscribe(
-    initialValue: Base.Value?,
-    didReceive callback: @escaping @Sendable (Result<Base.Value?, any Error>) -> Void
+    initialValue: Base.Value?, subscriber: SharedSubscriber<Base.Value?>
   ) -> SharedSubscription {
-    base.subscribe(initialValue: initialValue, didReceive: callback)
+    base.subscribe(initialValue: initialValue, subscriber: subscriber)
   }
 }
 

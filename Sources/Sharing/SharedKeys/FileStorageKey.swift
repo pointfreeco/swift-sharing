@@ -179,8 +179,7 @@
     }
 
     public func subscribe(
-      initialValue: Value?,
-      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
+      initialValue: Value?, subscriber: SharedSubscriber<Value?>
     ) -> SharedSubscription {
       let cancellable = LockIsolated<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
@@ -209,11 +208,7 @@
                   state.workItem == nil,
                   let data = try? self.storage.load(self.url)
                 else { return }
-                callback(
-                  Result {
-                    try decode(data)
-                  }
-                )
+                subscriber.yield(with: Result { try decode(data) })
               }
             }
             let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
@@ -223,7 +218,7 @@
                 state.workItem = nil
               }
               self.load(initialValue: initialValue, continuation: SharedContinuation { result in
-                callback(.success(try? result.get() ?? initialValue))
+                subscriber.yield(try? result.get() ?? initialValue)
               })
               setUpSources()
             }
@@ -232,7 +227,7 @@
               deleteCancellable.cancel()
             }
           } catch {
-            callback(.failure(error))
+            subscriber.yield(throwing: error)
           }
         }
       }

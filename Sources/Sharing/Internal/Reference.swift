@@ -210,7 +210,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
       initialValue: initialValue,
       continuation: SharedContinuation("\(key)", callback: callback)
     )
-    self.subscription = key.subscribe(initialValue: initialValue, didReceive: callback)
+    self.subscription = key.subscribe(
+      initialValue: initialValue,
+      subscriber: SharedSubscriber(callback: callback)
+    )
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }

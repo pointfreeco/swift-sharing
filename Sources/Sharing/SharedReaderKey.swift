@@ -38,14 +38,11 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///
   /// - Parameters:
   ///   - initialValue: An initial value assigned to the `@Shared` property.
-  ///   - callback: A closure that is invoked with new results from an external system, or
-  ///     `.success(nil)` if the external system no longer holds a value.
+  ///   - subscriber: A value that is given new results from an external system, or `nil` if the
+  ///     external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  func subscribe(
-    initialValue: Value?,
-    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-  ) -> SharedSubscription
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription
 }
 
 extension SharedReaderKey where ID == Self {
