@@ -71,7 +71,9 @@ extension DependencyValues {
             }
         """
       )
-      return try! DatabaseQueue()
+      var configuration = Configuration()
+      configuration.label = .defaultDatabaseLabel
+      return try! DatabaseQueue(configuration: configuration)
     }
   }
 }
@@ -82,27 +84,42 @@ protocol GRDBQuery<Value>: Hashable, Sendable {
 }
 
 struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
-  let animation: Animation?
-  let databaseQueue: any DatabaseWriter
+  let database: any DatabaseWriter
   let query: any GRDBQuery<Value>
+  let scheduler: any ValueObservationScheduler
+  #if DEBUG
+    let isDefaultDatabase: Bool
+  #endif
 
   typealias ID = GRDBQueryID
 
   var id: ID { ID(rawValue: query) }
 
   init(query: some GRDBQuery<Value>, animation: Animation? = nil) {
-    @Dependency(\.defaultDatabase) var databaseQueue
-    self.animation = animation
-    self.databaseQueue = databaseQueue
+    @Dependency(\.defaultDatabase) var database
+    self.scheduler = .animation(animation)
+    self.database = database
     self.query = query
+    #if DEBUG
+      self.isDefaultDatabase = database.configuration.label == .defaultDatabaseLabel
+    #endif
   }
 
   func load(
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) {
-    databaseQueue.asyncRead { result in
-      callback(result.flatMap { db in Result { try query.fetch(db) } })
+    #if DEBUG
+      guard !isDefaultDatabase else {
+        callback(.success(nil))
+        return
+      }
+    #endif
+    database.asyncRead { result in
+      let result: Result<Value?, any Error> = result.flatMap { db in
+        Result { try query.fetch(db) }
+      }
+      scheduler.schedule { callback(result) }
     }
   }
 
@@ -110,11 +127,13 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     initialValue: Value?,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) -> SharedSubscription {
+    #if DEBUG
+      guard !isDefaultDatabase else {
+        return SharedSubscription {}
+      }
+    #endif
     let observation = ValueObservation.tracking(query.fetch)
-    let cancellable = observation.start(
-      in: databaseQueue,
-      scheduling: .animation(animation)
-    ) { error in
+    let cancellable = observation.start(in: database, scheduling: scheduler) { error in
       callback(.failure(error))
     } onChange: { newValue in
       callback(.success(newValue))
@@ -173,3 +192,9 @@ extension ValueObservationScheduler where Self == AnimatedScheduler {
     AnimatedScheduler(animation: animation)
   }
 }
+
+#if DEBUG
+  extension String {
+    fileprivate static let defaultDatabaseLabel = "co.pointfree.SharingGRDB.testValue"
+  }
+#endif
