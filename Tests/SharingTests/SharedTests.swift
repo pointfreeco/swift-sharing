@@ -18,11 +18,8 @@ import Testing
     @Test func loadError() {
       struct Key: Hashable, Sendable, SharedReaderKey {
         let id = UUID()
-        func load(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
-        ) {
-          callback(.failure(LoadError()))
+        func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
+          continuation.resume(throwing: LoadError())
         }
         func subscribe(
           initialValue: Int?,
@@ -45,11 +42,8 @@ import Testing
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
         var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
-        func load(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
-        ) {
-          callback(.success(nil))
+        func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
+          continuation.resume(returning: nil)
         }
         func subscribe(
           initialValue: Int?,
@@ -78,11 +72,8 @@ import Testing
     @Test func saveError() {
       struct Key: SharedKey {
         let id = UUID()
-        func load(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
-        ) {
-          callback(.success(nil))
+        func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
+          continuation.resume(returning: nil)
         }
         func subscribe(
           initialValue: Int?,
@@ -116,11 +107,8 @@ import Testing
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
         var callback: (@Sendable (Result<Int?, any Error>) -> Void)?
-        func load(
-          initialValue: Int?,
-          didReceive callback: @escaping (Result<Int?, any Error>) -> Void
-        ) {
-          callback(.success(nil))
+        func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
+          continuation.resume(returning: nil)
         }
         func subscribe(
           initialValue: Int?,

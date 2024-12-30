@@ -21,20 +21,18 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// the ``AppStorageKey`` uses the string key and `UserDefaults` instance to define its ID.
   var id: ID { get }
 
-  // TODO: update these docs
   /// Loads the freshest value from storage.
   ///
   /// The `initialValue` provided can be used to supply a value in case the external storage has
   /// no value. This method is synchronous which means you cannot perform asynchronous work in it.
   /// If that is necessary to load the initial value from your external source, you can use the
-  /// ``SharedReaderKey/subscribe(initialValue:didSet:)`` method.
+  /// ``SharedReaderKey/subscribe(initialValue:didReceive:)`` method.
   ///
-  /// - Parameter initialValue: An initial value assigned to the `@Shared` property.
-  /// - Returns: An initial value provided by an external system, or `nil`.
-  func load(
-    initialValue: Value?,
-    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-  )
+  /// - Parameters
+  ///   - initialValue: An initial value assigned to the `@Shared` property.
+  ///   - continuation: A continuation that can be fed the result of loading a value from an
+  ///     external system.
+  func load(initialValue: Value?, continuation: SharedContinuation<Value?>)
 
   /// Subscribes to external updates.
   ///

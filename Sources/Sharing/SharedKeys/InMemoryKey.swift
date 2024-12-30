@@ -40,11 +40,8 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   public var id: InMemoryKeyID {
     InMemoryKeyID(key: self.key, store: self.store)
   }
-  public func load(
-    initialValue: Value?,
-    didReceive callback: @escaping (Result<Value?, any Error>) -> Void
-  ) {
-    callback(.success(store.values[key, default: initialValue] as? Value))
+  public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
+    continuation.resume(returning: store.values[key, default: initialValue] as? Value)
   }
   public func subscribe(
     initialValue: Value?,

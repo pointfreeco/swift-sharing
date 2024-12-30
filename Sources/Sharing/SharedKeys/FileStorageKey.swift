@@ -97,31 +97,28 @@
       self.encode = encode
     }
 
-    public func load(
-      initialValue: Value?,
-      didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-    ) {
+    public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
       do {
         if let initialValue, !storage.fileExists(url) {
           try storage.createDirectory(url.deletingLastPathComponent(), true)
           save(initialValue, immediately: true) { result in
             switch result {
             case let .failure(error):
-              callback(.failure(error))
+              continuation.resume(throwing: error)
             case .success:
-              callback(.success(nil))
+              continuation.resume(returning: nil)
             }
           }
           return
         }
-        try callback(.success(decode(storage.load(url))))
+        try continuation.resume(returning: decode(storage.load(url)))
       } catch {
-        callback(.failure(error))
+        continuation.resume(throwing: error)
       }
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
-      try self.storage.save(data, url)
+      try storage.save(data, url)
       if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
         as? Date
       {
@@ -225,9 +222,9 @@
                 state.workItem?.cancel()
                 state.workItem = nil
               }
-              self.load(initialValue: initialValue) { result in
+              self.load(initialValue: initialValue, continuation: SharedContinuation { result in
                 callback(.success(try? result.get() ?? initialValue))
-              }
+              })
               setUpSources()
             }
             $0 = SharedSubscription {

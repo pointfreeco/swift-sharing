@@ -12,11 +12,8 @@ import Testing
       ) {
         callback(.failure(SaveError()))
       }
-      func load(
-        initialValue: Int?,
-        didReceive callback: @escaping (Result<Int?, any Error>) -> Void
-      ) {
-        callback(.success(nil))
+      func load(initialValue: Int?, continuation: SharedContinuation<Int?>) {
+        continuation.resume(returning: nil)
       }
       func subscribe(
         initialValue: Int?,

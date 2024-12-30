@@ -380,11 +380,8 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    public func load(
-      initialValue: Value?,
-      didReceive callback: @escaping (Result<Value?, any Error>) -> Void
-    ) {
-      callback(.success(load(initialValue: initialValue)))
+    public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
+      continuation.resume(returning: load(initialValue: initialValue))
     }
 
     private func load(initialValue: Value?) -> Value? {
