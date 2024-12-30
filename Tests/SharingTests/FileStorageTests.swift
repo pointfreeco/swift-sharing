@@ -16,7 +16,11 @@
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
-        expectNoDifference(fileSystem.value, [.fileURL: Data("[\n\n]".utf8)])
+        #if DEBUG
+          expectNoDifference(fileSystem.value, [.fileURL: Data("[\n\n]".utf8)])
+        #else
+          expectNoDifference(fileSystem.value, [.fileURL: Data("[]".utf8)])
+        #endif
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
       }
