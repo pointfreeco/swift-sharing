@@ -21,7 +21,7 @@ public struct SharedContinuation<Value>: Sendable {
       if !isComplete {
         reportIssue(
           """
-          '\(description())' leaked its continuation without resuming it. This may cause tasks \
+          \(description()) leaked its continuation without resuming it. This may cause tasks \
           waiting on it to remain suspended forever.
           """
         )
@@ -36,7 +36,7 @@ public struct SharedContinuation<Value>: Sendable {
       guard resumeCount == 1 else {
         reportIssue(
           """
-          '\(description())' tried to resume its continuation more than once.
+          \(description()) tried to resume its continuation more than once.
           """
         )
         return
@@ -55,7 +55,7 @@ public struct SharedContinuation<Value>: Sendable {
       callback: callback,
       description: {
         let description = description()
-        return description.isEmpty ? "SharedReaderKey<\(Value.self)>.load" : "\(description)"
+        return description.isEmpty ? "A shared key" : "'\(description)'"
       }
     )
   }

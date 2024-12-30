@@ -263,7 +263,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
     do {
       loadError = nil
       let newValue = try await withUnsafeThrowingContinuation { continuation in
-        key.load(initialValue: nil, continuation: SharedContinuation { result in
+        let key = key
+        key.load(initialValue: nil, continuation: SharedContinuation("\(key)") { result in
           continuation.resume(with: result)
         })
       }
@@ -378,15 +379,20 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     try withMutation(keyPath: \.value) {
       saveError = nil
       defer {
-        key.save(value, immediately: false, continuation: SharedContinuation { [weak self] result in
-          guard let self else { return }
-          switch result {
-          case .success:
-            loadError = nil
-          case let .failure(error):
-            saveError = error
+        let key = key
+        key.save(
+          value,
+          immediately: false,
+          continuation: SharedContinuation("\(key)") { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+              loadError = nil
+            case let .failure(error):
+              saveError = error
+            }
           }
-        })
+        )
       }
       return try lock.withLock {
         try body(&value)
@@ -398,10 +404,11 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     saveError = nil
     do {
       try await withUnsafeThrowingContinuation { continuation in
+        let key = key
         key.save(
           lock.withLock { value },
           immediately: true,
-          continuation: SharedContinuation { result in
+          continuation: SharedContinuation("\(key)") { result in
             continuation.resume(with: result)
           }
         )
