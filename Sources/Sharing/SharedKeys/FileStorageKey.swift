@@ -103,18 +103,15 @@
       self.encode = encode
     }
 
-    public func load(context: LoadContext, continuation: SharedContinuation<Value?>) {
-      continuation.resume(
-        with: Result {
-          guard
-            let data = try? storage.load(url),
-            data != stubBytes
-          else {
-            return nil
-          }
-          return try decode(data)
-        }
-      )
+    public func load(context _: LoadContext, continuation: LoadContinuation) {
+      guard
+        let data = try? storage.load(url),
+        data != stubBytes
+      else {
+        continuation.resume()
+        return
+      }
+      continuation.resume(with: Result { try decode(data) })
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {

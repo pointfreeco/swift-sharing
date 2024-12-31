@@ -32,7 +32,10 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///   - initialValue: An initial value assigned to the `@Shared` property.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
   ///     external system.
-  func load(context: LoadContext, continuation: SharedContinuation<Value?>)
+  func load(context: LoadContext, continuation: LoadContinuation)
+
+  // continuation.resume()
+  // continuation.resume(returning: .default)
 
   /// Subscribes to external updates.
   ///
@@ -47,6 +50,7 @@ public protocol SharedReaderKey<Value>: Sendable {
 
 extension SharedReaderKey {
   public typealias LoadContext = _LoadContext<Value>
+  public typealias LoadContinuation = _LoadContinuation<Value>
 }
 
 public enum _LoadContext<Value> {
@@ -156,9 +160,9 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedReaderKey<Value>) async throws {
+  public init<Key: SharedReaderKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: Key.LoadContinuation { result in
         continuation.resume(with: result)
       })
     }
@@ -169,9 +173,9 @@ extension SharedReader {
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init(require key: some SharedKey<Value>) async throws {
+  public init<Key: SharedKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: Key.LoadContinuation { result in
         continuation.resume(with: result)
       })
     }

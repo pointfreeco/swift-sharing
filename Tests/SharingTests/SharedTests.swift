@@ -18,7 +18,7 @@ import Testing
     @Test func loadError() {
       struct Key: Hashable, Sendable, SharedReaderKey {
         let id = UUID()
-        func load(context: LoadContext, continuation: SharedContinuation<Int?>) {
+        func load(context: LoadContext, continuation: LoadContinuation) {
           continuation.resume(throwing: LoadError())
         }
         func subscribe(
@@ -41,8 +41,8 @@ import Testing
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
         var subscriber: SharedSubscriber<Int?>?
-        func load(context: LoadContext, continuation: SharedContinuation<Int?>) {
-          continuation.resume(returning: nil)
+        func load(context: LoadContext, continuation: LoadContinuation) {
+          continuation.resume()
         }
         func subscribe(
           initialValue: Int?, subscriber: SharedSubscriber<Int?>
@@ -70,8 +70,8 @@ import Testing
     @Test func saveError() {
       struct Key: SharedKey {
         let id = UUID()
-        func load(context: LoadContext, continuation: SharedContinuation<Int?>) {
-          continuation.resume(returning: nil)
+        func load(context: LoadContext, continuation: LoadContinuation) {
+          continuation.resume()
         }
         func subscribe(
           initialValue: Int?, subscriber: SharedSubscriber<Int?>
@@ -100,8 +100,8 @@ import Testing
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
         var subscriber: SharedSubscriber<Int?>?
-        func load(context: LoadContext, continuation: SharedContinuation<Int?>) {
-          continuation.resume(returning: nil)
+        func load(context: LoadContext, continuation: LoadContinuation) {
+          continuation.resume()
         }
         func subscribe(
           initialValue: Int?, subscriber: SharedSubscriber<Int?>

@@ -40,8 +40,17 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   public var id: InMemoryKeyID {
     InMemoryKeyID(key: key, store: store)
   }
-  public func load(context: LoadContext, continuation: SharedContinuation<Value?>) {
-    continuation.resume(returning: store.values[key, default: context.initialValue] as? Value)
+  public func load(context: LoadContext, continuation: LoadContinuation) {
+    switch context {
+    case .initialValue(let initialValue):
+      continuation.resume(returning: store.values[key, default: initialValue])
+    case .userInitiated:
+      guard let value = store.values[key] as? Value else {
+        continuation.resume()
+        return
+      }
+      continuation.resume(returning: value)
+    }
   }
   public func subscribe(
     initialValue: Value?, subscriber: SharedSubscriber<Value?>
@@ -78,10 +87,13 @@ public struct InMemoryStorage: Hashable, Sendable {
       set { storage.withLock { $0[key] = newValue } }
     }
 
-    subscript(key: String, default defaultValue: (any Sendable)?) -> (any Sendable)? {
-      storage.withLock {
-        $0[key] = $0[key] ?? defaultValue
-        return $0[key]
+    subscript<Value: Sendable>(key: String, default defaultValue: Value) -> Value {
+      storage.withLock { storage in
+        let value = (storage[key] as? Value) ?? {
+          storage[key] = defaultValue
+          return defaultValue
+        }()
+        return value
       }
     }
   }

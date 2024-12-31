@@ -8,8 +8,8 @@ import Testing
       func save(_ value: Int, immediately: Bool, continuation: SharedContinuation<Void>) {
         continuation.resume(throwing: SaveError())
       }
-      func load(context: LoadContext, continuation: SharedContinuation<Int?>) {
-        continuation.resume(returning: nil)
+      func load(context: LoadContext, continuation: LoadContinuation) {
+        continuation.resume()
       }
       func subscribe(initialValue: Int?, subscriber: SharedSubscriber<Int?>) -> SharedSubscription {
         SharedSubscription {}

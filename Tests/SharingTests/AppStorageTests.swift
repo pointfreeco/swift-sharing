@@ -201,7 +201,7 @@
       await confirmation { confirm in
         persistenceKey.load(
           context: .userInitiated,
-          continuation: SharedContinuation { result in
+          continuation: AppStorageKey.LoadContinuation { result in
             let success = try? result.get()
             #expect(success == 123)
             confirm()

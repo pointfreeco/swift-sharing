@@ -45,7 +45,7 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
     Self(base: key, defaultValue: value)
   }
 
-  public func load(context: Base.LoadContext, continuation: SharedContinuation<Base.Value?>) {
+  public func load(context: Base.LoadContext, continuation: Base.LoadContinuation) {
     base.load(context: context, continuation: continuation)
   }
 

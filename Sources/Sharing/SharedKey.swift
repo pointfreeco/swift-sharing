@@ -78,9 +78,9 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedKey<Value>) async throws {
+  public init<Key: SharedKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: Key.LoadContinuation { result in
         continuation.resume(with: result)
       })
     }
