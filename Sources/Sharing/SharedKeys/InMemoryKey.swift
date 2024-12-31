@@ -38,7 +38,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
     self.store = defaultInMemoryStorage
   }
   public var id: InMemoryKeyID {
-    InMemoryKeyID(key: self.key, store: self.store)
+    InMemoryKeyID(key: key, store: store)
   }
   public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
     continuation.resume(returning: store.values[key, default: initialValue] as? Value)

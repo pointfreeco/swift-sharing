@@ -16,7 +16,7 @@ import IssueReporting
 /// > ``Shared/load()`` or ``Shared/save()`` in a suspended state indefinitely and leaks any
 /// > associated resources. `SharedContinuation` reports an issue if either of these invariants is
 /// > violated.
-public struct SharedContinuation<Value>: Sendable/*, ~Escapable*/ {
+public struct SharedContinuation<Value>: Sendable {
   private let box: Box
 
   package init(
