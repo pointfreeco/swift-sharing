@@ -564,11 +564,11 @@
       guard let value = store.object(forKey: key) as? Value
       else {
         guard !SharedAppStorageLocals.isSetting
-        else { return defaultValue }
+        else { return nil }
         SharedAppStorageLocals.$isSetting.withValue(true) {
           store.set(defaultValue, forKey: key)
         }
-        return defaultValue
+        return nil
       }
       return value
     }
@@ -587,11 +587,11 @@
       guard let value = store.url(forKey: key)
       else {
         guard !SharedAppStorageLocals.isSetting
-        else { return defaultValue }
+        else { return nil }
         SharedAppStorageLocals.$isSetting.withValue(true) {
           store.set(defaultValue, forKey: key)
         }
-        return defaultValue
+        return nil
       }
       return value
     }
@@ -611,7 +611,6 @@
     ) -> Value? {
       base.loadValue(from: store, at: key, default: defaultValue?.rawValue)
         .flatMap(Value.init(rawValue:))
-        ?? defaultValue
     }
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       base.saveValue(newValue.rawValue, to: store, at: key)
@@ -624,6 +623,8 @@
       from store: UserDefaults, at key: String, default defaultValue: Base.Value??
     ) -> Base.Value?? {
       base.loadValue(from: store, at: key, default: defaultValue ?? nil)
+        .flatMap(Optional.some)
+        ?? .none
     }
     func saveValue(_ newValue: Base.Value?, to store: UserDefaults, at key: String) {
       if let newValue {
