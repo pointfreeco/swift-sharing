@@ -32,7 +32,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///   - initialValue: An initial value assigned to the `@Shared` property.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
   ///     external system.
-  func load(initialValue: Value?, continuation: SharedContinuation<Value?>)
+  func load(context: LoadContext, continuation: SharedContinuation<Value?>)
 
   /// Subscribes to external updates.
   ///
@@ -43,6 +43,19 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
   func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription
+}
+
+extension SharedReaderKey {
+  public typealias LoadContext = _LoadContext<Value>
+}
+
+public enum _LoadContext<Value> {
+  /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
+  /// first time.
+  case initialValue(Value)
+  /// Value is being loaded from invoking ``SharedReader/load()`` or
+  /// ``SharedReader/init(require:)``.
+  case userInitiated
 }
 
 extension SharedReaderKey where ID == Self {
@@ -138,7 +151,7 @@ extension SharedReader {
   ///   loading and saving the shared reference's value from some external source.
   public init(require key: some SharedReaderKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(initialValue: nil, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: SharedContinuation { result in
         continuation.resume(with: result)
       })
     }
@@ -151,7 +164,7 @@ extension SharedReader {
   @_documentation(visibility: private)
   public init(require key: some SharedKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(initialValue: nil, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: SharedContinuation { result in
         continuation.resume(with: result)
       })
     }

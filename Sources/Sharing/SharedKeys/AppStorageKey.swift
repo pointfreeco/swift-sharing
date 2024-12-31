@@ -380,12 +380,12 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
-      continuation.resume(returning: load(initialValue: initialValue))
+    public func load(context: LoadContext, continuation: SharedContinuation<Value?>) {
+      continuation.resume(returning: load(context: context))
     }
 
-    private func load(initialValue: Value?) -> Value? {
-      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
+    private func load(context: LoadContext) -> Value? {
+      lookup.loadValue(from: store.wrappedValue, at: key, context: context)
     }
 
     public func subscribe(
@@ -562,7 +562,11 @@
 
   private protocol Lookup<Value>: Sendable {
     associatedtype Value: Sendable
-    func loadValue(from store: UserDefaults, at key: String, default defaultValue: Value?) -> Value?
+    func loadValue(
+      from store: UserDefaults,
+      at key: String,
+      context: AppStorageKey<Value>.LoadContext
+    ) -> Value?
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String)
   }
 
@@ -570,7 +574,7 @@
     func loadValue(
       from store: UserDefaults,
       at key: String,
-      default defaultValue: Value?
+      context: AppStorageKey<Value>.LoadContext
     ) -> Value? {
       guard let value = store.object(forKey: key) as? Value
       else {

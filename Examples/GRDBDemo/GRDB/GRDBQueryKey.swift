@@ -106,7 +106,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
   }
 
   func load(
-    initialValue: Value?,
+    context _: LoadContext,
     didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) {
     #if DEBUG

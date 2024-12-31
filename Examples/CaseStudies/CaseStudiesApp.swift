@@ -31,7 +31,7 @@ private struct RootView: View {
         SharedStateInViewController()
       }
       CaseStudyGroupView("Custom SharedKey") {
-        NotificationsView()
+//        NotificationsView()
         GRDBView()
         FirebaseView()
       }

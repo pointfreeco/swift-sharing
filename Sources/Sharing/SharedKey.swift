@@ -80,7 +80,7 @@ extension Shared {
   ///   loading and saving the shared reference's value from some external source.
   public init(require key: some SharedKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(initialValue: nil, continuation: SharedContinuation { result in
+      key.load(context: .userInitiated, continuation: SharedContinuation { result in
         continuation.resume(with: result)
       })
     }
