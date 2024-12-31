@@ -56,6 +56,13 @@ public enum _LoadContext<Value> {
   /// Value is being loaded from invoking ``SharedReader/load()`` or
   /// ``SharedReader/init(require:)``.
   case userInitiated
+
+  var initialValue: Value? {
+    guard case let .initialValue(value) = self else {
+      return nil 
+    }
+    return value
+  }
 }
 
 extension SharedReaderKey where ID == Self {

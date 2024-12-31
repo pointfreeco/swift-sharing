@@ -381,11 +381,11 @@
     }
 
     public func load(context: LoadContext, continuation: SharedContinuation<Value?>) {
-      continuation.resume(returning: load(context: context))
+      continuation.resume(returning: load(initialValue: context.initialValue))
     }
 
-    private func load(context: LoadContext) -> Value? {
-      lookup.loadValue(from: store.wrappedValue, at: key, context: context)
+    private func load(initialValue: Value?) -> Value? {
+      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
     }
 
     public func subscribe(
@@ -565,7 +565,7 @@
     func loadValue(
       from store: UserDefaults,
       at key: String,
-      context: AppStorageKey<Value>.LoadContext
+      default defaultValue: Value?
     ) -> Value?
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String)
   }
@@ -574,7 +574,7 @@
     func loadValue(
       from store: UserDefaults,
       at key: String,
-      context: AppStorageKey<Value>.LoadContext
+      default defaultValue: Value?
     ) -> Value? {
       guard let value = store.object(forKey: key) as? Value
       else {

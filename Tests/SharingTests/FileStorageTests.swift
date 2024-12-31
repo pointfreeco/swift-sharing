@@ -16,11 +16,7 @@
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
-        #if DEBUG
-          expectNoDifference(fileSystem.value, [.fileURL: Data("[\n\n]".utf8)])
-        #else
-          expectNoDifference(fileSystem.value, [.fileURL: Data("[]".utf8)])
-        #endif
+        expectNoDifference(fileSystem.value, [.fileURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)])
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
       }
@@ -32,7 +28,7 @@
       } operation: {
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
-        expectNoDifference(fileSystem.value, [.utf8StringURL: Data()])
+        expectNoDifference(fileSystem.value, [.utf8StringURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)])
         $string.withLock { $0 = "hello" }
         expectNoDifference(
           fileSystem.value[.utf8StringURL].map { String(decoding: $0, as: UTF8.self) },
@@ -49,7 +45,7 @@
         )
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [])
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -87,7 +83,7 @@
         )
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [])
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -107,7 +103,7 @@
 
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
-        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), [])
+        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), nil)
 
         $otherUsers.withLock { $0.append(.blobJr) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -145,27 +141,6 @@
         } matching: {
           $0.error is DecodingError
         }
-      }
-    }
-
-    @Test func writeFileWhileThrottling() throws {
-      let fileStorage = FileStorage.inMemory(
-        fileSystem: fileSystem,
-        scheduler: testScheduler.eraseToAnyScheduler()
-      )
-
-      try withDependencies {
-        $0.defaultFileStorage = fileStorage
-      } operation: {
-        @Shared(.fileStorage(.fileURL)) var users = [User]()
-
-        $users.withLock { $0.append(.blob) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
-
-        try fileStorage.save(Data(), .fileURL)
-        testScheduler.run()
-        expectNoDifference(users, [.blob])
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
       }
     }
 
@@ -319,10 +294,33 @@
           try FileManager.default.removeItem(at: .fileURL)
           try await Task.sleep(nanoseconds: 1_200_000_000)
           expectNoDifference(users, [.blob])
-          #expect(
-            try JSONDecoder().decode([User].self, from: Data(contentsOf: .fileURL))
-            == [.blob]
+          #expect(try Data(contentsOf: .fileURL) == Data("co.pointfree.sharing.fileStorage.stub".utf8))
+        }
+      }
+
+      @Test func writeFileWhileThrottling() async throws {
+        try await withMainSerialExecutor {
+          @Shared(.fileStorage(.fileURL)) var users = [User]()
+
+          $users.withLock { $0.append(.blob) }
+          expectNoDifference(
+            try JSONDecoder().decode([User].self, from: Data(contentsOf: .fileURL)),
+            [.blob]
           )
+          $users.withLock { $0.append(.blobJr) }
+          expectNoDifference(
+            try JSONDecoder().decode([User].self, from: Data(contentsOf: .fileURL)),
+            [.blob]
+          )
+
+          try Data().write(to: .fileURL)
+          try await Task.sleep(nanoseconds: 1_200_000_000)
+
+          expectNoDifference(users, [.blob, .blobJr])
+          withKnownIssue("Throttled work should be cancelled when an external write occurs.") {
+            #expect($users.loadError != nil)
+            try #expect(Data(contentsOf: .fileURL) == Data())
+          }
         }
       }
 
@@ -389,7 +387,7 @@
     fileprivate func users(for url: URL) throws -> [User]? {
       guard
         let data = self[url],
-        !data.isEmpty
+        data != Data("co.pointfree.sharing.fileStorage.stub".utf8)
       else { return nil }
       return try JSONDecoder().decode([User].self, from: data)
     }

@@ -80,6 +80,11 @@
       var modificationDates: [Date] = []
       var value: Value?
       var workItem: DispatchWorkItem?
+      mutating func cancelWorkItem() {
+        value = nil
+        workItem?.cancel()
+        workItem = nil
+      }
     }
 
     public var id: FileStorageKeyID {
@@ -98,24 +103,18 @@
       self.encode = encode
     }
 
-    public func load(initialValue: Value?, continuation: SharedContinuation<Value?>) {
-      do {
-        if let initialValue, !storage.fileExists(url) {
-          try storage.createDirectory(url.deletingLastPathComponent(), true)
-          save(initialValue, immediately: true, continuation: SharedContinuation { result in
-            switch result {
-            case let .failure(error):
-              continuation.resume(throwing: error)
-            case .success:
-              continuation.resume(returning: nil)
-            }
-          })
-          return
+    public func load(context: LoadContext, continuation: SharedContinuation<Value?>) {
+      continuation.resume(
+        with: Result {
+          guard
+            let data = try? storage.load(url),
+            data != stubBytes
+          else {
+            return nil
+          }
+          return try decode(data)
         }
-        try continuation.resume(returning: decode(storage.load(url)))
-      } catch {
-        continuation.resume(throwing: error)
-      }
+      )
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
@@ -132,9 +131,7 @@
         try state.withValue { state in
           let data = try self.encode(value)
           if immediately {
-            state.value = nil
-            state.workItem?.cancel()
-            state.workItem = nil
+            state.cancelWorkItem()
             try self.storage.save(data, url)
             continuation.resume()
             return
@@ -190,36 +187,37 @@
             // NB: Make sure there is a file to create a source for.
             if !storage.fileExists(url) {
               try storage.createDirectory(url.deletingLastPathComponent(), true)
-              try storage.save(Data(), url)
+              try storage.save(stubBytes, url)
             }
             let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
               guard let self else { return }
               state.withValue { state in
                 let modificationDate =
-                (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate] as? Date)
-                ?? Date.distantPast
+                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
+                    as? Date)
+                  ?? Date.distantPast
                 guard
                   !state.modificationDates.contains(modificationDate)
                 else {
                   state.modificationDates.removeAll(where: { $0 <= modificationDate })
                   return
                 }
-                guard
-                  state.workItem == nil,
-                  let data = try? self.storage.load(self.url)
+
+                guard state.workItem == nil
                 else { return }
-                subscriber.yield(with: Result { try decode(data) })
+
+                subscriber.yield(with: Result {
+                  try decode(self.storage.load(self.url))
+                })
               }
             }
-            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
+            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
+              [weak self] in
               guard let self else { return }
               state.withValue { state in
-                state.workItem?.cancel()
-                state.workItem = nil
+                state.cancelWorkItem()
               }
-              self.load(initialValue: initialValue, continuation: SharedContinuation { result in
-                subscriber.yield(try? result.get() ?? initialValue)
-              })
+              subscriber.yield(try? decode(storage.load(url)))
               setUpSources()
             }
             $0 = SharedSubscription {
@@ -246,8 +244,7 @@
           DispatchWorkItem { [weak self] in
             guard let self else { return }
             self.state.withValue { state in
-              state.workItem?.cancel()
-              state.workItem = nil
+              state.cancelWorkItem()
             }
           }
         )
@@ -418,4 +415,6 @@
     #endif
     return encoder
   }()
+
+  private let stubBytes = Data("co.pointfree.sharing.fileStorage.stub".utf8)
 #endif

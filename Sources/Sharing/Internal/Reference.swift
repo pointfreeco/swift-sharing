@@ -207,7 +207,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     }
     key.load(
-      initialValue: initialValue,
+      context: .initialValue(initialValue),
       continuation: SharedContinuation("\(key)", callback: callback)
     )
     self.subscription = key.subscribe(
@@ -264,7 +264,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       loadError = nil
       let newValue = try await withUnsafeThrowingContinuation { continuation in
         let key = key
-        key.load(initialValue: nil, continuation: SharedContinuation("\(key)") { result in
+        key.load(context: .userInitiated, continuation: SharedContinuation("\(key)") { result in
           continuation.resume(with: result)
         })
       }

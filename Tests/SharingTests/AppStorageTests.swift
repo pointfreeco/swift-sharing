@@ -200,7 +200,7 @@
       #expect(try [1, 42] == changes.value.map { try $0.get() })
       await confirmation { confirm in
         persistenceKey.load(
-          initialValue: nil,
+          context: .userInitiated,
           continuation: SharedContinuation { result in
             let success = try? result.get()
             #expect(success == 123)
