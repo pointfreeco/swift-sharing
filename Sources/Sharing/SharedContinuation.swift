@@ -2,11 +2,10 @@ import Foundation
 import IssueReporting
 
 public struct SharedContinuation<Value>: Sendable {
-  private final class Box: @unchecked Sendable {
+  private final class Box: Sendable {
     private let callback: @Sendable (Result<Value, any Error>) -> Void
     private let description: @Sendable () -> String
-    private let lock = NSLock()
-    private var _resumeCount = 0
+    private let resumeCount = Mutex(0)
 
     init(
       callback: @escaping @Sendable (Result<Value, any Error>) -> Void,
@@ -17,7 +16,7 @@ public struct SharedContinuation<Value>: Sendable {
     }
 
     deinit {
-      let isComplete = lock.withLock { _resumeCount } > 0
+      let isComplete = resumeCount.withLock(\.self) > 0
       if !isComplete {
         reportIssue(
           """
@@ -29,9 +28,9 @@ public struct SharedContinuation<Value>: Sendable {
     }
 
     func resume(with result: Result<Value, any Error>) {
-      let resumeCount = lock.withLock {
-        _resumeCount += 1
-        return _resumeCount
+      let resumeCount = resumeCount.withLock {
+        $0 += 1
+        return $0
       }
       guard resumeCount == 1 else {
         reportIssue(
