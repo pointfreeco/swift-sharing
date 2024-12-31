@@ -1,9 +1,70 @@
 import Foundation
 import IssueReporting
 
-public struct SharedContinuation<Value>: Sendable {
+/// A mechanism to communicate with a shared key's external system, synchronously or asynchronously.
+///
+/// A continuation is passed to ``SharedReaderKey/load(initialValue:continuation:)`` and
+/// ``SharedKey/save(_:immediately:continuation:)`` so that state can be shared with an external
+/// system.
+///
+/// > Important: You must call a resume method exactly once on every execution path from the shared
+/// > key it is passed to, _i.e._ in ``SharedReaderKey/load(initialValue:continuation:)`` and
+/// > ``SharedKey/save(_:immediately:continuation:)``.
+/// >
+/// > Resuming from a continuation more than once is considered a logic error, and only the first
+/// > call to `resume` will be executed. Never resuming leaves the task awaiting the call to
+/// > ``Shared/load()`` or ``Shared/save()`` in a suspended state indefinitely and leaks any
+/// > associated resources. `SharedContinuation` reports an issue if either of these invariants is
+/// > violated.
+public struct SharedContinuation<Value>: Sendable/*, ~Escapable*/ {
+  private let box: Box
+
+  init(
+    _ description: @autoclosure @escaping @Sendable () -> String = "",
+    callback: @escaping @Sendable (Result<Value, any Error>) -> Void
+  ) {
+    self.box = Box(
+      callback: callback,
+      description: {
+        let description = description()
+        return description.isEmpty ? "A shared key" : "'\(description)'"
+      }
+    )
+  }
+
+  /// Resume the task awaiting the continuation by having it return normally from its suspension
+  /// point.
+  ///
+  /// - Parameter value: The value to return from the continuation.
+  public func resume(returning value: Value) {
+    resume(with: .success(value))
+  }
+
+  /// Resume the task awaiting the continuation by having it throw an error from its
+  /// suspension point.
+  ///
+  /// - Parameter error: The error to throw from the continuation.
+  public func resume(throwing error: any Error) {
+    resume(with: .failure(error))
+  }
+
+  /// Resume the task awaiting the continuation by having it return normally from its suspension
+  /// point.
+  public func resume() where Value == Void {
+    resume(returning: ())
+  }
+
+  /// Resume the task awaiting the continuation by having it either return normally or throw an
+  /// error based on the state of the given `Result` value.
+  ///
+  /// - Parameter result: A value to either return or throw from the
+  ///   continuation.
+  public func resume(with result: Result<Value, any Error>) {
+    box.resume(with: result)
+  }
+
   private final class Box: Sendable {
-    private let callback: @Sendable (Result<Value, any Error>) -> Void
+    private let callback: Mutex<(@Sendable (Result<Value, any Error>) -> Void)?>
     private let description: @Sendable () -> String
     private let resumeCount = Mutex(0)
 
@@ -11,7 +72,7 @@ public struct SharedContinuation<Value>: Sendable {
       callback: @escaping @Sendable (Result<Value, any Error>) -> Void,
       description: @escaping @Sendable () -> String
     ) {
-      self.callback = callback
+      self.callback = Mutex(callback)
       self.description = description
     }
 
@@ -40,40 +101,10 @@ public struct SharedContinuation<Value>: Sendable {
         )
         return
       }
-      callback(result)
-    }
-  }
-
-  private let box: Box
-
-  init(
-    _ description: @autoclosure @escaping @Sendable () -> String = "",
-    callback: @escaping @Sendable (Result<Value, any Error>) -> Void
-  ) {
-    self.box = Box(
-      callback: callback,
-      description: {
-        let description = description()
-        return description.isEmpty ? "A shared key" : "'\(description)'"
+      callback.withLock { callback in
+        defer { callback = nil }
+        callback?(result)
       }
-    )
-  }
-
-  public func resume(with result: Result<Value, any Error>) {
-    box.resume(with: result)
-  }
-
-  public func resume(returning value: Value) {
-    resume(with: .success(value))
-  }
-
-  public func resume(throwing error: any Error) {
-    resume(with: .failure(error))
-  }
-}
-
-extension SharedContinuation where Value == Void {
-  public func resume() {
-    resume(returning: ())
+    }
   }
 }
