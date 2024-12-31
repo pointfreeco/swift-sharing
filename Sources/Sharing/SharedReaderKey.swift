@@ -129,6 +129,37 @@ extension SharedReader {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
+  /// Creates a shared reference to a read-only value using a shared key.
+  ///
+  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
+  /// version of this initializer, see ``init(wrappedValue:_:)-56tir``.
+  ///
+  /// - Parameter key: A shared key associated with the shared reference. It is responsible for
+  ///   loading and saving the shared reference's value from some external source.
+  public init(require key: some SharedReaderKey<Value>) async throws {
+    let value = try await withUnsafeThrowingContinuation { continuation in
+      key.load(initialValue: nil, continuation: SharedContinuation { result in
+        continuation.resume(with: result)
+      })
+    }
+    guard let value else { throw LoadError() }
+    self.init(rethrowing: value, key)
+    if let loadError { throw loadError }
+  }
+
+  @_disfavoredOverload
+  @_documentation(visibility: private)
+  public init(require key: some SharedKey<Value>) async throws {
+    let value = try await withUnsafeThrowingContinuation { continuation in
+      key.load(initialValue: nil, continuation: SharedContinuation { result in
+        continuation.resume(with: result)
+      })
+    }
+    guard let value else { throw LoadError() }
+    self.init(rethrowing: value, key)
+    if let loadError { throw loadError }
+  }
+
   @available(*, unavailable, message: "Assign a default value")
   public init(_ key: some SharedReaderKey<Value>) {
     fatalError()
