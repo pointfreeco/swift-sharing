@@ -105,28 +105,22 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     #endif
   }
 
-  func load(
-    context _: LoadContext,
-    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-  ) {
+  func load(context: LoadContext, continuation: LoadContinuation) {
     #if DEBUG
       guard !isDefaultDatabase else {
-        callback(.success(nil))
+        continuation.resume()
         return
       }
     #endif
-    database.asyncRead { result in
-      let result: Result<Value?, any Error> = result.flatMap { db in
+    database.asyncRead { dbResult in
+      let result = dbResult.flatMap { db in
         Result { try query.fetch(db) }
       }
-      scheduler.schedule { callback(result) }
+      scheduler.schedule { continuation.resume(with: result) }
     }
   }
 
-  func subscribe(
-    initialValue: Value?,
-    didReceive callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
-  ) -> SharedSubscription {
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription {
     #if DEBUG
       guard !isDefaultDatabase else {
         return SharedSubscription {}
@@ -134,9 +128,9 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     #endif
     let observation = ValueObservation.tracking(query.fetch)
     let cancellable = observation.start(in: database, scheduling: scheduler) { error in
-      callback(.failure(error))
+      subscriber.yield(throwing: error)
     } onChange: { newValue in
-      callback(.success(newValue))
+      subscriber.yield(newValue)
     }
     return SharedSubscription {
       cancellable.cancel()
