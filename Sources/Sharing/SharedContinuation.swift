@@ -19,7 +19,7 @@ import IssueReporting
 public struct SharedContinuation<Value>: Sendable/*, ~Escapable*/ {
   private let box: Box
 
-  init(
+  package init(
     _ description: @autoclosure @escaping @Sendable () -> String = "",
     callback: @escaping @Sendable (Result<Value, any Error>) -> Void
   ) {

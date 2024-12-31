@@ -32,7 +32,6 @@ let package = Package(
       dependencies: [
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
-        .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),

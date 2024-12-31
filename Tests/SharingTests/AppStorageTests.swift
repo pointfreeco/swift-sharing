@@ -1,7 +1,7 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Dependencies
   import Foundation
-  @testable import Sharing
+  import Sharing
   import Testing
 
   @Suite struct AppStorageTests {

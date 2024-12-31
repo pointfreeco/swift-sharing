@@ -5,6 +5,10 @@
 public struct SharedSubscriber<Value>: Sendable {
   let callback: @Sendable (Result<Value, any Error>) -> Void
 
+  package init(callback: @escaping @Sendable (Result<Value, any Error>) -> Void) {
+    self.callback = callback
+  }
+
   /// Yield an updated value from an external source.
   ///
   /// - Parameter value: An updated value.
