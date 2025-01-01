@@ -381,15 +381,11 @@
     }
 
     public func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
-      if let value = load(initialValue: context.initialValue) {
+      if let value = lookupValue(default: context.initialValue) {
         continuation.resume(returning: value)
       } else {
         continuation.resume()
       }
-    }
-
-    private func load(initialValue: Value?) -> Value? {
-      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
     }
 
     public func subscribe(
@@ -436,7 +432,7 @@
           object: store.wrappedValue,
           queue: nil
         ) { _ in
-          let newValue = load(initialValue: initialValue)
+          let newValue = lookupValue(default: initialValue)
           defer { previousValue.withValue { $0 = newValue } }
           func isEqual<T>(_ lhs: T, _ rhs: T) -> Bool? {
             func open<U: Equatable>(_ lhs: U) -> Bool {
@@ -460,7 +456,7 @@
         let observer = Observer {
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          subscriber.yield(load(initialValue: initialValue))
+          subscriber.yield(lookupValue(default: initialValue))
         }
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
@@ -472,7 +468,7 @@
           object: nil,
           queue: .main
         ) { _ in
-          subscriber.yield(load(initialValue: initialValue))
+          subscriber.yield(lookupValue(default: initialValue))
         }
       } else {
         willEnterForeground = nil
@@ -488,6 +484,10 @@
     public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
       lookup.saveValue(value, to: store.wrappedValue, at: key)
       continuation.resume()
+    }
+
+    private func lookupValue(default initialValue: Value?) -> Value? {
+      lookup.loadValue(from: store.wrappedValue, at: key, default: initialValue)
     }
 
     private final class Observer: NSObject, Sendable {
