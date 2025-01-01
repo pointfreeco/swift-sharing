@@ -395,7 +395,6 @@
     public func subscribe(
       initialValue: Value?, subscriber: SharedSubscriber<Value?>
     ) -> SharedSubscription {
-      let previousValue = LockIsolated(initialValue)
       let removeObserver: @Sendable () -> Void
       let keyContainsPeriod = key.contains(".")
       if keyContainsPeriod || key.hasPrefix("@") {
@@ -431,6 +430,7 @@
             """
           )
         }
+        let previousValue = LockIsolated(initialValue)
         let userDefaultsDidChange = NotificationCenter.default.addObserver(
           forName: UserDefaults.didChangeNotification,
           object: store.wrappedValue,
@@ -488,13 +488,6 @@
     public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
       lookup.saveValue(value, to: store.wrappedValue, at: key)
       continuation.resume()
-    }
-    public func save(
-      _ value: Value,
-      immediately: Bool,
-      didComplete callback: @escaping (Result<Void, any Error>) -> Void
-    ) {
-      callback(.success(lookup.saveValue(value, to: store.wrappedValue, at: key)))
     }
 
     private final class Observer: NSObject, Sendable {
