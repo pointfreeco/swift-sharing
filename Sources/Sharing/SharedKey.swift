@@ -20,7 +20,15 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     delays.
   ///   - continuation: A continuation that should be notified upon the completion of saving a
   ///     shared value.
-  func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>)
+  func save(_ value: Value, context: SaveContext, continuation: SaveContinuation)
+}
+
+public enum SaveContext: Sendable {
+  /// Value is being saved after mutation via ``Shared/withLock(_:fileID:filePath:line:column:)``.
+  case didSet
+
+  /// Value is being saved via ``Shared/save()``.
+  case userInitiated
 }
 
 extension Shared {

@@ -49,6 +49,7 @@ public enum LoadContext<Value> {
   /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
   /// first time.
   case initialValue(Value)
+
   /// Value is being loaded from invoking ``SharedReader/load()`` or
   /// ``SharedReader/init(require:)``.
   case userInitiated
@@ -60,6 +61,8 @@ public enum LoadContext<Value> {
     return value
   }
 }
+
+extension LoadContext: Sendable where Value: Sendable {}
 
 extension SharedReaderKey where ID == Self {
   public var id: ID { self }

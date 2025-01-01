@@ -382,8 +382,8 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
         let key = key
         key.save(
           value,
-          immediately: false,
-          continuation: SharedContinuation("\(key)") { [weak self] result in
+          context: .didSet,
+          continuation: SaveContinuation("\(key)") { [weak self] result in
             guard let self else { return }
             switch result {
             case .success:
@@ -407,8 +407,8 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
         let key = key
         key.save(
           lock.withLock { value },
-          immediately: true,
-          continuation: SharedContinuation("\(key)") { result in
+          context: .userInitiated,
+          continuation: SaveContinuation("\(key)") { result in
             continuation.resume(with: result)
           }
         )

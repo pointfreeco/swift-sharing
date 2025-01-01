@@ -57,7 +57,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   ) -> SharedSubscription {
     SharedSubscription {}
   }
-  public func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>) {
+  public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
     store.values[key] = value
     continuation.resume()
   }

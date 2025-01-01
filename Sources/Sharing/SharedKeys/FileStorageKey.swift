@@ -76,7 +76,7 @@
     fileprivate let state = LockIsolated(State())
 
     fileprivate struct State {
-      var continuations: [SharedContinuation<Void>] = []
+      var continuations: [SaveContinuation] = []
       var modificationDates: [Date] = []
       var value: Value?
       var workItem: DispatchWorkItem?
@@ -123,48 +123,50 @@
       }
     }
 
-    public func save(_ value: Value, immediately: Bool, continuation: SharedContinuation<Void>) {
+    public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
         try state.withValue { state in
           let data = try self.encode(value)
-          if immediately {
+          switch context {
+          case .didSet:
+            if state.workItem == nil {
+              try save(data: data, url: url, modificationDates: &state.modificationDates)
+              continuation.resume()
+              let workItem = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.state.withValue { state in
+                  defer {
+                    state.value = nil
+                    state.workItem = nil
+                  }
+                  guard
+                    let value = state.value,
+                    let data = try? self.encode(value)
+                  else { return }
+                  let result = Result {
+                    try self.save(
+                      data: data,
+                      url: self.url,
+                      modificationDates: &state.modificationDates
+                    )
+                  }
+                  for continuation in state.continuations {
+                    continuation.resume(with: result)
+                  }
+                  state.continuations.removeAll()
+                }
+              }
+              state.workItem = workItem
+              storage.asyncAfter(.seconds(1), workItem)
+            } else {
+              state.value = value
+              state.continuations.append(continuation)
+            }
+
+          case .userInitiated:
             state.cancelWorkItem()
             try self.storage.save(data, url)
             continuation.resume()
-            return
-          }
-          if state.workItem == nil {
-            try save(data: data, url: url, modificationDates: &state.modificationDates)
-            continuation.resume()
-            let workItem = DispatchWorkItem { [weak self] in
-              guard let self else { return }
-              self.state.withValue { state in
-                defer {
-                  state.value = nil
-                  state.workItem = nil
-                }
-                guard
-                  let value = state.value,
-                  let data = try? self.encode(value)
-                else { return }
-                let result = Result {
-                  try self.save(
-                    data: data,
-                    url: self.url,
-                    modificationDates: &state.modificationDates
-                  )
-                }
-                for continuation in state.continuations {
-                  continuation.resume(with: result)
-                }
-                state.continuations.removeAll()
-              }
-            }
-            state.workItem = workItem
-            storage.asyncAfter(.seconds(1), workItem)
-          } else {
-            state.value = value
-            state.continuations.append(continuation)
           }
         }
       } catch {

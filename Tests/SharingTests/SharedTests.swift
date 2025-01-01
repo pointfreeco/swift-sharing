@@ -78,7 +78,7 @@ import Testing
         ) -> SharedSubscription {
           SharedSubscription {}
         }
-        func save(_ value: Int, immediately: Bool, continuation: SharedContinuation<Void>) {
+        func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
           continuation.resume(with: value < 0 ? .failure(SaveError()) : .success(()))
         }
         struct SaveError: Error {}
@@ -109,7 +109,7 @@ import Testing
           self.subscriber = subscriber
           return SharedSubscription {}
         }
-        func save(_ value: Int, immediately: Bool, continuation: SharedContinuation<Void>) {
+        func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
           continuation.resume(with: value < 0 ? .failure(SaveError()) : .success(()))
         }
         struct LoadError: Error {}
