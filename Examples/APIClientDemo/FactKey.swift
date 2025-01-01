@@ -11,7 +11,7 @@ struct FactAPIKey: SharedReaderKey {
   let id = UUID()
   let number: Int?
 
-  func load(context: LoadContext<String?>, continuation: LoadContinuation<String?>) {
+  func load(context _: LoadContext<String?>, continuation: LoadContinuation<String?>) {
     guard let number else {
       continuation.resume()
       return

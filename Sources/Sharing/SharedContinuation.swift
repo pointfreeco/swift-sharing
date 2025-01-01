@@ -52,7 +52,7 @@ public struct LoadContinuation<Value>: Sendable {
   /// Resume the task awaiting the continuation by having it return normally from its suspension
   /// point.
   public func resume() {
-    box.resume(with: .success(nil))
+    resume(with: .success(nil))
   }
 
   /// Resume the task awaiting the continuation by having it either return normally or throw an
@@ -60,8 +60,8 @@ public struct LoadContinuation<Value>: Sendable {
   ///
   /// - Parameter result: A value to either return or throw from the
   ///   continuation.
-  public func resume(with result: Result<Value, any Error>) {
-    box.resume(with: result.map(Optional.some))
+  public func resume(with result: Result<Value?, any Error>) {
+    box.resume(with: result)
   }
 
   private final class Box: Sendable {

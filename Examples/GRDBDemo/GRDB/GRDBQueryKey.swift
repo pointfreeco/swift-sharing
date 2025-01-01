@@ -116,7 +116,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
       let result = dbResult.flatMap { db in
         Result { try query.fetch(db) }
       }
-      scheduler.schedule { continuation.resume(with: result) }
+      scheduler.schedule { continuation.resume(with: result.map(Optional.some)) }
     }
   }
 

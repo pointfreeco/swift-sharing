@@ -126,7 +126,7 @@
     public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
         try state.withValue { state in
-          let data = try self.encode(value)
+          let data = try encode(value)
           switch context {
           case .didSet:
             if state.workItem == nil {
@@ -141,12 +141,12 @@
                   }
                   guard
                     let value = state.value,
-                    let data = try? self.encode(value)
+                    let data = try? encode(value)
                   else { return }
                   let result = Result {
-                    try self.save(
+                    try save(
                       data: data,
-                      url: self.url,
+                      url: url,
                       modificationDates: &state.modificationDates
                     )
                   }
@@ -165,7 +165,7 @@
 
           case .userInitiated:
             state.cancelWorkItem()
-            try self.storage.save(data, url)
+            try storage.save(data, url)
             continuation.resume()
           }
         }
@@ -192,7 +192,7 @@
               guard let self else { return }
               state.withValue { state in
                 let modificationDate =
-                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
+                  (try? storage.attributesOfItemAtPath(url.path)[.modificationDate]
                     as? Date)
                   ?? Date.distantPast
                 guard
@@ -205,9 +205,7 @@
                 guard state.workItem == nil
                 else { return }
 
-                subscriber.yield(with: Result {
-                  try decode(self.storage.load(self.url))
-                })
+                subscriber.yield(with: Result { try decode(storage.load(url)) })
               }
             }
             let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {

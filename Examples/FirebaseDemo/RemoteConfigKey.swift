@@ -12,27 +12,21 @@ struct RemoteConfigKey<Value: Decodable & Sendable>: SharedReaderKey {
   let key: String
   var id: some Hashable { key }
   @Dependency(RemoteConfigDependencyKey.self) var remoteConfig
-  func load(
-    initialValue: Value?,
-    didReceive callback: @escaping (Result<Value?, any Error>) -> Void
-  ) {
+  func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
     remoteConfig.fetchAndActivate { changed, error in
       if let error {
-        callback(.failure(error))
+        continuation.resume(throwing: error)
       } else {
-        callback(Result { try remoteConfig.configValue(forKey: key).decoded() })
+        continuation.resume(with: Result { try remoteConfig.configValue(forKey: key).decoded() })
       }
     }
   }
-  func subscribe(
-    initialValue: Value?,
-    didReceive callback: @escaping (Result<Value?, any Error>) -> Void
-  ) -> SharedSubscription {
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription {
     let registration = remoteConfig.addOnConfigUpdateListener { update, error in
       guard error == nil else { return }
       remoteConfig.activate { changed, error in
         guard error == nil else { return }
-        callback(Result { try remoteConfig.configValue(forKey: key).decoded() })
+        subscriber.yield(with: Result { try remoteConfig.configValue(forKey: key).decoded() })
       }
     }
     return SharedSubscription {
