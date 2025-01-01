@@ -380,7 +380,7 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    public func load(context: LoadContext, continuation: LoadContinuation) {
+    public func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
       if let value = load(initialValue: context.initialValue) {
         continuation.resume(returning: value)
       } else {

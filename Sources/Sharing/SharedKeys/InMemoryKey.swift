@@ -40,7 +40,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
   public var id: InMemoryKeyID {
     InMemoryKeyID(key: key, store: store)
   }
-  public func load(context: LoadContext, continuation: LoadContinuation) {
+  public func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
     switch context {
     case .initialValue(let initialValue):
       continuation.resume(returning: store.values[key, default: initialValue])

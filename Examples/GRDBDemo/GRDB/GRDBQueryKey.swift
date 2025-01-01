@@ -105,7 +105,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     #endif
   }
 
-  func load(context: LoadContext, continuation: LoadContinuation) {
+  func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
     #if DEBUG
       guard !isDefaultDatabase else {
         continuation.resume()

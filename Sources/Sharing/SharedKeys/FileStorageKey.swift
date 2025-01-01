@@ -103,7 +103,7 @@
       self.encode = encode
     }
 
-    public func load(context _: LoadContext, continuation: LoadContinuation) {
+    public func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
       guard
         let data = try? storage.load(url),
         data != stubBytes

@@ -32,10 +32,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///   - initialValue: An initial value assigned to the `@Shared` property.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
   ///     external system.
-  func load(context: LoadContext, continuation: LoadContinuation)
-
-  // continuation.resume()
-  // continuation.resume(returning: .default)
+  func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>)
 
   /// Subscribes to external updates.
   ///
@@ -48,12 +45,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription
 }
 
-extension SharedReaderKey {
-  public typealias LoadContext = _LoadContext<Value>
-  public typealias LoadContinuation = _LoadContinuation<Value>
-}
-
-public enum _LoadContext<Value> {
+public enum LoadContext<Value> {
   /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
   /// first time.
   case initialValue(Value)
@@ -162,7 +154,7 @@ extension SharedReader {
   ///   loading and saving the shared reference's value from some external source.
   public init<Key: SharedReaderKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: Key.LoadContinuation { result in
+      key.load(context: .userInitiated, continuation: LoadContinuation { result in
         continuation.resume(with: result)
       })
     }
@@ -175,7 +167,7 @@ extension SharedReader {
   @_documentation(visibility: private)
   public init<Key: SharedKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: Key.LoadContinuation { result in
+      key.load(context: .userInitiated, continuation: LoadContinuation { result in
         continuation.resume(with: result)
       })
     }
