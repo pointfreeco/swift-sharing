@@ -1,20 +1,19 @@
 import Foundation
 import Sharing
 
-extension SharedReaderKey where Self == FactAPIKey.Default {
+extension SharedReaderKey where Self == FactAPIKey {
   static func fact(_ number: Int?) -> Self {
-    Self[FactAPIKey(number: number), default: ""]
+    Self(number: number)
   }
 }
 
 struct FactAPIKey: SharedReaderKey {
+  let id = UUID()
   let number: Int?
 
-  let id = UUID()
-
-  func load(initialValue: String?, continuation: SharedContinuation<String?>) {
-    guard let number/*, initialValue == nil*/ else {
-      continuation.resume(returning: nil)
+  func load(context: LoadContext<String?>, continuation: LoadContinuation<String?>) {
+    guard let number else {
+      continuation.resume()
       return
     }
     Task {
@@ -30,7 +29,7 @@ struct FactAPIKey: SharedReaderKey {
   }
 
   func subscribe(
-    initialValue: String?, subscriber: SharedSubscriber<String?>
+    initialValue: String??, subscriber: SharedSubscriber<String??>
   ) -> SharedSubscription {
     SharedSubscription {}
   }

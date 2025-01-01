@@ -30,7 +30,7 @@ struct ContentView: View {
         ProgressView()
       } else if let loadError = $fact.loadError {
         Text(loadError.localizedDescription)
-      } else if !fact.isEmpty {
+      } else if let fact {
         Text(fact)
       }
       Button("Get Fact") {
