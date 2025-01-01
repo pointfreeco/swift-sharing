@@ -57,7 +57,8 @@ struct InteractionWithAppStorageView: SwiftUICaseStudy {
   }
 }
 
-#Preview("Standard user defaults", traits: .dependency(\.defaultAppStorage, .standard)) {
+#Preview("Standard user defaults") {
+  let _ = prepareDependencies { $0.defaultAppStorage = .standard }
   NavigationStack {
     CaseStudyView {
       InteractionWithAppStorageView()
@@ -65,14 +66,10 @@ struct InteractionWithAppStorageView: SwiftUICaseStudy {
   }
 }
 
-#Preview(
-  "Quarantined user defaults",
-  traits: .dependencies {
-    $0.defaultAppStorage = UserDefaults(
-      suiteName: "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
-    )!
-  }
-) {
+#Preview("Quarantined user defaults") {
+  let _ = UserDefaults(
+    suiteName: "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
+  )!
   @Dependency(\.defaultAppStorage) var store
   NavigationStack {
     CaseStudyView {

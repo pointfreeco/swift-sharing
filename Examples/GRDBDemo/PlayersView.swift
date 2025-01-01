@@ -150,14 +150,14 @@ struct AddPlayerView: View {
   }
 }
 
-#Preview(
-  traits: .dependency(\.defaultDatabase, .appDatabase)
-) {
-  @Dependency(\.defaultDatabase) var database
-  let _ = try! database.write { db in
-    for index in 0...9 {
-      _ = try Player(name: "Blob \(index)", isInjured: index.isMultiple(of: 3))
-        .inserted(db)
+#Preview {
+  let _ = prepareDependencies {
+    $0.defaultDatabase = .appDatabase
+    let _ = try! $0.defaultDatabase.write { db in
+      for index in 0...9 {
+        _ = try Player(name: "Blob \(index)", isInjured: index.isMultiple(of: 3))
+          .inserted(db)
+      }
     }
   }
   PlayersView()
