@@ -247,10 +247,9 @@
     private let lookup: any Lookup<Value>
     private let key: String
     private let store: UncheckedSendable<UserDefaults>
-    private let storeID: String
 
     public var id: AppStorageKeyID {
-      AppStorageKeyID(key: key, storeID: storeID)
+      AppStorageKeyID(key: key, store: store.wrappedValue)
     }
 
     private init(lookup: some Lookup<Value>, key: String, store: UserDefaults?) {
@@ -259,15 +258,36 @@
       self.key = key
       let store = store ?? defaultStore
       self.store = UncheckedSendable(store)
-      let storeID: String
-      if store.responds(to: Selector(("_identifier"))),
-        let id = store.perform(Selector(("_identifier"))).takeUnretainedValue() as? String
-      {
-        storeID = id
-      } else {
-        storeID = ObjectIdentifier(store).debugDescription
-      }
-      self.storeID = storeID
+      #if DEBUG
+        if store.responds(to: Selector(("_identifier"))),
+          let suiteName = store.perform(Selector(("_identifier"))).takeUnretainedValue() as? String
+        {
+          let objectID = ObjectIdentifier(store)
+          suites.withLock { suites in
+            defer { suites[suiteName] = objectID }
+            if let id = suites[suiteName], id != objectID {
+              reportIssue(
+                """
+                '@Shared(\(self))' was given a new store object for an existing suite name \
+                (\(suiteName.debugDescription)).
+
+                Shared app storage for a given suite should all share the same store object to \
+                ensure synchronization and observation. For example, define a store as a \
+                'static let' and refer to this single instance when creating shared app storage:
+
+                    extension UserDefaults {
+                      nonisolated(unsafe) static let mySuite = UserDefaults(
+                        suiteName: \(suiteName.debugDescription)
+                      )!
+                    }
+
+                    @Shared(.appStorage(\(key.debugDescription), store: .mySuite) var myProperty
+                """
+              )
+            }
+          }
+        }
+      #endif
     }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Bool {
@@ -479,7 +499,7 @@
 
   public struct AppStorageKeyID: Hashable {
     fileprivate let key: String
-    fileprivate let storeID: String
+    fileprivate let store: UserDefaults
   }
 
   extension DependencyValues {
@@ -624,4 +644,8 @@
       return nil
     #endif
   }()
+
+  #if DEBUG
+    private let suites = Mutex<[String: ObjectIdentifier]>([:])
+  #endif
 #endif
