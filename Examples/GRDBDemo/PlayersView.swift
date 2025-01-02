@@ -99,7 +99,7 @@ struct PlayersView: View {
     }
   }
 
-  struct Players: GRDBQuery {
+  struct Players: QueryKeyRequest {
     enum Order: String { case name, isInjured }
     let order: Order
     init(order: Order = .name) {

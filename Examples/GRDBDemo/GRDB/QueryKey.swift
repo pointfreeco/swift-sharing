@@ -6,20 +6,20 @@ import SwiftUI
 extension SharedReaderKey {
   /// A key that can query for data in a SQLite database.
   static func query<Value>(
-    _ query: some GRDBQuery<Value>,
+    _ request: some QueryKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
-  where Self == GRDBQueryKey<Value> {
-    GRDBQueryKey(query: query, animation: animation)
+  where Self == QueryKey<Value> {
+    QueryKey(request: request, animation: animation)
   }
 
   /// A key that can query for a collection of data in a SQLite database.
   static func query<Value: RangeReplaceableCollection>(
-    _ query: some GRDBQuery<Value>,
+    _ request: some QueryKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
-  where Self == GRDBQueryKey<Value>.Default {
-    Self[.query(query, animation: animation), default: Value()]
+  where Self == QueryKey<Value>.Default {
+    Self[.query(request, animation: animation), default: Value()]
   }
 
   /// A key that can query for a collection of data in a SQLite database.
@@ -28,7 +28,7 @@ extension SharedReaderKey {
     arguments: StatementArguments = StatementArguments(),
     animation: Animation? = nil
   ) -> Self
-  where Self == GRDBQueryKey<[Value]>.Default {
+  where Self == QueryKey<[Value]>.Default {
     Self[.query(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
   }
 
@@ -38,7 +38,7 @@ extension SharedReaderKey {
     arguments: StatementArguments = StatementArguments(),
     animation: Animation? = nil
   ) -> Self
-  where Self == GRDBQueryKey<Value> {
+  where Self == QueryKey<Value> {
     .query(FetchOne(sql: sql, arguments: arguments), animation: animation)
   }
 }
@@ -46,11 +46,11 @@ extension SharedReaderKey {
 extension DependencyValues {
   /// The default database used by ``Sharing/SharedReaderKey/query(_:animation:)``.
   public var defaultDatabase: any DatabaseWriter {
-    get { self[GRDBDatabaseKey.self] }
-    set { self[GRDBDatabaseKey.self] = newValue }
+    get { self[DefaultDatabaseKey.self] }
+    set { self[DefaultDatabaseKey.self] = newValue }
   }
 
-  private enum GRDBDatabaseKey: DependencyKey {
+  private enum DefaultDatabaseKey: DependencyKey {
     static var liveValue: any DatabaseWriter { testValue }
     static var testValue: any DatabaseWriter {
       reportIssue(
@@ -78,28 +78,28 @@ extension DependencyValues {
   }
 }
 
-protocol GRDBQuery<Value>: Hashable, Sendable {
+protocol QueryKeyRequest<Value>: Hashable, Sendable {
   associatedtype Value
   func fetch(_ db: Database) throws -> Value
 }
 
-struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
+struct QueryKey<Value: Sendable>: SharedReaderKey {
   let database: any DatabaseWriter
-  let query: any GRDBQuery<Value>
+  let request: any QueryKeyRequest<Value>
   let scheduler: any ValueObservationScheduler
   #if DEBUG
     let isDefaultDatabase: Bool
   #endif
 
-  typealias ID = GRDBQueryID
+  typealias ID = QueryKeyID
 
-  var id: ID { ID(rawValue: query) }
+  var id: ID { ID(rawValue: request) }
 
-  init(query: some GRDBQuery<Value>, animation: Animation? = nil) {
+  init(request: some QueryKeyRequest<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var database
     self.scheduler = .animation(animation)
     self.database = database
-    self.query = query
+    self.request = request
     #if DEBUG
       self.isDefaultDatabase = database.configuration.label == .defaultDatabaseLabel
     #endif
@@ -114,7 +114,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     #endif
     database.asyncRead { dbResult in
       let result = dbResult.flatMap { db in
-        Result { try query.fetch(db) }
+        Result { try request.fetch(db) }
       }
       scheduler.schedule { continuation.resume(with: result.map(Optional.some)) }
     }
@@ -128,7 +128,7 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
         return SharedSubscription {}
       }
     #endif
-    let observation = ValueObservation.tracking(query.fetch)
+    let observation = ValueObservation.tracking(request.fetch)
     let cancellable = observation.start(in: database, scheduling: scheduler) { error in
       subscriber.yield(throwing: error)
     } onChange: { newValue in
@@ -140,15 +140,15 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
   }
 }
 
-struct GRDBQueryID: Hashable {
+struct QueryKeyID: Hashable {
   fileprivate let rawValue: AnyHashableSendable
 
-  init(rawValue: any GRDBQuery) {
+  init(rawValue: any QueryKeyRequest) {
     self.rawValue = AnyHashableSendable(rawValue)
   }
 }
 
-private struct FetchAll<Element: FetchableRecord>: GRDBQuery {
+private struct FetchAll<Element: FetchableRecord>: QueryKeyRequest {
   var sql: String
   var arguments: StatementArguments = StatementArguments()
   func fetch(_ db: Database) throws -> [Element] {
@@ -156,7 +156,7 @@ private struct FetchAll<Element: FetchableRecord>: GRDBQuery {
   }
 }
 
-private struct FetchOne<Value: DatabaseValueConvertible>: GRDBQuery {
+private struct FetchOne<Value: DatabaseValueConvertible>: QueryKeyRequest {
   var sql: String
   var arguments: StatementArguments = StatementArguments()
   func fetch(_ db: Database) throws -> Value {
