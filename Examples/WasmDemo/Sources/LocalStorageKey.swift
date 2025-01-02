@@ -17,7 +17,7 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
     continuation.resume(with: Result { try decode() })
   }
 
-  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription {
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value>) -> SharedSubscription {
     nonisolated(unsafe) let listener = JSClosure { _ in
       subscriber.yield(with: Result { try decode() })
       return .undefined

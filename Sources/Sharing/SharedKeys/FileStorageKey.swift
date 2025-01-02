@@ -114,6 +114,64 @@
       continuation.resume(with: Result { try decode(data) })
     }
 
+    public func subscribe(
+      initialValue: Value?, subscriber: SharedSubscriber<Value>
+    ) -> SharedSubscription {
+      let cancellable = LockIsolated<SharedSubscription?>(nil)
+      @Sendable func setUpSources() {
+        cancellable.withValue { [weak self] in
+          $0?.cancel()
+          guard let self else { return }
+          do {
+            // NB: Make sure there is a file to create a source for.
+            if !storage.fileExists(url) {
+              try storage.createDirectory(url.deletingLastPathComponent(), true)
+              try storage.save(stubBytes, url)
+            }
+            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                let modificationDate =
+                  (try? storage.attributesOfItemAtPath(url.path)[.modificationDate]
+                    as? Date)
+                  ?? Date.distantPast
+                guard
+                  !state.modificationDates.contains(modificationDate)
+                else {
+                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                  return
+                }
+
+                guard state.workItem == nil
+                else { return }
+
+                subscriber.yield(with: Result { try decode(storage.load(url)) })
+              }
+            }
+            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
+              [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                state.cancelWorkItem()
+              }
+              subscriber.yield(with: .success(try? decode(storage.load(url))))
+              setUpSources()
+            }
+            $0 = SharedSubscription {
+              writeCancellable.cancel()
+              deleteCancellable.cancel()
+            }
+          } catch {
+            subscriber.yield(throwing: error)
+          }
+        }
+      }
+      setUpSources()
+      return SharedSubscription {
+        cancellable.withValue { $0?.cancel() }
+      }
+    }
+
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
       try storage.save(data, url)
       if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
@@ -171,64 +229,6 @@
         }
       } catch {
         continuation.resume(throwing: error)
-      }
-    }
-
-    public func subscribe(
-      initialValue: Value?, subscriber: SharedSubscriber<Value?>
-    ) -> SharedSubscription {
-      let cancellable = LockIsolated<SharedSubscription?>(nil)
-      @Sendable func setUpSources() {
-        cancellable.withValue { [weak self] in
-          $0?.cancel()
-          guard let self else { return }
-          do {
-            // NB: Make sure there is a file to create a source for.
-            if !storage.fileExists(url) {
-              try storage.createDirectory(url.deletingLastPathComponent(), true)
-              try storage.save(stubBytes, url)
-            }
-            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
-              guard let self else { return }
-              state.withValue { state in
-                let modificationDate =
-                  (try? storage.attributesOfItemAtPath(url.path)[.modificationDate]
-                    as? Date)
-                  ?? Date.distantPast
-                guard
-                  !state.modificationDates.contains(modificationDate)
-                else {
-                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                  return
-                }
-
-                guard state.workItem == nil
-                else { return }
-
-                subscriber.yield(with: Result { try decode(storage.load(url)) })
-              }
-            }
-            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
-              [weak self] in
-              guard let self else { return }
-              state.withValue { state in
-                state.cancelWorkItem()
-              }
-              subscriber.yield(try? decode(storage.load(url)))
-              setUpSources()
-            }
-            $0 = SharedSubscription {
-              writeCancellable.cancel()
-              deleteCancellable.cancel()
-            }
-          } catch {
-            subscriber.yield(throwing: error)
-          }
-        }
-      }
-      setUpSources()
-      return SharedSubscription {
-        cancellable.withValue { $0?.cancel() }
       }
     }
 

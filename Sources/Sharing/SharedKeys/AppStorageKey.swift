@@ -381,15 +381,11 @@
     }
 
     public func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
-      if let value = lookupValue(default: context.initialValue) {
-        continuation.resume(returning: value)
-      } else {
-        continuation.resume()
-      }
+      continuation.resume(with: .success(lookupValue(default: context.initialValue)))
     }
 
     public func subscribe(
-      initialValue: Value?, subscriber: SharedSubscriber<Value?>
+      initialValue: Value?, subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let removeObserver: @Sendable () -> Void
       let keyContainsPeriod = key.contains(".")
@@ -449,14 +445,16 @@
           }
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          DispatchQueue.main.async { subscriber.yield(newValue) }
+          DispatchQueue.main.async {
+            subscriber.yield(with: .success(newValue))
+          }
         }
         removeObserver = { NotificationCenter.default.removeObserver(userDefaultsDidChange) }
       } else {
         let observer = Observer {
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          subscriber.yield(lookupValue(default: initialValue))
+          subscriber.yield(with: .success(lookupValue(default: initialValue)))
         }
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
@@ -468,7 +466,7 @@
           object: nil,
           queue: .main
         ) { _ in
-          subscriber.yield(lookupValue(default: initialValue))
+          subscriber.yield(with: .success(lookupValue(default: initialValue)))
         }
       } else {
         willEnterForeground = nil

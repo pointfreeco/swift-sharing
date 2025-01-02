@@ -50,7 +50,7 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
   }
 
   public func subscribe(
-    initialValue: Base.Value?, subscriber: SharedSubscriber<Base.Value?>
+    initialValue: Base.Value?, subscriber: SharedSubscriber<Base.Value>
   ) -> SharedSubscription {
     base.subscribe(initialValue: initialValue, subscriber: subscriber)
   }

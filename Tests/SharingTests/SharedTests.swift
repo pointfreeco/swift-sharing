@@ -22,7 +22,7 @@ import Testing
           continuation.resume(throwing: LoadError())
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int?>
+          initialValue: Int?, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -40,12 +40,12 @@ import Testing
     @Test func subscribeError() {
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
-        var subscriber: SharedSubscriber<Int?>?
+        var subscriber: SharedSubscriber<Int>?
         func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int?>
+          initialValue: Int?, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           self.subscriber = subscriber
           return SharedSubscription {}
@@ -74,7 +74,7 @@ import Testing
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int?>
+          initialValue: Int?, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -99,12 +99,12 @@ import Testing
     @Test func saveErrorLoadErrorInterplay() {
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
-        var subscriber: SharedSubscriber<Int?>?
+        var subscriber: SharedSubscriber<Int>?
         func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int?>
+          initialValue: Int?, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           self.subscriber = subscriber
           return SharedSubscription {}
@@ -133,7 +133,7 @@ import Testing
       #expect($count.loadError != nil)
       #expect($count.saveError != nil)
 
-      key.subscriber?.yield(nil)
+      key.subscriber?.yield()
       #expect(count == 0)
       #expect($count.loadError == nil)
       #expect($count.saveError != nil)

@@ -42,7 +42,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///     external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value>) -> SharedSubscription
 }
 
 public enum LoadContext<Value> {
@@ -54,7 +54,8 @@ public enum LoadContext<Value> {
   /// ``SharedReader/init(require:)``.
   case userInitiated
 
-  var initialValue: Value? {
+  // TODO: Document
+  public var initialValue: Value? {
     guard case let .initialValue(value) = self else {
       return nil 
     }

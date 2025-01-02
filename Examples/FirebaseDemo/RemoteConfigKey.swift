@@ -21,7 +21,7 @@ struct RemoteConfigKey<Value: Decodable & Sendable>: SharedReaderKey {
       }
     }
   }
-  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription {
+  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value>) -> SharedSubscription {
     let registration = remoteConfig.addOnConfigUpdateListener { update, error in
       guard error == nil else { return }
       remoteConfig.activate { changed, error in
