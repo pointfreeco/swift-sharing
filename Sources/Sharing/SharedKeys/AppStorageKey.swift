@@ -385,7 +385,7 @@
     }
 
     public func subscribe(
-      initialValue: Value?, subscriber: SharedSubscriber<Value>
+      context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let removeObserver: @Sendable () -> Void
       let keyContainsPeriod = key.contains(".")
@@ -422,13 +422,13 @@
             """
           )
         }
-        let previousValue = LockIsolated(initialValue)
+        let previousValue = LockIsolated(context.initialValue)
         let userDefaultsDidChange = NotificationCenter.default.addObserver(
           forName: UserDefaults.didChangeNotification,
           object: store.wrappedValue,
           queue: nil
         ) { _ in
-          let newValue = lookupValue(default: initialValue)
+          let newValue = lookupValue(default: context.initialValue)
           defer { previousValue.withValue { $0 = newValue } }
           func isEqual<T>(_ lhs: T, _ rhs: T) -> Bool? {
             func open<U: Equatable>(_ lhs: U) -> Bool {
@@ -439,7 +439,7 @@
           }
           guard
             !(isEqual(newValue, previousValue.value) ?? false)
-              || (isEqual(newValue, initialValue) ?? true)
+              || (isEqual(newValue, context.initialValue) ?? true)
           else {
             return
           }
@@ -454,7 +454,7 @@
         let observer = Observer {
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          subscriber.yield(with: .success(lookupValue(default: initialValue)))
+          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
         }
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
@@ -466,7 +466,7 @@
           object: nil,
           queue: .main
         ) { _ in
-          subscriber.yield(with: .success(lookupValue(default: initialValue)))
+          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
         }
       } else {
         willEnterForeground = nil

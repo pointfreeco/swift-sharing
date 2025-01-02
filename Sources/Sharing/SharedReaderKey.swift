@@ -42,7 +42,9 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///     external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value>) -> SharedSubscription
+  func subscribe(
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+  ) -> SharedSubscription
 }
 
 public enum LoadContext<Value> {

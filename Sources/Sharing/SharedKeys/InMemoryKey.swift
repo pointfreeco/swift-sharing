@@ -53,7 +53,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
     }
   }
   public func subscribe(
-    initialValue _: Value?, subscriber _: SharedSubscriber<Value>
+    context _: LoadContext<Value>, subscriber _: SharedSubscriber<Value>
   ) -> SharedSubscription {
     SharedSubscription {}
   }

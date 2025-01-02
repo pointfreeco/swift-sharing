@@ -115,7 +115,7 @@
     }
 
     public func subscribe(
-      initialValue: Value?, subscriber: SharedSubscriber<Value>
+      context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let cancellable = LockIsolated<SharedSubscription?>(nil)
       @Sendable func setUpSources() {

@@ -120,7 +120,9 @@ struct GRDBQueryKey<Value: Sendable>: SharedReaderKey {
     }
   }
 
-  func subscribe(initialValue: Value?, subscriber: SharedSubscriber<Value?>) -> SharedSubscription {
+  func subscribe(
+    context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+  ) -> SharedSubscription {
     #if DEBUG
       guard !isDefaultDatabase else {
         return SharedSubscription {}

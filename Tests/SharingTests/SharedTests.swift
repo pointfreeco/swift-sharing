@@ -22,7 +22,7 @@ import Testing
           continuation.resume(throwing: LoadError())
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int>
+          context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -45,7 +45,7 @@ import Testing
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int>
+          context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           self.subscriber = subscriber
           return SharedSubscription {}
@@ -74,7 +74,7 @@ import Testing
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int>
+          context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
@@ -104,7 +104,7 @@ import Testing
           continuation.resume()
         }
         func subscribe(
-          initialValue: Int?, subscriber: SharedSubscriber<Int>
+          context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           self.subscriber = subscriber
           return SharedSubscription {}

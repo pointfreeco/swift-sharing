@@ -29,7 +29,7 @@ struct FactAPIKey: SharedReaderKey {
   }
 
   func subscribe(
-    initialValue _: String??, subscriber _: SharedSubscriber<String?>
+    context _: LoadContext<String?>, subscriber _: SharedSubscriber<String?>
   ) -> SharedSubscription {
     SharedSubscription {}
   }

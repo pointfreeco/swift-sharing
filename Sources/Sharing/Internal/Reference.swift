@@ -211,7 +211,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       continuation: LoadContinuation("\(key)", callback: callback)
     )
     self.subscription = key.subscribe(
-      initialValue: initialValue,
+      context: .initialValue(initialValue),
       subscriber: SharedSubscriber(callback: callback)
     )
   }

@@ -186,7 +186,7 @@
       let persistenceKey: AppStorageKey<Int> = .appStorage("shared")
       let changes = LockIsolated<[Result<Int?, any Error>]>([])
       var subscription: Optional = persistenceKey.subscribe(
-        initialValue: nil,
+        context: .userInitiated,
         subscriber: SharedSubscriber { value in
           changes.withValue { $0.append(value) }
         }

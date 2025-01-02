@@ -8,7 +8,9 @@ import Testing
       func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
         continuation.resume()
       }
-      func subscribe(initialValue: Int?, subscriber: SharedSubscriber<Int>) -> SharedSubscription {
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
         SharedSubscription {}
       }
       func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
