@@ -20,7 +20,7 @@ struct PlayersView: View {
   @Dependency(\.defaultDatabase) private var database
   @Shared(.appStorage("order")) private var order: Players.Order = .name
   @SharedReader private var players: [Player]
-  @SharedReader(.fetchOne(sql: #"SELECT count(*) FROM "players" WHERE "isInjured" = 0"#))
+  @SharedReader(.fetchOne(sql: #"SELECT count(*) FROM "players" WHERE NOT "isInjured""#))
   private var uninjuredCount = 0
 
   init() {
