@@ -197,5 +197,34 @@
       #expect([1, 42] == changes.value)
       #expect(123 == persistenceKey.load(initialValue: nil))
     }
+
+    #if DEBUG
+      @Test func suiteWarning() {
+        let suiteName = NSTemporaryDirectory() + "suite-warning"
+        @Shared(.appStorage("count", store: UserDefaults(suiteName: suiteName)!)) var count = 0
+        withKnownIssue {
+          @Shared(.appStorage("count", store: UserDefaults(suiteName: suiteName)!)) var count = 0
+        } matching: {
+          $0.description.hasSuffix(
+            """
+            '@Shared(.appStorage("count"))' was given a new store object for an existing suite \
+            name ("\(suiteName)").
+            
+            Shared app storage for a given suite should all share the same store object to ensure \
+            synchronization and observation. For example, define a store as a 'static let' and \
+            refer to this single instance when creating shared app storage:
+            
+                extension UserDefaults {
+                  nonisolated(unsafe) static let mySuite = UserDefaults(
+                    suiteName: "\(suiteName)"
+                  )!
+                }
+            
+                @Shared(.appStorage("count", store: .mySuite) var myProperty
+            """
+          )
+        }
+      }
+    #endif
   }
 #endif
