@@ -38,13 +38,12 @@ file system. This makes it possible for previews and tests to operate in their o
 environment so that changes made to files do not spill over to other previews or tests, or the
 simulator. It also allows your tests to pass deterministically and for tests to be run in parallel.
 
-If you really do want to use the live file system in your previews, you can use the `dependency`
-preview trait:
+If you really do want to use the live file system in your previews, you can use
+`prepareDependencies`:
 
 ```swift
-#Preview(
-  traits: .dependency(\.defaultFileSystem, .inMemory)
-) {
+#Preview {
+  let _ = prepareDependencies { $0.defaultFileSystem = .inMemory }
   // ...
 }
 ```
@@ -52,7 +51,7 @@ preview trait:
 And if you want to use the live file system in your tests you can use the `dependency` test trait:
 
 ```swift
-#Test(.dependency(\.defaultFileStorage, .inMemory)) 
+@Test(.dependency(\.defaultFileStorage, .inMemory))
 func basics() {
   // ...
 }
