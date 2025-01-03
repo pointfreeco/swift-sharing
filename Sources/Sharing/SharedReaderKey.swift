@@ -84,7 +84,7 @@ extension SharedReader {
     _ key: some SharedReaderKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key)
+    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
   }
 
   @_disfavoredOverload
@@ -94,7 +94,7 @@ extension SharedReader {
     _ key: some SharedKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key)
+    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
   }
 
   /// Creates a shared reference to an optional, read-only value using a shared key.
@@ -165,7 +165,7 @@ extension SharedReader {
       })
     }
     guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key)
+    self.init(rethrowing: value, key, isPreloaded: true)
     if let loadError { throw loadError }
   }
 
@@ -178,7 +178,7 @@ extension SharedReader {
       })
     }
     guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key)
+    self.init(rethrowing: value, key, isPreloaded: true)
     if let loadError { throw loadError }
   }
 
@@ -195,10 +195,17 @@ extension SharedReader {
   }
 
   private init(
-    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>
+    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>,
+    isPreloaded: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(reference: try persistentReferences.value(forKey: key, default: try value()))
+    self.init(
+      reference: try persistentReferences.value(
+        forKey: key,
+        default: try value(),
+        isPreloaded: isPreloaded
+      )
+    )
   }
 
   private struct LoadError: Error {}

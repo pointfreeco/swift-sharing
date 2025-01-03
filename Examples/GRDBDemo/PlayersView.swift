@@ -35,9 +35,13 @@ final class PlayersModel {
   }
 
   func reload() async {
-//    $players = SharedReader(wrappedValue: players, .fetch(Players(order: order), animation: .default))
     do {
-      $players = try await SharedReader(require: .fetch(Players(order: order), animation: .default))
+      let players = try await SharedReader(
+        require: .fetch(Players(order: order), animation: .default)
+      )
+      withAnimation {
+        $players = players
+      }
     } catch {
       reportIssue(error)
     }
