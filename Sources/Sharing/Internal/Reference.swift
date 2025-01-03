@@ -185,10 +185,13 @@ final class _PersistentReference<Key: SharedReaderKey>:
     private var value: Key.Value
   #endif
 
+
   private var _isLoading: Bool
   private var _loadError: (any Error)?
-  private var _saveError: (any Error)?
   private var _referenceCount = 0
+  private let saveActor = SaveActor()
+  private var _saveError: (any Error)?
+  private var _saveTask: Task<Void, any Error>?
   private var subscription: SharedSubscription?
   private var initialLoadTask: Task<Void, any Error>?
 
@@ -252,11 +255,11 @@ final class _PersistentReference<Key: SharedReaderKey>:
         lock.withLock {
           if !(newValue is CancellationError) {
             _loadError = newValue
+            if let newValue {
+              reportIssue(newValue)
+            }
           }
         }
-      }
-      if let newValue {
-        reportIssue(newValue)
       }
     }
   }
@@ -359,10 +362,14 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     }
     set {
       withMutation(keyPath: \._saveError) {
-        lock.withLock { _saveError = newValue }
-      }
-      if let newValue {
-        reportIssue(newValue)
+        lock.withLock {
+          if !(newValue is CancellationError) {
+            _saveError = newValue
+            if let newValue {
+              reportIssue(newValue)
+            }
+          }
+        }
       }
     }
   }
@@ -395,19 +402,17 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
       saveError = nil
       defer {
         let key = key
-        key.save(
-          value,
-          context: .didSet,
-          continuation: SaveContinuation("\(key)") { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success:
+        lock.withLock {
+          _saveTask?.cancel()
+          _saveTask = Task {
+            do {
+              try await key.save(value, context: .didSet)
               loadError = nil
-            case let .failure(error):
+            } catch {
               saveError = error
             }
           }
-        )
+        }
       }
       return try lock.withLock {
         try body(&value)
@@ -418,16 +423,15 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   func save() async throws {
     saveError = nil
     do {
-      try await withUnsafeThrowingContinuation { continuation in
-        let key = key
-        key.save(
-          lock.withLock { value },
-          context: .userInitiated,
-          continuation: SaveContinuation("\(key)") { result in
-            continuation.resume(with: result)
-          }
-        )
+      let task = lock.withLock {
+        _saveTask?.cancel()
+        let task = Task {
+          try await key.save(lock.withLock { value }, context: .userInitiated)
+        }
+        _saveTask = task
+        return task
       }
+      try await task.cancellableValue
     } catch {
       saveError = error
       throw error
@@ -438,6 +442,9 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
     lhs === rhs
   }
+}
+
+private actor SaveActor {
 }
 
 final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {

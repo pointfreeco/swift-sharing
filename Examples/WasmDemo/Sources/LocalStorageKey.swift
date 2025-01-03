@@ -30,13 +30,11 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
     }
   }
 
-  func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
-    continuation.resume(with: Result {
-      _ = try JSObject.global.window.localStorage.setItem(
-        key,
-        String(decoding: JSONEncoder().encode(value), as: UTF8.self)
-      )
-    })
+  func save(_ value: Value, context _: SaveContext) throws {
+    _ = try JSObject.global.window.localStorage.setItem(
+      key,
+      String(decoding: JSONEncoder().encode(value), as: UTF8.self)
+    )
   }
 
   private func getAndDecodeItem() throws -> Value? {

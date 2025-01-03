@@ -20,7 +20,7 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     delays.
   ///   - continuation: A continuation that should be notified upon the completion of saving a
   ///     shared value.
-  func save(_ value: Value, context: SaveContext, continuation: SaveContinuation)
+  func save(_ value: Value, context: SaveContext) async throws 
 }
 
 public enum SaveContext: Sendable {
