@@ -26,7 +26,10 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
         return _ManagedReference(persistentReference)
       }
       guard let persistentReference = pair.reference else {
-        let persistentReference = _PersistentReference(key: key, value: pair.cachedValue)
+        let persistentReference = _PersistentReference(
+          key: key,
+          value: (try? value()) ?? pair.cachedValue
+        )
         pair.reference = persistentReference
         storage[key.id] = pair
         return _ManagedReference(persistentReference)

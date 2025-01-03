@@ -1,3 +1,4 @@
+@preconcurrency import Combine
 import Dependencies
 import GRDB
 import Sharing
@@ -129,11 +130,11 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
       }
     #endif
     let observation = ValueObservation.tracking(request.fetch)
-    let cancellable = observation.start(in: database, scheduling: scheduler) { error in
-      subscriber.yield(throwing: error)
-    } onChange: { newValue in
-      subscriber.yield(newValue)
-    }
+    let cancellable = observation.publisher(in: database, scheduling: scheduler)
+      .dropFirst()
+      .sink { _ in } receiveValue: { newValue in
+        subscriber.yield(newValue)
+      }
     return SharedSubscription {
       cancellable.cancel()
     }
@@ -169,7 +170,7 @@ private struct FetchOne<Value: DatabaseValueConvertible>: QueryKeyRequest {
 
 private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
-  func immediateInitialValue() -> Bool { true }
+  func immediateInitialValue() -> Bool { false }
   func schedule(_ action: @escaping @Sendable () -> Void) {
     if let animation {
       DispatchQueue.main.async {
