@@ -51,10 +51,8 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
       return .newValue(value)
     }
   }
-  public func subscribe(
-    context _: LoadContext<Value>, subscriber _: SharedSubscriber<Value>
-  ) -> SharedSubscription {
-    SharedSubscription {}
+  public func subscribe(context _: LoadContext<Value>) -> AsyncStream<SubscriptionResult<Value>> {
+    AsyncStream { $0.finish() }
   }
   public func save(_ value: Value, context _: SaveContext) {
     store.values[key] = value

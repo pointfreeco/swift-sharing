@@ -192,7 +192,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private let saveActor = SaveActor()
   private var _saveError: (any Error)?
   private var _saveTask: Task<Void, any Error>?
-  private var subscription: SharedSubscription?
+  private var subscriptionTask: Task<Void, any Error>?
   private var initialLoadTask: Task<Void, any Error>?
 
   init(key: Key, value initialValue: Key.Value, isPreloaded: Bool) {
@@ -225,10 +225,24 @@ final class _PersistentReference<Key: SharedReaderKey>:
         callback(result)
       }
     }
-    self.subscription = key.subscribe(
-      context: .initialValue(initialValue),
-      subscriber: SharedSubscriber(callback: callback)
-    )
+    self.subscriptionTask = Task {
+      let sequence = key.subscribe(context: .initialValue(initialValue))
+      for try await result in sequence {
+        switch result {
+        case .failure(let error):
+          callback(.failure(error))
+        case .initialValue:
+          callback(.success(nil))
+        case .newValue(let newValue):
+          callback(.success(newValue))
+        }
+      }
+    }
+  }
+
+  deinit {
+    initialLoadTask?.cancel()
+    subscriptionTask?.cancel()
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
