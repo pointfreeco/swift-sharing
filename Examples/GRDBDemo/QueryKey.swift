@@ -7,19 +7,19 @@ import SwiftUI
 extension SharedReaderKey {
   /// A key that can query for data in a SQLite database.
   static func fetch<Value>(
-    _ request: some QueryKeyRequest<Value>,
+    _ request: some FetchKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
-  where Self == QueryKey<Value> {
-    QueryKey(request: request, animation: animation)
+  where Self == FetchKey<Value> {
+    FetchKey(request: request, animation: animation)
   }
 
   /// A key that can query for a collection of data in a SQLite database.
   static func fetch<Value: RangeReplaceableCollection>(
-    _ request: some QueryKeyRequest<Value>,
+    _ request: some FetchKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
-  where Self == QueryKey<Value>.Default {
+  where Self == FetchKey<Value>.Default {
     Self[.fetch(request, animation: animation), default: Value()]
   }
 
@@ -29,7 +29,7 @@ extension SharedReaderKey {
     arguments: StatementArguments = StatementArguments(),
     animation: Animation? = nil
   ) -> Self
-  where Self == QueryKey<[Value]>.Default {
+  where Self == FetchKey<[Value]>.Default {
     Self[.fetch(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
   }
 
@@ -39,7 +39,7 @@ extension SharedReaderKey {
     arguments: StatementArguments = StatementArguments(),
     animation: Animation? = nil
   ) -> Self
-  where Self == QueryKey<Value> {
+  where Self == FetchKey<Value> {
     .fetch(FetchOne(sql: sql, arguments: arguments), animation: animation)
   }
 }
@@ -79,24 +79,24 @@ extension DependencyValues {
   }
 }
 
-protocol QueryKeyRequest<Value>: Hashable, Sendable {
+protocol FetchKeyRequest<Value>: Hashable, Sendable {
   associatedtype Value
   func fetch(_ db: Database) throws -> Value
 }
 
-struct QueryKey<Value: Sendable>: SharedReaderKey {
+struct FetchKey<Value: Sendable>: SharedReaderKey {
   let database: any DatabaseWriter
-  let request: any QueryKeyRequest<Value>
+  let request: any FetchKeyRequest<Value>
   let scheduler: any ValueObservationScheduler
   #if DEBUG
     let isDefaultDatabase: Bool
   #endif
 
-  typealias ID = QueryKeyID
+  typealias ID = FetchKeyID
 
   var id: ID { ID(rawValue: request) }
 
-  init(request: some QueryKeyRequest<Value>, animation: Animation? = nil) {
+  init(request: some FetchKeyRequest<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var database
     self.scheduler = .animation(animation)
     self.database = database
@@ -156,15 +156,15 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
   }
 }
 
-struct QueryKeyID: Hashable {
+struct FetchKeyID: Hashable {
   fileprivate let rawValue: AnyHashableSendable
 
-  init(rawValue: any QueryKeyRequest) {
+  init(rawValue: any FetchKeyRequest) {
     self.rawValue = AnyHashableSendable(rawValue)
   }
 }
 
-private struct FetchAll<Element: FetchableRecord>: QueryKeyRequest {
+private struct FetchAll<Element: FetchableRecord>: FetchKeyRequest {
   var sql: String
   var arguments: StatementArguments = StatementArguments()
   func fetch(_ db: Database) throws -> [Element] {
@@ -172,7 +172,7 @@ private struct FetchAll<Element: FetchableRecord>: QueryKeyRequest {
   }
 }
 
-private struct FetchOne<Value: DatabaseValueConvertible>: QueryKeyRequest {
+private struct FetchOne<Value: DatabaseValueConvertible>: FetchKeyRequest {
   var sql: String
   var arguments: StatementArguments = StatementArguments()
   func fetch(_ db: Database) throws -> Value {

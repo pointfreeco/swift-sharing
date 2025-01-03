@@ -130,7 +130,7 @@ struct PlayersView: View {
   }
 }
 
-struct Players: QueryKeyRequest {
+struct Players: FetchKeyRequest {
   enum Order: String { case name, isInjured }
   let order: Order
   init(order: Order = .name) {
