@@ -49,8 +49,10 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
     try await base.load(context: context)
   }
 
-  public func subscribe(context: LoadContext<Base.Value>) -> Base.SubscriptionSequence {
-    base.subscribe(context: context)
+  public func subscribe(
+    context: LoadContext<Base.Value>, subscriber: SharedSubscriber<Base.Value>
+  ) -> SharedSubscription {
+    base.subscribe(context: context, subscriber: subscriber)
   }
 }
 

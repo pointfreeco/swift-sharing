@@ -384,9 +384,9 @@
       LoadResult(lookupValue(default: context.initialValue))
     }
 
-    public func subscribe(context: LoadContext<Value>) -> AsyncStream<SubscriptionResult<Value>> {
-      let (stream, continuation) = AsyncStream<SubscriptionResult<Value>>.makeStream()
-
+    public func subscribe(
+      context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+    ) -> SharedSubscription {
       let removeObserver: @Sendable () -> Void
       let keyContainsPeriod = key.contains(".")
       if keyContainsPeriod || key.hasPrefix("@") {
@@ -398,16 +398,16 @@
             A Shared app storage key (\(key.debugDescription)) contains an invalid character \
             (\(character.debugDescription)) for key-value observation. External updates will be \
             observed less efficiently and accurately via notification center, instead.
-            
+
             Please reformat this key by removing invalid characters in order to ensure efficient, \
             cross-process observation.
-            
+
             If you cannot control the format of this key and would like to silence this warning, \
             override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
             your application. For example:
-            
+
                 + import Dependencies
-            
+
                   @main
                   struct MyApp: App {
                     init() {
@@ -416,7 +416,7 @@
                 +     }
                       // ...
                     }
-            
+
                     var body: some Scene { /* ... */ }
                   }
             """
@@ -446,7 +446,7 @@
           guard !SharedAppStorageLocals.isSetting
           else { return }
           DispatchQueue.main.async {
-            continuation.yield(SubscriptionResult(newValue))
+            subscriber.yield(with: .success(newValue))
           }
         }
         removeObserver = { NotificationCenter.default.removeObserver(userDefaultsDidChange) }
@@ -454,7 +454,7 @@
         let observer = Observer {
           guard !SharedAppStorageLocals.isSetting
           else { return }
-          continuation.yield(SubscriptionResult(lookupValue(default: context.initialValue)))
+          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
         }
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
@@ -466,19 +466,17 @@
           object: nil,
           queue: .main
         ) { _ in
-          continuation.yield(SubscriptionResult(lookupValue(default: context.initialValue)))
+          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
         }
       } else {
         willEnterForeground = nil
       }
-      continuation.onTermination = { _ in
+      return SharedSubscription {
         removeObserver()
         if let willEnterForeground {
           NotificationCenter.default.removeObserver(willEnterForeground)
         }
       }
-
-      return stream
     }
 
     public func save(_ value: Value, context _: SaveContext) {
