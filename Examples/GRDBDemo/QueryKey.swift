@@ -113,6 +113,10 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
         return
       }
     #endif
+    guard case .userInitiated = context else {
+      continuation.resumeReturningInitialValue()
+      return
+    }
     database.asyncRead { dbResult in
       let result = dbResult.flatMap { db in
         Result { try request.fetch(db) }
@@ -122,7 +126,7 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
   }
 
   func subscribe(
-    context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription {
     #if DEBUG
       guard !isDefaultDatabase else {
@@ -130,8 +134,12 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
       }
     #endif
     let observation = ValueObservation.tracking(request.fetch)
+    let dropFirst = switch context {
+    case .initialValue: false
+    case .userInitiated: true
+    }
     let cancellable = observation.publisher(in: database, scheduling: scheduler)
-      .dropFirst()
+      .dropFirst(dropFirst ? 1 : 0)
       .sink { _ in } receiveValue: { newValue in
         subscriber.yield(newValue)
       }
