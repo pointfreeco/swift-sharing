@@ -33,7 +33,7 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
       guard let persistentReference = pair.reference else {
         let persistentReference = _PersistentReference(
           key: key,
-          value: (try? value()) ?? pair.cachedValue,
+          value: isPreloaded ? (try? value()) ?? pair.cachedValue : pair.cachedValue,
           isPreloaded: isPreloaded
         )
         pair.reference = persistentReference
