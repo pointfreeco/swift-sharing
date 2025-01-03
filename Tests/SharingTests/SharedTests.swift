@@ -42,7 +42,7 @@ import Testing
         let id = UUID()
         var subscriber: SharedSubscriber<Int>?
         func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resume()
+          continuation.resumeReturningInitialValue()
         }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
@@ -71,7 +71,7 @@ import Testing
       struct Key: SharedKey {
         let id = UUID()
         func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resume()
+          continuation.resumeReturningInitialValue()
         }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
@@ -101,7 +101,7 @@ import Testing
         let id = UUID()
         var subscriber: SharedSubscriber<Int>?
         func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resume()
+          continuation.resumeReturningInitialValue()
         }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
@@ -133,7 +133,7 @@ import Testing
       #expect($count.loadError != nil)
       #expect($count.saveError != nil)
 
-      key.subscriber?.yield()
+      key.subscriber?.yieldReturningInitialValue()
       #expect(count == 0)
       #expect($count.loadError == nil)
       #expect($count.saveError != nil)

@@ -6,7 +6,7 @@ import Testing
     struct Key: SharedKey {
       var id: some Hashable { 0 }
       func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-        continuation.resume()
+        continuation.resumeReturningInitialValue()
       }
       func subscribe(
         context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
