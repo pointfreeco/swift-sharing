@@ -140,7 +140,14 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
     }
     let cancellable = observation.publisher(in: database, scheduling: scheduler)
       .dropFirst(dropFirst ? 1 : 0)
-      .sink { _ in } receiveValue: { newValue in
+      .sink { completion in
+        switch completion {
+        case let .failure(error):
+          subscriber.yield(throwing: error)
+        case .finished:
+          break
+        }
+      } receiveValue: { newValue in
         subscriber.yield(newValue)
       }
     return SharedSubscription {
