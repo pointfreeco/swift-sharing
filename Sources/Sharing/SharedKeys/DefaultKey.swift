@@ -45,8 +45,8 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
     Self(base: key, defaultValue: value)
   }
 
-  public func load(context: LoadContext<Base.Value>, continuation: LoadContinuation<Base.Value>) {
-    base.load(context: context, continuation: continuation)
+  public func load(context: LoadContext<Base.Value>) async throws -> LoadResult<Base.Value> {
+    try await base.load(context: context)
   }
 
   public func subscribe(

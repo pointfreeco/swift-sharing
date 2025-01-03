@@ -103,15 +103,14 @@
       self.encode = encode
     }
 
-    public func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
+    public func load(context _: LoadContext<Value>) throws -> LoadResult<Value> {
       guard
         let data = try? storage.load(url),
         data != stubBytes
       else {
-        continuation.resumeReturningInitialValue()
-        return
+        return .initialValue
       }
-      continuation.resume(with: Result { try decode(data) })
+      return .newValue(try decode(data))
     }
 
     public func subscribe(

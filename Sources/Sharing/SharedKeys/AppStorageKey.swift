@@ -380,8 +380,8 @@
       self.store = UncheckedSendable(store ?? defaultStore)
     }
 
-    public func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
-      continuation.resume(with: .success(lookupValue(default: context.initialValue)))
+    public func load(context: LoadContext<Value>) -> LoadResult<Value> {
+      LoadResult(lookupValue(default: context.initialValue))
     }
 
     public func subscribe(

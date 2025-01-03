@@ -32,7 +32,7 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///   - initialValue: An initial value assigned to the `@Shared` property.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
   ///     external system.
-  func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>)
+  func load(context: LoadContext<Value>) async throws -> LoadResult<Value>
 
   /// Subscribes to external updates.
   ///
@@ -47,6 +47,26 @@ public protocol SharedReaderKey<Value>: Sendable {
   ) -> SharedSubscription
 }
 
+public enum LoadResult<Value> {
+  case newValue(Value)
+  case initialValue
+  
+  public init(_ valueIfExists: Value?) {
+    guard let value = valueIfExists else {
+      self = .initialValue
+      return
+    }
+    self = .newValue(value)
+  }
+
+  public var newValue: Value? {
+    guard case let .newValue(value) = self else {
+      return nil
+    }
+    return value
+  }
+}
+
 public enum LoadContext<Value> {
   /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
   /// first time.
@@ -59,7 +79,7 @@ public enum LoadContext<Value> {
   // TODO: Document
   public var initialValue: Value? {
     guard case let .initialValue(value) = self else {
-      return nil 
+      return nil
     }
     return value
   }
@@ -159,12 +179,8 @@ extension SharedReader {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
   public init<Key: SharedReaderKey<Value>>(require key: Key) async throws {
-    let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: LoadContinuation { result in
-        continuation.resume(with: result)
-      })
-    }
-    guard let value else { throw LoadError() }
+    let value = try await key.load(context: .userInitiated)
+    guard let value = value.newValue else { throw LoadError() }
     self.init(rethrowing: value, key, isPreloaded: true)
     if let loadError { throw loadError }
   }
@@ -172,12 +188,8 @@ extension SharedReader {
   @_disfavoredOverload
   @_documentation(visibility: private)
   public init<Key: SharedKey<Value>>(require key: Key) async throws {
-    let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: LoadContinuation { result in
-        continuation.resume(with: result)
-      })
-    }
-    guard let value else { throw LoadError() }
+    let value = try await key.load(context: .userInitiated)
+    guard let value = value.newValue else { throw LoadError() }
     self.init(rethrowing: value, key, isPreloaded: true)
     if let loadError { throw loadError }
   }
