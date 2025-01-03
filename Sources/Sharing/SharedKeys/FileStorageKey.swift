@@ -108,7 +108,7 @@
         let data = try? storage.load(url),
         data != stubBytes
       else {
-        continuation.resume()
+        continuation.resumeReturningInitialValue()
         return
       }
       continuation.resume(with: Result { try decode(data) })

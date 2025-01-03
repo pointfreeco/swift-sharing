@@ -13,7 +13,7 @@ struct FactAPIKey: SharedReaderKey {
 
   func load(context _: LoadContext<String?>, continuation: LoadContinuation<String?>) {
     guard let number else {
-      continuation.resume()
+      continuation.resume(returning: nil)
       return
     }
     Task {

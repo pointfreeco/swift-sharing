@@ -14,25 +14,48 @@ private let readMe: LocalizedStringKey = """
   the players in the form of sorting the list by name or their injury status.
   """
 
-struct PlayersView: View {
-  @State private var aboutIsPresented = false
-  @State private var addPlayerIsPresented = false
-  @Dependency(\.defaultDatabase) private var database
-  @Shared(.appStorage("order")) private var order: Players.Order = .name
-  @SharedReader private var players: [Player]
+@MainActor
+@Observable
+final class PlayersModel {
+  @ObservationIgnored
+  @Dependency(\.defaultDatabase) var database
+
+  @ObservationIgnored
+  @Shared(.appStorage("order")) var order: Players.Order = .name
+
+  @ObservationIgnored
+  @SharedReader var players: [Player]
+
+  @ObservationIgnored
   @SharedReader(.fetchOne(sql: #"SELECT count(*) FROM "players" WHERE NOT "isInjured""#))
-  private var uninjuredCount = 0
+  var uninjuredCount = 0
 
   init() {
-    _players = SharedReader(.query(Players(order: _order.wrappedValue)))
+    _players = SharedReader(.fetch(Players(order: _order.wrappedValue), animation: .default))
   }
+
+  func reload() async {
+//    $players = SharedReader(wrappedValue: players, .fetch(Players(order: order), animation: .default))
+    do {
+      $players = try await SharedReader(require: .fetch(Players(order: order), animation: .default))
+    } catch {
+      reportIssue(error)
+    }
+  }
+}
+
+struct PlayersView: View {
+  @Dependency(\.defaultDatabase) var database
+  @State private var aboutIsPresented = false
+  @State private var addPlayerIsPresented = false
+  let model: PlayersModel
 
   var body: some View {
     NavigationStack {
       List {
-        if !players.isEmpty {
+        if !model.players.isEmpty {
           Section {
-            ForEach(players, id: \.id) { player in
+            ForEach(model.players, id: \.id) { player in
               HStack {
                 Text(player.name)
                 Spacer()
@@ -44,14 +67,14 @@ struct PlayersView: View {
             }
             .onDelete(perform: deleteItems)
           } header: {
-            Text("^[\(uninjuredCount) player](inflect: true) are available")
+            Text("^[\(model.uninjuredCount) player](inflect: true) are available")
           }
         }
       }
       .navigationTitle("Players")
       .toolbar {
         ToolbarItem {
-          Picker("Sort", selection: Binding($order)) {
+          Picker("Sort", selection: Binding(model.$order)) {
             Section {
               Text("Name").tag(Players.Order.name)
               Text("Is injured?").tag(Players.Order.isInjured)
@@ -74,8 +97,11 @@ struct PlayersView: View {
         }
       }
     }
-    .onChange(of: order) {
-      $players = SharedReader(.query(Players(order: order)))
+    .onChange(of: model.order) {
+      Task {
+        await
+        model.reload()
+      }
     }
     .sheet(isPresented: $addPlayerIsPresented) {
       AddPlayerView()
@@ -92,33 +118,33 @@ struct PlayersView: View {
   private func deleteItems(offsets: IndexSet) {
     do {
       try database.write { db in
-        _ = try Player.deleteAll(db, keys: offsets.map { players[$0].id })
+        _ = try Player.deleteAll(db, keys: offsets.map { model.players[$0].id })
       }
     } catch {
       reportIssue(error)
     }
   }
+}
 
-  struct Players: QueryKeyRequest {
-    enum Order: String { case name, isInjured }
-    let order: Order
-    init(order: Order = .name) {
-      self.order = order
-    }
-    func fetch(_ db: Database) throws -> [Player] {
-      let ordering: any SQLOrderingTerm =
-        switch order {
-        case .name:
-          Column("name")
-        case .isInjured:
-          Column("isInjured").desc
-        }
-      return
-        try Player
-        .all()
-        .order(ordering)
-        .fetchAll(db)
-    }
+struct Players: QueryKeyRequest {
+  enum Order: String { case name, isInjured }
+  let order: Order
+  init(order: Order = .name) {
+    self.order = order
+  }
+  func fetch(_ db: Database) throws -> [Player] {
+    let ordering: any SQLOrderingTerm =
+      switch order {
+      case .name:
+        Column("name")
+      case .isInjured:
+        Column("isInjured").desc
+      }
+    return
+      try Player
+      .all()
+      .order(ordering)
+      .fetchAll(db)
   }
 }
 
@@ -160,5 +186,5 @@ struct AddPlayerView: View {
         .inserted(db)
     }
   }
-  PlayersView()
+  PlayersView(model: PlayersModel())
 }

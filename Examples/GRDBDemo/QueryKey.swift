@@ -6,7 +6,7 @@ import SwiftUI
 
 extension SharedReaderKey {
   /// A key that can query for data in a SQLite database.
-  static func query<Value>(
+  static func fetch<Value>(
     _ request: some QueryKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
@@ -15,12 +15,12 @@ extension SharedReaderKey {
   }
 
   /// A key that can query for a collection of data in a SQLite database.
-  static func query<Value: RangeReplaceableCollection>(
+  static func fetch<Value: RangeReplaceableCollection>(
     _ request: some QueryKeyRequest<Value>,
     animation: Animation? = nil
   ) -> Self
   where Self == QueryKey<Value>.Default {
-    Self[.query(request, animation: animation), default: Value()]
+    Self[.fetch(request, animation: animation), default: Value()]
   }
 
   /// A key that can query for a collection of data in a SQLite database.
@@ -30,7 +30,7 @@ extension SharedReaderKey {
     animation: Animation? = nil
   ) -> Self
   where Self == QueryKey<[Value]>.Default {
-    Self[.query(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
+    Self[.fetch(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
   }
 
   /// A key that can query for a value in a SQLite database.
@@ -40,7 +40,7 @@ extension SharedReaderKey {
     animation: Animation? = nil
   ) -> Self
   where Self == QueryKey<Value> {
-    .query(FetchOne(sql: sql, arguments: arguments), animation: animation)
+    .fetch(FetchOne(sql: sql, arguments: arguments), animation: animation)
   }
 }
 
@@ -109,7 +109,7 @@ struct QueryKey<Value: Sendable>: SharedReaderKey {
   func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
     #if DEBUG
       guard !isDefaultDatabase else {
-        continuation.resume()
+        continuation.resumeReturningInitialValue()
         return
       }
     #endif

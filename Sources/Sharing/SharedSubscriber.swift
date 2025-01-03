@@ -16,11 +16,10 @@ public struct SharedSubscriber<Value>: Sendable {
     yield(with: .success(value))
   }
 
-  // TODO: Should this be 'yieldNothing()'?
-  /// Yield an deleted value from an external source.
+  /// Yield the initial value when none exists in the external source.
   ///
   /// - Parameter value: An updated value.
-  public func yield() {
+  public func yieldReturningInitialValue() {
     yield(with: .success(nil))
   }
 

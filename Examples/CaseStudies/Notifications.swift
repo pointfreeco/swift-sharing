@@ -57,7 +57,7 @@ private struct NotificationKey<Value: Sendable>: SharedReaderKey {
   var id: some Hashable { name }
 
   func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
-    continuation.resume()
+    continuation.resumeReturningInitialValue()
   }
 
   func subscribe(

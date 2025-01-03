@@ -49,9 +49,9 @@ public struct LoadContinuation<Value>: Sendable {
     resume(with: .failure(error))
   }
 
-  /// Resume the task awaiting the continuation by having it return normally from its suspension
-  /// point.
-  public func resume() {
+  /// Resume the task awaiting the continuation by having it return the initial value from its
+  /// suspension point.
+  public func resumeReturningInitialValue() {
     resume(with: .success(nil))
   }
 

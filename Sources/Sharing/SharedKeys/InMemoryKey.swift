@@ -46,7 +46,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
       continuation.resume(returning: store.values[key, default: initialValue])
     case .userInitiated:
       guard let value = store.values[key] as? Value else {
-        continuation.resume()
+        continuation.resumeReturningInitialValue()
         return
       }
       continuation.resume(returning: value)

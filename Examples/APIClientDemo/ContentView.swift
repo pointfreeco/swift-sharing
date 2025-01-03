@@ -1,3 +1,4 @@
+import IssueReporting
 import Sharing
 import SwiftUI
 
@@ -17,13 +18,19 @@ struct ContentView: View {
         }
       }
     }
-    .onChange(of: count) {
-      $fact = SharedReader(.fact(nil))
+    .task(id: count) {
+      do {
+        $fact = try await SharedReader(require: .fact(nil))
+      } catch {
+        reportIssue(error)
+      }
     }
     .refreshable {
       do {
         $fact = try await SharedReader(require: .fact(count))
-      } catch {}
+      } catch {
+        reportIssue(error)
+      }
     }
     VStack(spacing: 24) {
       if $fact.isLoading {
