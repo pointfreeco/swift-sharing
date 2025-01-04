@@ -5,17 +5,13 @@ import Testing
   @Test func saveErrorWhenInvokingSave() async {
     struct Key: SharedKey {
       var id: some Hashable { 0 }
-      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-        continuation.resumeReturningInitialValue()
-      }
+      func load(context: LoadContext<Int>) -> LoadResult<Int> { .initialValue }
       func subscribe(
         context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
       ) -> SharedSubscription {
         SharedSubscription {}
       }
-      func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
-        continuation.resume(throwing: SaveError())
-      }
+      func save(_ value: Int, context: SaveContext) throws { throw SaveError() }
     }
     @Shared(Key()) var value = 0
     await withKnownIssue {

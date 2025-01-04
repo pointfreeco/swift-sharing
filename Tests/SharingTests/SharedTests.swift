@@ -18,9 +18,7 @@ import Testing
     @Test func loadError() {
       struct Key: Hashable, Sendable, SharedReaderKey {
         let id = UUID()
-        func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resume(throwing: LoadError())
-        }
+        func load(context: LoadContext<Int>) throws -> LoadResult<Int> { throw LoadError() }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
@@ -41,9 +39,7 @@ import Testing
       class Key: SharedReaderKey, @unchecked Sendable {
         let id = UUID()
         var subscriber: SharedSubscriber<Int>?
-        func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resumeReturningInitialValue()
-        }
+        func load(context: LoadContext<Int>) -> LoadResult<Int> { .initialValue }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
@@ -70,16 +66,14 @@ import Testing
     @Test func saveError() {
       struct Key: SharedKey {
         let id = UUID()
-        func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resumeReturningInitialValue()
-        }
+        func load(context: LoadContext<Int>) -> LoadResult<Int> { .initialValue }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           SharedSubscription {}
         }
-        func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
-          continuation.resume(with: value < 0 ? .failure(SaveError()) : .success(()))
+        func save(_ value: Int, context: SaveContext) throws {
+          guard value >= 0 else { throw SaveError() }
         }
         struct SaveError: Error {}
       }
@@ -100,17 +94,15 @@ import Testing
       class Key: SharedKey, @unchecked Sendable {
         let id = UUID()
         var subscriber: SharedSubscriber<Int>?
-        func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-          continuation.resumeReturningInitialValue()
-        }
+        func load(context: LoadContext<Int>) -> LoadResult<Int> { .initialValue }
         func subscribe(
           context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
         ) -> SharedSubscription {
           self.subscriber = subscriber
           return SharedSubscription {}
         }
-        func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
-          continuation.resume(with: value < 0 ? .failure(SaveError()) : .success(()))
+        func save(_ value: Int, context: SaveContext) throws {
+          guard value >= 0 else { throw SaveError() }
         }
         struct LoadError: Error {}
         struct SaveError: Error {}
