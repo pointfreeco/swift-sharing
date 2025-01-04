@@ -56,23 +56,22 @@ private struct NotificationKey<Value: Sendable>: SharedReaderKey {
 
   var id: some Hashable { name }
 
+  func load(context _: LoadContext<Value>) -> LoadResult<Value> {
+    .initialValue
+  }
+
   func subscribe(
-    initialValue: Value?,
-    didSet receiveValue: @escaping @Sendable (Value?) -> Void
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription {
     nonisolated(unsafe) let token = NotificationCenter.default.addObserver(
       forName: name,
       object: nil,
       queue: nil
     ) { notification in
-      receiveValue(transform(notification))
+      subscriber.yield(transform(notification))
     }
     return SharedSubscription {
       NotificationCenter.default.removeObserver(token)
     }
-  }
-
-  func load(initialValue: Value?) -> Value? {
-    nil
   }
 }

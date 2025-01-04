@@ -266,6 +266,46 @@ public struct Shared<Value> {
     SharedReader(self)[dynamicMember: keyPath]
   }
 
+  /// Whether or not an associated shared key is loading data.
+  public var isLoading: Bool {
+    reference.isLoading
+  }
+
+  /// An error encountered during the most recent attempt to load data.
+  ///
+  /// This value is `nil` unless a load attempt failed. It contains the latest error from the
+  /// underlying ``SharedReaderKey``. Access it from `@Shared`'s projected value:
+  ///
+  /// ```swift
+  /// @Shared(.fileStorage(.users)) var users: [User] = []
+  ///
+  /// var body: some View {
+  ///   if let loadError = $users.loadError {
+  ///     ContentUnavailableView {
+  ///       Label("Failed to users", systemImage: "xmark.circle")
+  ///     } description: {
+  ///       Text(loadError.localizedDescription)
+  ///     }
+  ///   } else {
+  ///     ForEach(users) { user in /* ... */ }
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// > When a load error occurs, ``wrappedValue`` retains results from the last successful fetch.
+  /// > Its value will update once a new load succeeds.
+  public var loadError: (any Error)? {
+    reference.loadError
+  }
+
+  /// An error encountered during the most recent attempt to save data.
+  ///
+  /// This value is `nil` unless a save attempt failed. It contains the latest error from the
+  /// underlying ``SharedKey``.
+  public var saveError: (any Error)? {
+    reference.saveError
+  }
+
   /// Requests an up-to-date value from an external source.
   ///
   /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
@@ -276,8 +316,8 @@ public struct Shared<Value> {
   /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
   /// their external source. In these cases, you should call this method whenever you need the most
   /// up-to-date value.
-  public func load() {
-    reference.load()
+  public func load() async throws {
+    try await reference.load()
   }
 
   /// Requests the underlying value be persisted to an external source.
@@ -289,8 +329,8 @@ public struct Shared<Value> {
   /// save to the external source immediately upon modification. Some persistence strategies,
   /// however, may choose to debounce this work, in which case it may be desirable to tell the
   /// strategy to save more eagerly.
-  public func save() {
-    reference.save()
+  public func save() async throws {
+    try await reference.save()
   }
 
   private final class Box: @unchecked Sendable {

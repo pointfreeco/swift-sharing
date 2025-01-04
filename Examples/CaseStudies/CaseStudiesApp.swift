@@ -32,6 +32,7 @@ private struct RootView: View {
       }
       CaseStudyGroupView("Custom SharedKey") {
         NotificationsView()
+        APIClientView()
         GRDBView()
         FirebaseView()
       }

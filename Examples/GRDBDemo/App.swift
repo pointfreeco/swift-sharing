@@ -4,6 +4,8 @@ import SwiftUI
 
 @main
 struct GRDBDemoApp: App {
+  static let model = PlayersModel()
+
   init() {
     prepareDependencies {
       $0.defaultDatabase = .appDatabase
@@ -12,7 +14,7 @@ struct GRDBDemoApp: App {
 
   var body: some Scene {
     WindowGroup {
-      PlayersView()
+      PlayersView(model: Self.model)
     }
   }
 }

@@ -4,4 +4,4 @@
 
 ### Updating data sources
 
-- ``save(_:immediately:)``
+- ``save(_:immediately:didComplete:)``

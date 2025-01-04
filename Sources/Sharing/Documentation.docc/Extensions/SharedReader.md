@@ -80,6 +80,14 @@ if remoteConfig.isToggleEnabled {
 
 - ``load()``
 
+### Error handling
+
+- ``loadError``
+
+### SwiftUI integration
+
+- ``Swift/Array``
+
 ### Combine integration
 
 - ``publisher``

@@ -26,24 +26,73 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// The `initialValue` provided can be used to supply a value in case the external storage has
   /// no value. This method is synchronous which means you cannot perform asynchronous work in it.
   /// If that is necessary to load the initial value from your external source, you can use the
-  /// ``SharedReaderKey/subscribe(initialValue:didSet:)`` method.
+  /// ``SharedReaderKey/subscribe(initialValue:didReceive:)`` method.
   ///
-  /// - Parameter initialValue: An initial value assigned to the `@Shared` property.
-  /// - Returns: An initial value provided by an external system, or `nil`.
-  func load(initialValue: Value?) -> Value?
+  /// - Parameters
+  ///   - initialValue: An initial value assigned to the `@Shared` property.
+  ///   - continuation: A continuation that can be fed the result of loading a value from an
+  ///     external system.
+  func load(context: LoadContext<Value>) async throws -> LoadResult<Value>
 
   /// Subscribes to external updates.
   ///
   /// - Parameters:
   ///   - initialValue: An initial value assigned to the `@Shared` property.
-  ///   - receiveValue: A closure that is invoked with new values from an external system, or `nil`
-  ///     if the external system no longer holds a value.
+  ///   - subscriber: A value that is given new results from an external system, or `nil` if the
+  ///     external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
   func subscribe(
-    initialValue: Value?, didSet receiveValue: @escaping @Sendable (Value?) -> Void
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription
 }
+
+// TODO: docs
+public enum LoadResult<Value> {
+  case newValue(Value)
+  case initialValue
+  
+  public init(_ valueIfExists: Value?) {
+    guard let value = valueIfExists else {
+      self = .initialValue
+      return
+    }
+    self = .newValue(value)
+  }
+
+  public var newValue: Value? {
+    guard case let .newValue(value) = self else {
+      return nil
+    }
+    return value
+  }
+}
+
+extension LoadResult: Sendable where Value: Sendable {}
+
+extension LoadResult: Equatable where Value: Equatable {}
+
+extension LoadResult: Hashable where Value: Hashable {}
+
+public enum LoadContext<Value> {
+  /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
+  /// first time.
+  case initialValue(Value)
+
+  /// Value is being loaded from invoking ``SharedReader/load()`` or
+  /// ``SharedReader/init(require:)``.
+  case userInitiated
+
+  // TODO: Document
+  public var initialValue: Value? {
+    guard case let .initialValue(value) = self else {
+      return nil
+    }
+    return value
+  }
+}
+
+extension LoadContext: Sendable where Value: Sendable {}
 
 extension SharedReaderKey where ID == Self {
   public var id: ID { self }
@@ -62,7 +111,7 @@ extension SharedReader {
     _ key: some SharedReaderKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key)
+    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
   }
 
   @_disfavoredOverload
@@ -72,7 +121,7 @@ extension SharedReader {
     _ key: some SharedKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key)
+    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
   }
 
   /// Creates a shared reference to an optional, read-only value using a shared key.
@@ -136,22 +185,20 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedReaderKey<Value>) throws {
-    let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
-      return value
-    }
-    try self.init(rethrowing: value(), key)
+  public init<Key: SharedReaderKey<Value>>(require key: Key) async throws {
+    let value = try await key.load(context: .userInitiated)
+    guard let value = value.newValue else { throw LoadError() }
+    self.init(rethrowing: value, key, isPreloaded: true)
+    if let loadError { throw loadError }
   }
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init(require key: some SharedKey<Value>) throws {
-    let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
-      return value
-    }
-    try self.init(rethrowing: value(), key)
+  public init<Key: SharedKey<Value>>(require key: Key) async throws {
+    let value = try await key.load(context: .userInitiated)
+    guard let value = value.newValue else { throw LoadError() }
+    self.init(rethrowing: value, key, isPreloaded: true)
+    if let loadError { throw loadError }
   }
 
   @available(*, unavailable, message: "Assign a default value")
@@ -167,10 +214,18 @@ extension SharedReader {
   }
 
   private init(
-    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>
+    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>,
+    isPreloaded: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(reference: try persistentReferences.value(forKey: key, default: try value()))
+    self.init(
+      reference: try persistentReferences.value(
+        forKey: key,
+        default: try value(),
+        isPreloaded: isPreloaded
+      )
+    )
   }
+
   private struct LoadError: Error {}
 }

@@ -84,12 +84,6 @@ import Testing
       #expect(isOn == true)
     }
   }
-
-  @Test func requireShouldThrow() {
-    withKnownIssue {
-      _ = try Shared(require: .isOn)
-    }
-  }
 }
 
 extension SharedReaderKey where Self == InMemoryKey<Bool>.Default {

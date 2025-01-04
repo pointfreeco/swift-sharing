@@ -38,18 +38,25 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
     self.store = defaultInMemoryStorage
   }
   public var id: InMemoryKeyID {
-    InMemoryKeyID(key: self.key, store: self.store)
+    InMemoryKeyID(key: key, store: store)
   }
-  public func load(initialValue: Value?) -> Value? {
-    store.values[key, default: initialValue] as? Value
+  public func load(context: LoadContext<Value>) -> LoadResult<Value> {
+    switch context {
+    case .initialValue(let initialValue):
+      return .newValue(store.values[key, default: initialValue])
+    case .userInitiated:
+      guard let value = store.values[key] as? Value else {
+        return .initialValue
+      }
+      return .newValue(value)
+    }
   }
   public func subscribe(
-    initialValue: Value?,
-    didSet receiveValue: @escaping (Value?) -> Void
+    context _: LoadContext<Value>, subscriber _: SharedSubscriber<Value>
   ) -> SharedSubscription {
     SharedSubscription {}
   }
-  public func save(_ value: Value, immediately: Bool) {
+  public func save(_ value: Value, context _: SaveContext) {
     store.values[key] = value
   }
 }
@@ -78,10 +85,13 @@ public struct InMemoryStorage: Hashable, Sendable {
       set { storage.withLock { $0[key] = newValue } }
     }
 
-    subscript(key: String, default defaultValue: (any Sendable)?) -> (any Sendable)? {
-      storage.withLock {
-        $0[key] = $0[key] ?? defaultValue
-        return $0[key]
+    subscript<Value: Sendable>(key: String, default defaultValue: Value) -> Value {
+      storage.withLock { storage in
+        let value = (storage[key] as? Value) ?? {
+          storage[key] = defaultValue
+          return defaultValue
+        }()
+        return value
       }
     }
   }

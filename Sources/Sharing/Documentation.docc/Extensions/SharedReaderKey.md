@@ -5,8 +5,8 @@
 ### Loading and subscribing to data sources
 
 - ``Value``
-- ``load(initialValue:)``
-- ``subscribe(initialValue:didSet:)``
+- ``load(initialValue:didReceive:)``
+- ``subscribe(initialValue:didReceive:)``
 
 ### Managing subscriptions
 
@@ -16,3 +16,7 @@
 
 - ``ID``
 - ``id``
+
+### Deprecations
+
+- ``subscribe(initialValue:didSet:)``

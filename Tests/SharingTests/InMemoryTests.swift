@@ -50,13 +50,19 @@ import Testing
     .value
   }
 
-  @Test func `default`() {
+  @Test func `default`() async throws {
     do {
       @SharedReader(.inMemory("count")) var count = 10
     }
     do {
       @SharedReader(.inMemory("count")) var count = 0
       #expect(count == 10)
+    }
+    do {
+      let sharedCount = try await SharedReader<Int>(require: .inMemory("count"))
+      #expect(sharedCount.wrappedValue == 10)
+    } catch {
+      throw error
     }
   }
 }

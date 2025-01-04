@@ -78,7 +78,12 @@
     fileprivate struct State {
       var modificationDates: [Date] = []
       var value: Value?
-      var workItem: DispatchWorkItem?
+      var throttleTask: Task<Void, any Error>?
+      mutating func cancelThrottle() {
+        throttleTask?.cancel()
+        throttleTask = nil
+        value = nil
+      }
     }
 
     public var id: FileStorageKeyID {
@@ -97,106 +102,65 @@
       self.encode = encode
     }
 
-    public func load(initialValue: Value?) -> Value? {
-      try? load(data: storage.load(url), initialValue: initialValue)
-    }
-
-    private func load(data: Data, initialValue: Value?) -> Value? {
-      do {
-        return try decode(data)
-      } catch {
-        return initialValue
+    public func load(context _: LoadContext<Value>) throws -> LoadResult<Value> {
+      guard
+        let data = try? storage.load(url),
+        data != stubBytes
+      else {
+        return .initialValue
       }
-    }
-
-    private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
-      try self.storage.save(data, url)
-      if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
-        as? Date
-      {
-        modificationDates.append(modificationDate)
-      }
-    }
-
-    public func save(_ value: Value, immediately: Bool) {
-      state.withValue { state in
-        if immediately {
-          state.value = nil
-          state.workItem?.cancel()
-          state.workItem = nil
-        }
-        if state.workItem == nil {
-          guard let data = try? self.encode(value)
-          else { return }
-          try? save(data: data, url: url, modificationDates: &state.modificationDates)
-
-          let workItem = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.withValue { state in
-              defer {
-                state.value = nil
-                state.workItem = nil
-              }
-              guard
-                let value = state.value,
-                let data = try? self.encode(value)
-              else { return }
-              try? self.save(data: data, url: self.url, modificationDates: &state.modificationDates)
-            }
-          }
-          state.workItem = workItem
-          storage.asyncAfter(.seconds(1), workItem)
-        } else {
-          state.value = value
-        }
-      }
+      return .newValue(try decode(data))
     }
 
     public func subscribe(
-      initialValue: Value?,
-      didSet receiveValue: @escaping @Sendable (_ newValue: Value?) -> Void
+      context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let cancellable = LockIsolated<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
         cancellable.withValue { [weak self] in
           $0?.cancel()
           guard let self else { return }
-          // NB: Make sure there is a file to create a source for.
-          if !storage.fileExists(url) {
-            try? storage.createDirectory(url.deletingLastPathComponent(), true)
-            try? storage.save(Data(), url)
-          }
-          let writeCancellable = try? storage.fileSystemSource(url, [.write]) { [weak self] in
-            guard let self else { return }
-            state.withValue { state in
-              let modificationDate =
-                (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate] as? Date)
-                ?? Date.distantPast
-              guard
-                !state.modificationDates.contains(modificationDate)
-              else {
-                state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                return
+          do {
+            // NB: Make sure there is a file to create a source for.
+            if !storage.fileExists(url) {
+              try storage.createDirectory(url.deletingLastPathComponent(), true)
+              try storage.save(stubBytes, url)
+            }
+            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                let modificationDate =
+                  (try? storage.attributesOfItemAtPath(url.path)[.modificationDate]
+                    as? Date)
+                  ?? Date.distantPast
+                guard
+                  !state.modificationDates.contains(modificationDate)
+                else {
+                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                  return
+                }
+
+                guard state.throttleTask == nil
+                else { return }
+
+                subscriber.yield(with: Result { try decode(storage.load(url)) })
               }
-              guard
-                state.workItem == nil,
-                let data = try? self.storage.load(self.url)
-              else { return }
-              receiveValue(self.load(data: data, initialValue: initialValue))
             }
-          }
-          let deleteCancellable = try? storage.fileSystemSource(url, [.delete, .rename]) { [weak self] in
-            guard let self else { return }
-            state.withValue { state in
-              state.workItem?.cancel()
-              state.workItem = nil
+            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
+              [weak self] in
+              guard let self else { return }
+              state.withValue { state in
+                state.cancelThrottle()
+              }
+              subscriber.yield(with: .success(try? decode(storage.load(url))))
+              setUpSources()
             }
-            receiveValue(self.load(initialValue: initialValue))
-            setUpSources()
-          }
-          $0 = SharedSubscription {
-            writeCancellable?.cancel()
-            deleteCancellable?.cancel()
+            $0 = SharedSubscription {
+              writeCancellable.cancel()
+              deleteCancellable.cancel()
+            }
+          } catch {
+            subscriber.yield(throwing: error)
           }
         }
       }
@@ -206,20 +170,44 @@
       }
     }
 
-    private func performImmediately() {
-      state.withValue { state in
-        guard let workItem = state.workItem
-        else { return }
-        storage.async(workItem)
-        storage.async(
-          DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.withValue { state in
-              state.workItem?.cancel()
-              state.workItem = nil
+    private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
+      try Task.checkCancellation()
+      try storage.save(data, url)
+      if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
+        as? Date
+      {
+        modificationDates.append(modificationDate)
+      }
+    }
+
+    public func save(_ value: Value, context: SaveContext) async throws {
+      switch context {
+      case .didSet:
+        let throttleTask = try state.withValue { state throws -> Task<Void, any Error>? in
+          if let throttleTask = state.throttleTask {
+            state.value = value
+            return throttleTask
+          } else {
+            try storage.save(encode(value), url)
+            state.throttleTask = Task {
+              // TODO: control this for tests
+              try await Task.sleep(nanoseconds: 1_000_000_000)
+              try self.state.withValue { state in
+                defer { state.cancelThrottle() }
+                guard let value = state.value else { return }
+                try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
+              }
             }
+            return nil
           }
-        )
+        }
+        try await throttleTask?.value
+
+      case .userInitiated:
+        try state.withValue { state in
+          state.cancelThrottle()
+          try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
+        }
       }
     }
   }
@@ -387,4 +375,6 @@
     #endif
     return encoder
   }()
+
+  private let stubBytes = Data("co.pointfree.sharing.fileStorage.stub".utf8)
 #endif

@@ -45,21 +45,20 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
     Self(base: key, defaultValue: value)
   }
 
-  public func load(initialValue: Base.Value?) -> Base.Value? {
-    base.load(initialValue: initialValue)
+  public func load(context: LoadContext<Base.Value>) async throws -> LoadResult<Base.Value> {
+    try await base.load(context: context)
   }
 
   public func subscribe(
-    initialValue: Base.Value?,
-    didSet receiveValue: @escaping @Sendable (Base.Value?) -> Void
+    context: LoadContext<Base.Value>, subscriber: SharedSubscriber<Base.Value>
   ) -> SharedSubscription {
-    base.subscribe(initialValue: initialValue, didSet: receiveValue)
+    base.subscribe(context: context, subscriber: subscriber)
   }
 }
 
 extension _SharedKeyDefault: SharedKey where Base: SharedKey {
-  public func save(_ value: Value, immediately: Bool) {
-    base.save(value, immediately: immediately)
+  public func save(_ value: Base.Value, context: SaveContext) async throws {
+    try await base.save(value, context: context)
   }
 }
 

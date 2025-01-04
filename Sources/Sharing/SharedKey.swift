@@ -18,7 +18,17 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///     by default to delay writing to an external source in some way, for example throttling or
   ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
   ///     delays.
-  func save(_ value: Value, immediately: Bool)
+  ///   - continuation: A continuation that should be notified upon the completion of saving a
+  ///     shared value.
+  func save(_ value: Value, context: SaveContext) async throws 
+}
+
+public enum SaveContext: Sendable {
+  /// Value is being saved after mutation via ``Shared/withLock(_:fileID:filePath:line:column:)``.
+  case didSet
+
+  /// Value is being saved via ``Shared/save()``.
+  case userInitiated
 }
 
 extension Shared {
@@ -34,7 +44,7 @@ extension Shared {
     _ key: some SharedKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key)
+    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
   }
 
   /// Creates a shared reference to an optional value using a shared key.
@@ -76,12 +86,11 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(require key: some SharedKey<Value>) throws {
-    let value = {
-      guard let value = key.load(initialValue: nil) else { throw LoadError() }
-      return value
-    }
-    try self.init(rethrowing: value(), key)
+  public init<Key: SharedKey<Value>>(require key: Key) async throws {
+    let value = try await key.load(context: .userInitiated)
+    guard let value = value.newValue else { throw LoadError() }
+    self.init(rethrowing: value, key, isPreloaded: true)
+    if let loadError { throw loadError }
   }
 
   @available(*, unavailable, message: "Assign a default value")
@@ -90,10 +99,18 @@ extension Shared {
   }
 
   private init(
-    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedKey<Value>
+    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedKey<Value>,
+    isPreloaded: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(reference: try persistentReferences.value(forKey: key, default: try value()))
+    self.init(
+      reference: try persistentReferences.value(
+        forKey: key,
+        default: try value(),
+        isPreloaded: isPreloaded
+      )
+    )
   }
+
   private struct LoadError: Error {}
 }
