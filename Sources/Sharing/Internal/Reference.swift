@@ -231,6 +231,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
     )
   }
 
+  deinit {
+    initialLoadTask?.cancel()
+  }
+
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
   var isLoading: Bool {
