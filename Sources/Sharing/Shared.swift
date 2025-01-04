@@ -102,6 +102,7 @@ public struct Shared<Value> {
   ///   }
   /// }
   /// ```
+  #if compiler(>=6)
   public var wrappedValue: Value {
     get {
       @Dependency(\.snapshots) var snapshots
@@ -120,6 +121,16 @@ public struct Shared<Value> {
       withLock { $0 = newValue }
     }
   }
+  #else
+  public var wrappedValue: Value {
+    @Dependency(\.snapshots) var snapshots
+    if snapshots.isAsserting {
+      return reference.snapshot ?? reference.wrappedValue
+    } else {
+      return reference.wrappedValue
+    }
+  }
+  #endif
 
   /// Perform an operation on shared state with isolated access to the underlying value.
   /// 
