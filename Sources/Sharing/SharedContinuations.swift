@@ -61,6 +61,89 @@ public struct LoadContinuation<Value>: Sendable {
   }
 }
 
+/// A mechanism to synchronize with a shared key's external system.
+///
+/// A subscriber is passed to ``SharedReaderKey/subscribe(initialValue:subscriber:)`` so that
+/// updates to an external system can be shared.
+public struct SharedSubscriber<Value>: Sendable {
+  let callback: @Sendable (Result<Value?, any Error>) -> Void
+
+  package init(callback: @escaping @Sendable (Result<Value?, any Error>) -> Void) {
+    self.callback = callback
+  }
+
+  /// Yield an updated value from an external source.
+  ///
+  /// - Parameter value: An updated value.
+  public func yield(_ value: Value) {
+    yield(with: .success(value))
+  }
+
+  /// Yield the initial value provided to the property wrapper when none exists in the external
+  /// source.
+  ///
+  /// This method can be invoked when the external system detects that the associated value was
+  /// deleted and the associated shared key should revert back to its default.
+  ///
+  /// - Parameter value: An updated value.
+  public func yieldReturningInitialValue() {
+    yield(with: .success(nil))
+  }
+
+  /// Yield an error from an external source.
+  ///
+  /// - Parameter value: An error.
+  public func yield(throwing error: any Error) {
+    yield(with: .failure(error))
+  }
+
+  /// Yield a result of an updated value or error from an external source.
+  ///
+  /// - Parameter result: A result of an updated value or error.
+  public func yield(with result: Result<Value?, any Error>) {
+    callback(result)
+  }
+}
+
+/// A subscription to a ``SharedReaderKey``'s updates.
+///
+/// This object is returned from ``SharedReaderKey/subscribe(initialValue:didSet:)``, which
+/// will feed updates from an external system for its lifetime, or till ``cancel()`` is called.
+public struct SharedSubscription: Sendable {
+  private let box: Box
+
+  /// Initializes the subscription with the given cancel closure.
+  ///
+  /// - Parameter cancel: A closure that the `cancel()` method executes.
+  public init(_ cancel: @escaping @Sendable () -> Void) {
+    self.box = Box(cancel)
+  }
+
+  /// Cancels the subscription.
+  public func cancel() {
+    box.cancel()
+  }
+
+  private final class Box: Sendable {
+    let onCancel: Mutex<(@Sendable () -> Void)?>
+
+    init(_ onCancel: @escaping @Sendable () -> Void) {
+      self.onCancel = Mutex(onCancel)
+    }
+
+    func cancel() {
+      onCancel.withLock { onCancel in
+        defer { onCancel = nil }
+        onCancel?()
+      }
+    }
+
+    deinit {
+      cancel()
+    }
+  }
+}
+
 /// A mechanism to communicate with a shared key's external system, synchronously or asynchronously.
 ///
 /// A continuation is passed to ``SharedKey/save(_:immediately:continuation:)`` so that state can be
