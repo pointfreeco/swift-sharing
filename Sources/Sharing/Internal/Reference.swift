@@ -190,14 +190,14 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private var _saveError: (any Error)?
   private var _referenceCount = 0
   private var subscription: SharedSubscription?
-  private var initialLoadTask: Task<Void, any Error>?
 
   init(key: Key, value initialValue: Key.Value, isPreloaded: Bool) {
     self.key = key
     self.value = initialValue
-    self._isLoading = false
+    self._isLoading = true
     let callback: @Sendable (Result<Value?, any Error>) -> Void = { [weak self] result in
       guard let self else { return }
+      isLoading = false
       switch result {
       case let .failure(error):
         loadError = error
@@ -207,20 +207,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     }
     if !isPreloaded {
-      initialLoadTask = Task {
-        self.isLoading = true
-        defer { self.isLoading = false }
-
-        let result = await Result {
-          let value = try await key.load(
-            context: .initialValue(initialValue)
-          )
-          .newValue
-          try Task.checkCancellation()
-          return value
-        }
-        callback(result)
-      }
+      key.load(
+        context: .initialValue(initialValue),
+        continuation: LoadContinuation("\(key)", callback: callback)
+      )
     }
     self.subscription = key.subscribe(
       context: .initialValue(initialValue),
@@ -249,11 +239,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
     }
     set {
       withMutation(keyPath: \._loadError) {
-        lock.withLock {
-          if !(newValue is CancellationError) {
-            _loadError = newValue
-          }
-        }
+        lock.withLock { _loadError = newValue }
       }
       if let newValue {
         reportIssue(newValue)
@@ -278,12 +264,13 @@ final class _PersistentReference<Key: SharedReaderKey>:
     defer { isLoading = false }
     do {
       loadError = nil
-      initialLoadTask?.cancel()
-      let value = try await key.load(context: .userInitiated)
-      guard let newValue = value.newValue else {
-        // TODO: should we hold onto initialValue and re-assign here?
-        return
+      let newValue = try await withUnsafeThrowingContinuation { continuation in
+        let key = key
+        key.load(context: .userInitiated, continuation: LoadContinuation("\(key)") { result in
+          continuation.resume(with: result)
+        })
       }
+      guard let newValue else { return }
       wrappedValue = newValue
     } catch {
       loadError = error

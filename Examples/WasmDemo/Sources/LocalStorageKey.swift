@@ -13,8 +13,8 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
 
   var id: some Hashable { key }
 
-  func load(context _: LoadContext<Value>) throws -> LoadResult<Value> {
-    try LoadResult(getAndDecodeItem())
+  func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
+    continuation.resume(with: Result { try getAndDecodeItem() })
   }
 
   func subscribe(

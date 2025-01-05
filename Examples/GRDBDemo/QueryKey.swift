@@ -106,20 +106,23 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
     #endif
   }
 
-  func load(context: LoadContext<Value>) async throws -> LoadResult<Value> {
+  func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
     #if DEBUG
       guard !isDefaultDatabase else {
-        return .initialValue
+        continuation.resumeReturningInitialValue()
+        return
       }
     #endif
     guard case .userInitiated = context else {
-      return .initialValue
+      continuation.resumeReturningInitialValue()
+      return
     }
-    return try await .newValue(
-      database.read { db in
-        try request.fetch(db)
+    database.asyncRead { dbResult in
+      let result = dbResult.flatMap { db in
+        Result { try request.fetch(db) }
       }
-    )
+      scheduler.schedule { continuation.resume(with: result.map(Optional.some)) }
+    }
   }
 
   func subscribe(
