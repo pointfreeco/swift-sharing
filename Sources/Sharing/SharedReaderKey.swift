@@ -68,12 +68,6 @@ public enum LoadResult<Value> {
   }
 }
 
-extension LoadResult: Sendable where Value: Sendable {}
-
-extension LoadResult: Equatable where Value: Equatable {}
-
-extension LoadResult: Hashable where Value: Hashable {}
-
 public enum LoadContext<Value> {
   /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
   /// first time.

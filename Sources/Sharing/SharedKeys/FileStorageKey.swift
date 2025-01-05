@@ -78,7 +78,13 @@
     fileprivate struct State {
       var modificationDates: [Date] = []
       var value: Value?
+      var workItem: DispatchWorkItem?
       var throttleTask: Task<Void, any Error>?
+      mutating func cancelWorkItem() {
+        value = nil
+        workItem?.cancel()
+        workItem = nil
+      }
       mutating func cancelThrottle() {
         throttleTask?.cancel()
         throttleTask = nil
@@ -140,7 +146,7 @@
                   return
                 }
 
-                guard state.throttleTask == nil
+                guard state.workItem == nil
                 else { return }
 
                 subscriber.yield(with: Result { try decode(storage.load(url)) })
@@ -150,7 +156,7 @@
               [weak self] in
               guard let self else { return }
               state.withValue { state in
-                state.cancelThrottle()
+                state.cancelWorkItem()
               }
               subscriber.yield(with: .success(try? decode(storage.load(url))))
               setUpSources()
@@ -208,6 +214,22 @@
           state.cancelThrottle()
           try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
         }
+      }
+    }
+
+    private func performImmediately() {
+      state.withValue { state in
+        guard let workItem = state.workItem
+        else { return }
+        storage.async(workItem)
+        storage.async(
+          DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.state.withValue { state in
+              state.cancelWorkItem()
+            }
+          }
+        )
       }
     }
   }
