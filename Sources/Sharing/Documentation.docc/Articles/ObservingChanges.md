@@ -49,7 +49,8 @@ changes.
 ## Publisher of values
 
 It is possible to get a Combine publisher of changes in a piece of shared state. Every `Shared` 
-value has a ``Shared/publisher`` property, which emits every time the shared state changes:
+value has a ``Shared/publisher`` property, which emits the value every time the shared state
+changes:
 
 ```swift
 class Model {
@@ -58,15 +59,15 @@ class Model {
   var cancellables: Set<AnyCancellable> = []
   func startObservation() {
     $count.publisher.sink { count in
-      print("count changes to", count)
+      print("count is now", count)
     }
     .store(in: &cancellables)
   }
 }
 ```
 
-You must be careful to not further mutate the shared state from within `sink`, otherwise you run
-the risk of an infinite loop.
+> Important: You must be careful to not further mutate the shared state from within `sink`,
+> otherwise you run the risk of an infinite loop.
 
 ## UIKit
 

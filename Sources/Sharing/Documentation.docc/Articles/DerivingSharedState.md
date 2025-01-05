@@ -79,15 +79,27 @@ shared `currentUser`, and further those changes will be automatically persisted 
 needs access to shared state without describing the persistence strategy, and the parent can be
 responsible for persisting and deriving shared state to pass to the child.
 
-If your shared state is a collection, and in particular an `IdentifiedArray`, then we have another
-tool for deriving shared state to a particular element of the array. You can subscript into a 
-``Shared`` collection with the `[id:]` subscript, and that will give a piece of shared optional
-state, which you can then unwrap with the ``Shared/init(_:)-2z7om`` initializer:
+If your shared state is a collection, in particular an `IdentifiedArray`, then we have another tool
+for deriving shared state to a particular element of the array. You can pass the shared collection
+to a ``Swift/RangeReplaceableCollection``'s ``Swift/RangeReplaceableCollection/init(_:)`` to create
+a collection of shared elements:
+
+```swift
+@Shared(.fileStorage(.todos)) var todos: IdentifiedArrayOf<Todo> = []
+
+ForEach(Array($todos)) { $todo in  // '$todo' is a 'Shared<Todo>'
+  // ...
+}
+```
+
+You can also subscript into a ``Shared`` collection with the `IdentifiedArray[id:]` subscript. This
+will give a piece of shared optional state, which you can then unwrap with the
+``Shared/init(_:)-2z7om`` initializer:
 
 ```swift
 @Shared(.fileStorage(.todos)) var todos: IdentifiedArrayOf<Todo> = []
 
 guard let todo = Shared($todos[id: todoID])
 else { return }
-todo // Shared<Todo>
+todo  // Shared<Todo>
 ```

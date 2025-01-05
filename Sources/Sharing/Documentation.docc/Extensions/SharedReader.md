@@ -88,7 +88,7 @@ if remoteConfig.isToggleEnabled {
 
 ### SwiftUI integration
 
-- ``Swift/Array``
+- ``Swift/RangeReplaceableCollection``
 
 ### Combine integration
 
