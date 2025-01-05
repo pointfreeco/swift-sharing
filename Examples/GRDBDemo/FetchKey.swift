@@ -45,7 +45,7 @@ extension SharedReaderKey {
 }
 
 extension DependencyValues {
-  /// The default database used by ``Sharing/SharedReaderKey/query(_:animation:)``.
+  /// The default database used by ``Sharing/SharedReaderKey/fetch(_:animation:)``.
   public var defaultDatabase: any DatabaseWriter {
     get { self[DefaultDatabaseKey.self] }
     set { self[DefaultDatabaseKey.self] = newValue }

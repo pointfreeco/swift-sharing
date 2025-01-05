@@ -3,11 +3,11 @@ import IssueReporting
 
 /// A mechanism to communicate with a shared key's external system, synchronously or asynchronously.
 ///
-/// A continuation is passed to ``SharedReaderKey/load(initialValue:continuation:)`` so that state
+/// A continuation is passed to ``SharedReaderKey/load(context:continuation:)`` so that state
 /// can be shared from an external system.
 ///
 /// > Important: You must call a resume method exactly once on every execution path from the shared
-/// > key it is passed to, _i.e._ in ``SharedReaderKey/load(initialValue:continuation:)``.
+/// > key it is passed to, _i.e._ in ``SharedReaderKey/load(context:continuation:)``.
 /// >
 /// > Resuming from a continuation more than once is considered a logic error, and only the first
 /// > call to `resume` will be executed. Never resuming leaves the task awaiting the call to
@@ -63,8 +63,8 @@ public struct LoadContinuation<Value>: Sendable {
 
 /// A mechanism to synchronize with a shared key's external system.
 ///
-/// A subscriber is passed to ``SharedReaderKey/subscribe(initialValue:subscriber:)`` so that
-/// updates to an external system can be shared.
+/// A subscriber is passed to ``SharedReaderKey/subscribe(context:subscriber:)`` so that updates to
+/// an external system can be shared.
 public struct SharedSubscriber<Value>: Sendable {
   let callback: @Sendable (Result<Value?, any Error>) -> Void
 
@@ -84,15 +84,13 @@ public struct SharedSubscriber<Value>: Sendable {
   ///
   /// This method can be invoked when the external system detects that the associated value was
   /// deleted and the associated shared key should revert back to its default.
-  ///
-  /// - Parameter value: An updated value.
   public func yieldReturningInitialValue() {
     yield(with: .success(nil))
   }
 
   /// Yield an error from an external source.
   ///
-  /// - Parameter value: An error.
+  /// - Parameter error: An error.
   public func yield(throwing error: any Error) {
     yield(with: .failure(error))
   }
@@ -107,8 +105,8 @@ public struct SharedSubscriber<Value>: Sendable {
 
 /// A subscription to a ``SharedReaderKey``'s updates.
 ///
-/// This object is returned from ``SharedReaderKey/subscribe(initialValue:didSet:)``, which
-/// will feed updates from an external system for its lifetime, or till ``cancel()`` is called.
+/// This object is returned from ``SharedReaderKey/subscribe(context:subscriber:)``, which will feed
+/// updates from an external system for its lifetime, or till ``cancel()`` is called.
 public struct SharedSubscription: Sendable {
   private let box: Box
 
@@ -146,12 +144,12 @@ public struct SharedSubscription: Sendable {
 
 /// A mechanism to communicate with a shared key's external system, synchronously or asynchronously.
 ///
-/// A continuation is passed to ``SharedKey/save(_:immediately:continuation:)`` so that state can be
+/// A continuation is passed to ``SharedKey/save(_:context:continuation:)`` so that state can be
 /// shared to an external system.
 ///
 /// > Important: You must call a resume method exactly once on every execution path from the shared
-/// > key it is passed to, _i.e._ in ``SharedReaderKey/load(initialValue:continuation:)`` and
-/// > ``SharedKey/save(_:immediately:continuation:)``.
+/// > key it is passed to, _i.e._ in ``SharedReaderKey/load(context:continuation:)`` and
+/// > ``SharedKey/save(_:context:continuation:)``.
 /// >
 /// > Resuming from a continuation more than once is considered a logic error, and only the first
 /// > call to `resume` will be executed. Never resuming leaves the task awaiting the call to

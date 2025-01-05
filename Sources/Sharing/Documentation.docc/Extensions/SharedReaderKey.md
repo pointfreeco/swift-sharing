@@ -22,7 +22,3 @@
 
 - ``ID``
 - ``id``
-
-### Deprecations
-
-- ``subscribe(initialValue:didSet:)``
