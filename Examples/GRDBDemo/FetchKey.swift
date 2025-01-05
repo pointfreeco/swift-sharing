@@ -117,6 +117,10 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
       continuation.resumeReturningInitialValue()
       return
     }
+    guard !isTesting else {
+      continuation.resume(with: Result { try database.read(request.fetch) })
+      return
+    }
     database.asyncRead { dbResult in
       let result = dbResult.flatMap { db in
         Result { try request.fetch(db) }
@@ -185,7 +189,7 @@ private struct FetchOne<Value: DatabaseValueConvertible>: FetchKeyRequest {
 
 private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
-  func immediateInitialValue() -> Bool { false }
+  func immediateInitialValue() -> Bool { true }
   func schedule(_ action: @escaping @Sendable () -> Void) {
     if let animation {
       DispatchQueue.main.async {

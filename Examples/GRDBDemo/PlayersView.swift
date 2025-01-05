@@ -1,3 +1,4 @@
+import Combine
 import Dependencies
 import Foundation
 import GRDB
@@ -7,19 +8,16 @@ import SwiftUI
 @MainActor
 private let readMe: LocalizedStringKey = """
   This app demonstrates a simple way to persist data with GRDB. It introduces a new \
-  `SharedReaderKey` conformance, `query`, which queries a database for populating state. When the \
+  `SharedReaderKey` conformance, `fetch`, which queries a database for populating state. When the \
   database is updated the state will automatically be refreshed.
 
-  A list of players is powered by `query`. The demo also shows how to perform a dynamic query on \
+  A list of players is powered by `fetch`. The demo also shows how to perform a dynamic query on \
   the players in the form of sorting the list by name or their injury status.
   """
 
 @MainActor
 @Observable
 final class PlayersModel {
-  @ObservationIgnored
-  @Dependency(\.defaultDatabase) var database
-
   @ObservationIgnored
   @Shared(.appStorage("order")) var order: Players.Order = .name
 
@@ -30,11 +28,20 @@ final class PlayersModel {
   @SharedReader(.fetchOne(sql: #"SELECT count(*) FROM "players" WHERE NOT "isInjured""#))
   var uninjuredCount = 0
 
+  @ObservationIgnored
+  @Dependency(\.defaultDatabase) var database
+
+  var cancellables: Set<AnyCancellable> = []
+
   init() {
     _players = SharedReader(.fetch(Players(order: _order.wrappedValue), animation: .default))
+    $order.publisher.dropFirst().sink { @Sendable [weak self] order in
+      Task { await self?.updatePlayerQuery() }
+    }
+    .store(in: &cancellables)
   }
 
-  func reload() async {
+  func updatePlayerQuery() async {
     do {
       let players = try await SharedReader(
         require: .fetch(Players(order: order), animation: .default)
@@ -46,10 +53,41 @@ final class PlayersModel {
       reportIssue(error)
     }
   }
+
+  func deleteItems(offsets: IndexSet) {
+    do {
+      try database.write { db in
+        _ = try Player.deleteAll(db, keys: offsets.map { players[$0].id })
+      }
+    } catch {
+      reportIssue(error)
+    }
+  }
+}
+
+struct Players: FetchKeyRequest {
+  enum Order: String { case name, isInjured }
+  let order: Order
+  init(order: Order = .name) {
+    self.order = order
+  }
+  func fetch(_ db: Database) throws -> [Player] {
+    let ordering: any SQLOrderingTerm =
+      switch order {
+      case .name:
+        Column("name")
+      case .isInjured:
+        Column("isInjured").desc
+      }
+    return
+      try Player
+      .all()
+      .order(ordering)
+      .fetchAll(db)
+  }
 }
 
 struct PlayersView: View {
-  @Dependency(\.defaultDatabase) var database
   @State private var aboutIsPresented = false
   @State private var addPlayerIsPresented = false
   let model: PlayersModel
@@ -69,7 +107,7 @@ struct PlayersView: View {
                 }
               }
             }
-            .onDelete(perform: deleteItems)
+            .onDelete(perform: model.deleteItems)
           } header: {
             Text("^[\(model.uninjuredCount) player](inflect: true) are available")
           }
@@ -101,12 +139,6 @@ struct PlayersView: View {
         }
       }
     }
-    .onChange(of: model.order) {
-      Task {
-        await
-        model.reload()
-      }
-    }
     .sheet(isPresented: $addPlayerIsPresented) {
       AddPlayerView()
         .presentationDetents([.medium])
@@ -117,38 +149,6 @@ struct PlayersView: View {
       }
       .presentationDetents([.fraction(0.7)])
     }
-  }
-
-  private func deleteItems(offsets: IndexSet) {
-    do {
-      try database.write { db in
-        _ = try Player.deleteAll(db, keys: offsets.map { model.players[$0].id })
-      }
-    } catch {
-      reportIssue(error)
-    }
-  }
-}
-
-struct Players: FetchKeyRequest {
-  enum Order: String { case name, isInjured }
-  let order: Order
-  init(order: Order = .name) {
-    self.order = order
-  }
-  func fetch(_ db: Database) throws -> [Player] {
-    let ordering: any SQLOrderingTerm =
-      switch order {
-      case .name:
-        Column("name")
-      case .isInjured:
-        Column("isInjured").desc
-      }
-    return
-      try Player
-      .all()
-      .order(ordering)
-      .fetchAll(db)
   }
 }
 

@@ -14,7 +14,9 @@ struct GRDBDemoApp: App {
 
   var body: some Scene {
     WindowGroup {
-      PlayersView(model: Self.model)
+      if !isTesting {
+        PlayersView(model: Self.model)
+      }
     }
   }
 }

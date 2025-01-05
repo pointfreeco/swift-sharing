@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "70DF308D-D05A-4C68-8BC4-412D92E6FF80",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Examples.xcodeproj",
+      "identifier" : "CA7641552CF4ECF200C1CE55",
+      "name" : "GRDBDemo"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Examples.xcodeproj",
+        "identifier" : "CAA94A9C2D29E975004CAEAE",
+        "name" : "GRDBDemoTests"
+      }
+    }
+  ],
+  "version" : 1
+}
