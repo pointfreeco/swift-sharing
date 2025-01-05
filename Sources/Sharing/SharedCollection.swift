@@ -1,8 +1,7 @@
 import IdentifiedCollections
 import IssueReporting
 
-// TODO: Generalize to 'RangeReplaceableCollection' when deprecations become 'unavailable'
-extension Array {
+extension RangeReplaceableCollection {
   /// Creates an collection of shared elements from a shared collection.
   ///
   /// Useful in deriving a shared element when looping over a shared collection, for example in a
