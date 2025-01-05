@@ -46,7 +46,6 @@ struct GRDBDemoTests {
 
   @Test func delete() async throws {
     let model = PlayersModel()
-    try await Task.sleep(for: .milliseconds(100))
 
     model.deleteItems(offsets: [1])
 
