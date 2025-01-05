@@ -15,8 +15,6 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// A type representing the hashable identity of a shared key.
   associatedtype ID: Hashable = Self
 
-  associatedtype SubscriptionSequence: AsyncSequence where SubscriptionSequence.Element == SubscriptionResult<Value>
-
   /// The hashable identity of a shared key.
   ///
   /// Used to look up existing shared references associated with this shared key. For example,
@@ -44,29 +42,9 @@ public protocol SharedReaderKey<Value>: Sendable {
   ///     external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, the `didSet` closure will no longer be invoked.
-  func subscribe(context: LoadContext<Value>) -> SubscriptionSequence
-}
-
-public enum SubscriptionResult<Value> {
-  case failure(any Error)
-  case initialValue
-  case newValue(Value)
-
-  public init(_ valueIfExists: Value?) {
-    guard let value = valueIfExists else {
-      self = .initialValue
-      return
-    }
-    self = .newValue(value)
-  }
-
-  public init(catching: () throws -> Value?) {
-    do {
-      self.init(try catching())
-    } catch {
-      self = .failure(error)
-    }
-  }
+  func subscribe(
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+  ) -> SharedSubscription
 }
 
 // TODO: docs

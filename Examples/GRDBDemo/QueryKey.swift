@@ -123,20 +123,33 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
   }
 
   func subscribe(
-    context: LoadContext<Value>
-  ) -> some AsyncSequence<SubscriptionResult<Value>, any Error> {
+    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+  ) -> SharedSubscription {
+    #if DEBUG
+      guard !isDefaultDatabase else {
+        return SharedSubscription {}
+      }
+    #endif
     let observation = ValueObservation.tracking(request.fetch)
     let dropFirst = switch context {
     case .initialValue: false
     case .userInitiated: true
     }
-
-    return observation.values(in: database, scheduling: scheduler)
+    let cancellable = observation.publisher(in: database, scheduling: scheduler)
       .dropFirst(dropFirst ? 1 : 0)
-    #if DEBUG
-      .dropFirst(isDefaultDatabase ? .max : 0)
-    #endif
-      .map(SubscriptionResult.newValue)
+      .sink { completion in
+        switch completion {
+        case let .failure(error):
+          subscriber.yield(throwing: error)
+        case .finished:
+          break
+        }
+      } receiveValue: { newValue in
+        subscriber.yield(newValue)
+      }
+    return SharedSubscription {
+      cancellable.cancel()
+    }
   }
 }
 

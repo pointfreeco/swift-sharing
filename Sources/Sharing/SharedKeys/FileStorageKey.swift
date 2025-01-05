@@ -119,10 +119,8 @@
     }
 
     public func subscribe(
-      context: LoadContext<Value>
-    ) -> AsyncStream<SubscriptionResult<Value>> {
-      let (stream, continuation) = AsyncStream<SubscriptionResult<Value>>.makeStream()
-
+      context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+    ) -> SharedSubscription {
       let cancellable = LockIsolated<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
         cancellable.withValue { [weak self] in
@@ -151,7 +149,7 @@
                 guard state.workItem == nil
                 else { return }
 
-                continuation.yield(SubscriptionResult { try decode(storage.load(url)) })
+                subscriber.yield(with: Result { try decode(storage.load(url)) })
               }
             }
             let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
@@ -160,7 +158,7 @@
               state.withValue { state in
                 state.cancelWorkItem()
               }
-              continuation.yield(SubscriptionResult(try? decode(storage.load(url))))
+              subscriber.yield(with: .success(try? decode(storage.load(url))))
               setUpSources()
             }
             $0 = SharedSubscription {
@@ -168,16 +166,14 @@
               deleteCancellable.cancel()
             }
           } catch {
-            continuation.yield(.failure(error))
+            subscriber.yield(throwing: error)
           }
         }
       }
       setUpSources()
-      continuation.onTermination = { _ in
+      return SharedSubscription {
         cancellable.withValue { $0?.cancel() }
       }
-
-      return stream
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
