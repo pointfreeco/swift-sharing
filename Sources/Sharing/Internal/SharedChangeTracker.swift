@@ -107,20 +107,6 @@ public struct SharedChangeTracker: Hashable, Sendable {
     }
   }
 
-  @available(*, deprecated)
-  static func tracker(for key: some MutableReference) -> Self? {
-    @Dependency(SharedChangeTrackersKey.self) var sharedChangeTrackers
-    var sharedChangeTracker: Self?
-    for tracker in sharedChangeTrackers {
-      if sharedChangeTracker == nil, tracker.changes.hasChanges(for: key) {
-        sharedChangeTracker = tracker
-      } else if tracker.changes.hasChanges(for: key) {
-        break
-      }
-    }
-    return sharedChangeTracker
-  }
-
   fileprivate let changes: Changes
 
   public var hasChanges: Bool { changes.hasChanges }
