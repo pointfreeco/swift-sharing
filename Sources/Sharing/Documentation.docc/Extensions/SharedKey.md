@@ -4,4 +4,6 @@
 
 ### Updating data sources
 
-- ``save(_:immediately:didComplete:)``
+- ``save(_:context:continuation:)``
+- ``SaveContext``
+- ``SaveContinuation``

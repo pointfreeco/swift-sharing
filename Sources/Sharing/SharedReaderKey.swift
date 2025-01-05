@@ -23,13 +23,12 @@ public protocol SharedReaderKey<Value>: Sendable {
 
   /// Loads the freshest value from storage.
   ///
-  /// The `initialValue` provided can be used to supply a value in case the external storage has
-  /// no value. This method is synchronous which means you cannot perform asynchronous work in it.
-  /// If that is necessary to load the initial value from your external source, you can use the
-  /// ``SharedReaderKey/subscribe(initialValue:didReceive:)`` method.
+  /// The `context` provided can be used to determine if the value was loaded implicitly at the
+  /// initialization of a `@Shared` or `@SharedReader` property (_via_ `init(wrappedValue:)`), or
+  /// explicitly (_via_ `load()` or `init(require:)`).
   ///
   /// - Parameters
-  ///   - initialValue: An initial value assigned to the `@Shared` property.
+  ///   - context: The context of loading a value.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
   ///     external system.
   func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>)
@@ -37,39 +36,40 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// Subscribes to external updates.
   ///
   /// - Parameters:
-  ///   - initialValue: An initial value assigned to the `@Shared` property.
-  ///   - subscriber: A value that is given new results from an external system, or `nil` if the
-  ///     external system no longer holds a value.
+  ///   - context: The context of subscribing to updates.
+  ///   - subscriber: A continuation that can be fed new results from an external system, or the
+  ///     initial value if the external system no longer holds a value.
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
-  ///   deinitialized, the `didSet` closure will no longer be invoked.
+  ///   deinitialized, `subscriber` will no longer receive updates from the external system.
   func subscribe(
     context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription
 }
 
+extension SharedReaderKey where ID == Self {
+  public var id: ID { self }
+}
+
 public enum LoadContext<Value> {
-  /// Value is being loaded from initializing via ``SharedReader/init(wrappedValue:_:)`` for the
-  /// first time.
+  /// The value is being loaded implicitly at the initialization of a `@Shared` or `@SharedReader`
+  /// property (_via_ ``SharedReader/init(wrappedValue:_:)-56tir``).
+  ///
+  /// The associated value is the same value passed to the `wrappedValue` argument of the
+  /// initializer.
   case initialValue(Value)
 
-  /// Value is being loaded from invoking ``SharedReader/load()`` or
-  /// ``SharedReader/init(require:)``.
+  /// The value is being loaded explicitly (_via_ ``SharedReader/load()`` or
+  /// ``SharedReader/init(require:)``).
   case userInitiated
 
-  // TODO: Document
+  /// The value associated with ``LoadContext/initialValue(_:)``.
   public var initialValue: Value? {
-    guard case let .initialValue(value) = self else {
-      return nil 
-    }
+    guard case let .initialValue(value) = self else { return nil }
     return value
   }
 }
 
 extension LoadContext: Sendable where Value: Sendable {}
-
-extension SharedReaderKey where ID == Self {
-  public var id: ID { self }
-}
 
 extension SharedReader {
   /// Creates a shared reference to a read-only value using a shared key.

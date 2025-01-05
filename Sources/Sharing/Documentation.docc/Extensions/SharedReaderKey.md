@@ -2,14 +2,20 @@
 
 ## Topics
 
-### Loading and subscribing to data sources
+### Associated data
 
 - ``Value``
-- ``load(initialValue:didReceive:)``
-- ``subscribe(initialValue:didReceive:)``
 
-### Managing subscriptions
+### Loading from a data source
 
+- ``load(context:continuation:)``
+- ``LoadContext``
+- ``LoadContinuation``
+
+### Subscribing to a data source
+
+- ``subscribe(context:subscriber:)``
+- ``SharedSubscriber``
 - ``SharedSubscription``
 
 ### Key hashability
