@@ -14,7 +14,9 @@ public protocol SharedKey<Value>: SharedReaderKey {
   ///
   /// - Parameters:
   ///   - value: The value to save.
-  ///   - immediately: Tells the shared key to save the value as soon as possible. A key may choose
+  ///   - context: The context of saving a value.
+  ///
+  ///   Tells the shared key to save the value as soon as possible. A key may choose
   ///     by default to delay writing to an external source in some way, for example throttling or
   ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
   ///     delays.
@@ -23,11 +25,19 @@ public protocol SharedKey<Value>: SharedReaderKey {
   func save(_ value: Value, context: SaveContext, continuation: SaveContinuation)
 }
 
-public enum SaveContext: Sendable {
-  /// Value is being saved after mutation via ``Shared/withLock(_:fileID:filePath:line:column:)``.
+/// The context in which a value is saved by a ``SharedKey``.
+///
+/// A key may use this context to determine the behavior of the save. For example, an external
+/// system that may be expensive to write to very frequently (_i.e._ network or file IO) could
+/// choose to debounce saves when the value is simply updated in memory (via
+/// ``Shared/withLock(_:fileID:filePath:line:column:)``), but forgo debouncing with an immediate
+/// write when the value is saved explicitly (via ``Shared/save()``).
+public enum SaveContext: Hashable, Sendable {
+  /// The value is being saved implicitly (after a mutation via
+  /// ``Shared/withLock(_:fileID:filePath:line:column:)``).
   case didSet
 
-  /// Value is being saved via ``Shared/save()``.
+  /// The value is being saved explicitly (via ``Shared/save()``).
   case userInitiated
 }
 

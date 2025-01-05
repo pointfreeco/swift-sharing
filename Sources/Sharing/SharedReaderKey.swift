@@ -23,10 +23,6 @@ public protocol SharedReaderKey<Value>: Sendable {
 
   /// Loads the freshest value from storage.
   ///
-  /// The `context` provided can be used to determine if the value was loaded implicitly at the
-  /// initialization of a `@Shared` or `@SharedReader` property (_via_ `init(wrappedValue:)`), or
-  /// explicitly (_via_ `load()` or `init(require:)`).
-  ///
   /// - Parameters
   ///   - context: The context of loading a value.
   ///   - continuation: A continuation that can be fed the result of loading a value from an
@@ -50,15 +46,16 @@ extension SharedReaderKey where ID == Self {
   public var id: ID { self }
 }
 
+/// The context in which a value is loaded by a ``SharedReaderKey``.
 public enum LoadContext<Value> {
   /// The value is being loaded implicitly at the initialization of a `@Shared` or `@SharedReader`
-  /// property (_via_ ``SharedReader/init(wrappedValue:_:)-56tir``).
+  /// property (via ``SharedReader/init(wrappedValue:_:)-56tir``).
   ///
   /// The associated value is the same value passed to the `wrappedValue` argument of the
   /// initializer.
   case initialValue(Value)
 
-  /// The value is being loaded explicitly (_via_ ``SharedReader/load()`` or
+  /// The value is being loaded explicitly (via ``SharedReader/load()`` or
   /// ``SharedReader/init(require:)``).
   case userInitiated
 
@@ -70,6 +67,10 @@ public enum LoadContext<Value> {
 }
 
 extension LoadContext: Sendable where Value: Sendable {}
+
+extension LoadContext: Equatable where Value: Equatable {}
+
+extension LoadContext: Hashable where Value: Hashable {}
 
 extension SharedReader {
   /// Creates a shared reference to a read-only value using a shared key.
