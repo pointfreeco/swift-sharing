@@ -76,6 +76,7 @@
     fileprivate let state = LockIsolated(State())
 
     fileprivate struct State {
+      var continuations: [SaveContinuation] = []
       var modificationDates: [Date] = []
       var value: Value?
       var workItem: DispatchWorkItem?

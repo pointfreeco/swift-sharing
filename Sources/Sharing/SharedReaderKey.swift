@@ -47,7 +47,6 @@ public protocol SharedReaderKey<Value>: Sendable {
   ) -> SharedSubscription
 }
 
-// TODO: docs
 public enum LoadResult<Value> {
   case newValue(Value)
   case initialValue
