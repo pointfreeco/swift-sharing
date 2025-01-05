@@ -80,16 +80,10 @@
       var modificationDates: [Date] = []
       var value: Value?
       var workItem: DispatchWorkItem?
-      var throttleTask: Task<Void, any Error>?
       mutating func cancelWorkItem() {
         value = nil
         workItem?.cancel()
         workItem = nil
-      }
-      mutating func cancelThrottle() {
-        throttleTask?.cancel()
-        throttleTask = nil
-        value = nil
       }
     }
 
@@ -178,7 +172,6 @@
     }
 
     private func save(data: Data, url: URL, modificationDates: inout [Date]) throws {
-      try Task.checkCancellation()
       try storage.save(data, url)
       if let modificationDate = try storage.attributesOfItemAtPath(url.path)[.modificationDate]
         as? Date
@@ -187,34 +180,54 @@
       }
     }
 
-    public func save(_ value: Value, context: SaveContext) async throws {
-      switch context {
-      case .didSet:
-        let throttleTask = try state.withValue { state throws -> Task<Void, any Error>? in
-          if let throttleTask = state.throttleTask {
-            state.value = value
-            return throttleTask
-          } else {
-            try storage.save(encode(value), url)
-            state.throttleTask = Task {
-              // TODO: control this for tests
-              try await Task.sleep(nanoseconds: 1_000_000_000)
-              try self.state.withValue { state in
-                defer { state.cancelThrottle() }
-                guard let value = state.value else { return }
-                try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
+    public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
+      do {
+        try state.withValue { state in
+          let data = try encode(value)
+          switch context {
+          case .didSet:
+            if state.workItem == nil {
+              try save(data: data, url: url, modificationDates: &state.modificationDates)
+              continuation.resume()
+              let workItem = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.state.withValue { state in
+                  defer {
+                    state.value = nil
+                    state.workItem = nil
+                  }
+                  guard
+                    let value = state.value,
+                    let data = try? encode(value)
+                  else { return }
+                  let result = Result {
+                    try save(
+                      data: data,
+                      url: url,
+                      modificationDates: &state.modificationDates
+                    )
+                  }
+                  for continuation in state.continuations {
+                    continuation.resume(with: result)
+                  }
+                  state.continuations.removeAll()
+                }
               }
+              state.workItem = workItem
+              storage.asyncAfter(.seconds(1), workItem)
+            } else {
+              state.value = value
+              state.continuations.append(continuation)
             }
-            return nil
+
+          case .userInitiated:
+            state.cancelWorkItem()
+            try storage.save(data, url)
+            continuation.resume()
           }
         }
-        try await throttleTask?.value
-
-      case .userInitiated:
-        try state.withValue { state in
-          state.cancelThrottle()
-          try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
-        }
+      } catch {
+        continuation.resume(throwing: error)
       }
     }
 

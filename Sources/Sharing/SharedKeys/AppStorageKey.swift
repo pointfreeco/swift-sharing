@@ -479,8 +479,9 @@
       }
     }
 
-    public func save(_ value: Value, context _: SaveContext) {
+    public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
       lookup.saveValue(value, to: store.wrappedValue, at: key)
+      continuation.resume()
     }
 
     private func lookupValue(default initialValue: Value?) -> Value? {
