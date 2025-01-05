@@ -198,8 +198,16 @@
       userDefaults.set(123, forKey: "shared")
       subscription = nil
       #expect(try [1, 42] == changes.value.map { try $0.get() })
-      let result = persistenceKey.load(context: .userInitiated)
-      #expect(result == .newValue(123))
+      await confirmation { confirm in
+        persistenceKey.load(
+          context: .userInitiated,
+          continuation: LoadContinuation { result in
+            let success = try? result.get()
+            #expect(success == 123)
+            confirm()
+          }
+        )
+      }
     }
   }
 #endif
