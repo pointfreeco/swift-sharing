@@ -29,15 +29,6 @@ public struct Shared<Value> {
   }
 
   init(reference: any MutableReference<Value>) {
-    #if canImport(SwiftUI)
-      if !isTesting, Value.self is any _MutableIdentifiedCollection.Type {
-        func open(_ reference: some MutableReference<Value>) -> any MutableReference<Value> {
-          _CachedReference(base: reference)
-        }
-        self.box = Box(open(reference))
-        return
-      }
-    #endif
     self.box = Box(reference)
   }
 
@@ -46,13 +37,13 @@ public struct Shared<Value> {
   /// - Parameters:
   ///   - value: A value to wrap.
   #if compiler(>=6)
-  public init(value: sending Value) {
-    self.init(reference: _BoxReference(wrappedValue: value))
-  }
+    public init(value: sending Value) {
+      self.init(reference: _BoxReference(wrappedValue: value))
+    }
   #else
-  public init(value: Value) {
-    self.init(reference: _BoxReference(wrappedValue: value))
-  }
+    public init(value: Value) {
+      self.init(reference: _BoxReference(wrappedValue: value))
+    }
   #endif
 
   /// Unwraps a shared reference to an optional value.
@@ -122,9 +113,9 @@ public struct Shared<Value> {
   }
 
   /// Perform an operation on shared state with isolated access to the underlying value.
-  /// 
+  ///
   /// See <doc:MutatingSharedState> for more information.
-  /// 
+  ///
   /// - Parameters
   ///   - operation: An operation given mutable, isolated access to the underlying shared value.
   ///   - fileID: The source `#fileID` associated with the lock.

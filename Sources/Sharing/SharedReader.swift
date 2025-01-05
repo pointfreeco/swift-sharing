@@ -28,15 +28,6 @@ public struct SharedReader<Value> {
   }
 
   init(reference: some Reference<Value>) {
-    #if canImport(SwiftUI)
-      if !isTesting, Value.self is any _IdentifiedCollection.Type {
-        func open(_ reference: some Reference<Value>) -> any Reference<Value> {
-          _CachedReference(base: reference)
-        }
-        self.box = Box(open(reference))
-        return
-      }
-    #endif
     self.box = Box(reference)
   }
 
@@ -106,13 +97,13 @@ public struct SharedReader<Value> {
   /// )
   /// ```
   #if compiler(>=6)
-  public static func constant(_ value: sending Value) -> Self {
-    Self(Shared(value: value))
-  }
+    public static func constant(_ value: sending Value) -> Self {
+      Self(Shared(value: value))
+    }
   #else
-  public static func constant(_ value: Value) -> Self {
-    Self(Shared(value: value))
-  }
+    public static func constant(_ value: Value) -> Self {
+      Self(Shared(value: value))
+    }
   #endif
 
   /// The underlying value referenced by the shared variable.
