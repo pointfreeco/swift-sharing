@@ -133,7 +133,9 @@ See <doc:Testing> for more information on how to test your features when using `
 
 ### Loading and saving the value
 
+- ``init(require:)``
 - ``load()``
+- ``isLoading``
 - ``save()``
 
 ### Error handling

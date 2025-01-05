@@ -89,10 +89,11 @@ extension Shared {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
-  /// Creates a shared reference to a value using a shared key.
+  /// Creates a shared reference to a value using a shared key by loading it from its external
+  /// source.
   ///
-  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
-  /// version of this initializer, see ``init(wrappedValue:_:)-5xce4``.
+  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing,
+  /// synchronous version of this initializer, see ``init(wrappedValue:_:)-5xce4``.
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.

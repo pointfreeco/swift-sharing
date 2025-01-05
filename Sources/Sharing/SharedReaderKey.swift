@@ -152,10 +152,11 @@ extension SharedReader {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
-  /// Creates a shared reference to a read-only value using a shared key.
+  /// Creates a shared reference to a read-only value using a shared key by loading it from its
+  /// external source.
   ///
-  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing
-  /// version of this initializer, see ``init(wrappedValue:_:)-56tir``.
+  /// If the given shared key cannot load a value, an error is thrown. For a non-throwing,
+  /// synchronous version of this initializer, see ``init(wrappedValue:_:)-56tir``.
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.

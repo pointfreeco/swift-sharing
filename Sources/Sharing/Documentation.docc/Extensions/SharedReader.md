@@ -76,9 +76,11 @@ if remoteConfig.isToggleEnabled {
 - ``wrappedValue``
 - ``projectedValue``
 
-### Reloading the value
+### Loading the value
 
 - ``load()``
+- ``isLoading``
+- ``init(require:)``
 
 ### Error handling
 
