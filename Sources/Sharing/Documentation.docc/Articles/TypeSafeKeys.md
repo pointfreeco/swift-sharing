@@ -11,7 +11,9 @@ data from your app to the persistence storage and back. For example, if you are 
 users to disk you might do so like this:
 
 ```swift
-@Shared(.fileStorage(.documentsDirectory.appending(component: "users.json"))) 
+@Shared(
+  .fileStorage(.documentsDirectory.appending(component: "users.json"))
+)
 var users: [User] = []
 ```
 
@@ -31,7 +33,8 @@ To add some type-safety and reusability to this process you can extend the ``Sha
 add a static variable for describing the details of your persistence:
 
 ```swift
-extension SharedKey where Self == FileStorageKey<IdentifiedArrayOf<User>> {
+extension SharedKey
+where Self == FileStorageKey<IdentifiedArrayOf<User>> {
   static var users: Self {
     fileStorage(/* ... */)
   }
@@ -58,7 +61,8 @@ This technique works for all types of persistence strategies. For example, a typ
 key can be constructed like so:
 
 ```swift
-extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<User>> {
+extension SharedReaderKey
+where Self == InMemoryKey<IdentifiedArrayOf<User>> {
   static var users: Self {
     inMemory("users")
   }

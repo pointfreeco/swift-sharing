@@ -126,10 +126,8 @@ struct EntryPoint: App {
   init() {
     if ProcessInfo.processInfo.environment["UI_TESTING"] != nil {
       prepareDependencies {
-        $0.defaultAppStorage = UserDefaults(
-          suiteName:"\(NSTemporaryDirectory())\(UUID().uuidString)"
-        )!
-        $0.defaultFileStorage = .inMemory
+        $0.defaultAppStorage = .testValue
+        $0.defaultFileStorage = .testValue
       }
     }
   }
