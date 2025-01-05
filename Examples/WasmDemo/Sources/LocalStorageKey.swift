@@ -17,17 +17,18 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
     try LoadResult(getAndDecodeItem())
   }
 
-  func subscribe(
-    context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
-  ) -> SharedSubscription {
+  func subscribe(context: LoadContext<Value>) -> AsyncStream<SubscriptionResult<Value>> {
+    let (stream, continuation) = AsyncStream<SubscriptionResult<Value>>.makeStream()
+
     nonisolated(unsafe) let listener = JSClosure { _ in
-      subscriber.yield(with: Result { try getAndDecodeItem() })
+      continuation.yield(SubscriptionResult { try getAndDecodeItem() })
       return .undefined
     }
     _ = JSObject.global.window.addEventListener("storage", listener)
-    return SharedSubscription {
-       _ = JSObject.global.window.removeEventListener("storage", listener)
+    continuation.onTermination = { _ in
+      _ = JSObject.global.window.removeEventListener("storage", listener)
     }
+    return stream
   }
 
   func save(_ value: Value, context _: SaveContext) throws {
