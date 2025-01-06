@@ -26,17 +26,18 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
     }
     _ = JSObject.global.window.addEventListener("storage", listener)
     return SharedSubscription {
-       _ = JSObject.global.window.removeEventListener("storage", listener)
+      _ = JSObject.global.window.removeEventListener("storage", listener)
     }
   }
 
   func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
-    continuation.resume(with: Result {
-      _ = try JSObject.global.window.localStorage.setItem(
-        key,
-        String(decoding: JSONEncoder().encode(value), as: UTF8.self)
-      )
-    })
+    continuation.resume(
+      with: Result {
+        _ = try JSObject.global.window.localStorage.setItem(
+          key,
+          String(decoding: JSONEncoder().encode(value), as: UTF8.self)
+        )
+      })
   }
 
   private func getAndDecodeItem() throws -> Value? {

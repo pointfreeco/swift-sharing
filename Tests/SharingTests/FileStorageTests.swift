@@ -16,7 +16,9 @@
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
-        expectNoDifference(fileSystem.value, [.fileURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)])
+        expectNoDifference(
+          fileSystem.value, [.fileURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)]
+        )
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
       }
@@ -28,7 +30,9 @@
       } operation: {
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
-        expectNoDifference(fileSystem.value, [.utf8StringURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)])
+        expectNoDifference(
+          fileSystem.value, [.utf8StringURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)]
+        )
         $string.withLock { $0 = "hello" }
         expectNoDifference(
           fileSystem.value[.utf8StringURL].map { String(decoding: $0, as: UTF8.self) },
@@ -294,7 +298,9 @@
           try FileManager.default.removeItem(at: .fileURL)
           try await Task.sleep(nanoseconds: 1_200_000_000)
           expectNoDifference(users, [.blob])
-          #expect(try Data(contentsOf: .fileURL) == Data("co.pointfree.sharing.fileStorage.stub".utf8))
+          #expect(
+            try Data(contentsOf: .fileURL) == Data("co.pointfree.sharing.fileStorage.stub".utf8)
+          )
         }
       }
 

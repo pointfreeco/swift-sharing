@@ -23,24 +23,24 @@ extension DatabaseWriter {
     defer {
       try! migrator.migrate(self)
     }
-#if DEBUG
-    migrator.eraseDatabaseOnSchemaChange = true
-#endif
+    #if DEBUG
+      migrator.eraseDatabaseOnSchemaChange = true
+    #endif
     migrator.registerMigration("Create 'players' table") { db in
       try db.create(table: Player.databaseTableName) { t in
         t.autoIncrementedPrimaryKey("id")
         t.column("name", .text).notNull()
         t.column("isInjured", .boolean).defaults(to: false).notNull()
       }
-#if targetEnvironment(simulator)
-      if !isTesting {
-        try Player.deleteAll(db)
-        for (index, name) in ["Blob", "Blob Jr.", "Blob Sr.", "Blob Esq."].enumerated() {
-          _ = try Player(name: name, isInjured: index.isMultiple(of: 2))
-            .inserted(db)
+      #if targetEnvironment(simulator)
+        if !isTesting {
+          try Player.deleteAll(db)
+          for (index, name) in ["Blob", "Blob Jr.", "Blob Sr.", "Blob Esq."].enumerated() {
+            _ = try Player(name: name, isInjured: index.isMultiple(of: 2))
+              .inserted(db)
+          }
         }
-      }
-#endif
+      #endif
     }
   }
 }

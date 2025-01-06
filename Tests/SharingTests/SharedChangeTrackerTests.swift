@@ -14,10 +14,12 @@ import Testing
 
     tracker.assert {
       #expect($count != $count)
-      #expect(diff($count, $count) == """
-        - #1 0
-        + #1 1
-        """)
+      #expect(
+        diff($count, $count) == """
+          - #1 0
+          + #1 1
+          """
+      )
 
       $count.withLock { $0 = 1 }
 

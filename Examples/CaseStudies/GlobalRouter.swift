@@ -70,9 +70,10 @@ private struct PlainView: View {
 
   var body: some View {
     Form {
-      Text(template: """
-        This screen holds onto `@Shared(.path)` directly in the view and can mutate it directly. 
-        """)
+      Text(
+        template: """
+          This screen holds onto `@Shared(.path)` directly in the view and can mutate it directly.
+          """)
       Section {
         Button("Go to plain SwiftUI view") {
           $path.withLock { $0.append(.plainView) }
@@ -97,10 +98,11 @@ private struct ViewWithObesrvableModel: View {
 
   var body: some View {
     Form {
-      Text(template: """
-        This screen holds onto `@Shared(.path)` in an `@Observable` model. This shows that even
-        models can mutate the global router directly.
-        """)
+      Text(
+        template: """
+          This screen holds onto `@Shared(.path)` in an `@Observable` model. This shows that even
+          models can mutate the global router directly.
+          """)
       Section {
         Button("Go to plain SwiftUI view") {
           model.$path.withLock { $0.append(.plainView) }
@@ -159,7 +161,7 @@ private class ViewController: UIViewController {
         label,
         screenAButton,
         screenBButton,
-        screenCButton
+        screenCButton,
       ]
     )
     stackView.axis = .vertical

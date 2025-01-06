@@ -221,17 +221,17 @@
             """
             '@Shared(.appStorage("count"))' was given a new store object for an existing suite \
             name ("\(suiteName)").
-            
+
             Shared app storage for a given suite should all share the same store object to ensure \
             synchronization and observation. For example, define a store as a 'static let' and \
             refer to this single instance when creating shared app storage:
-            
+
                 extension UserDefaults {
                   nonisolated(unsafe) static let mySuite = UserDefaults(
                     suiteName: "\(suiteName)"
                   )!
                 }
-            
+
                 @Shared(.appStorage("count", store: .mySuite) var myProperty
             """
           )

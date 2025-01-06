@@ -2,7 +2,7 @@ import Dependencies
 @preconcurrency import FirebaseRemoteConfig
 import Sharing
 
-extension SharedReaderKey  {
+extension SharedReaderKey {
   static func remoteConfig<Value>(_ key: String) -> Self where Self == RemoteConfigKey<Value> {
     RemoteConfigKey(key: key)
   }

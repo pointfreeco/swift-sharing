@@ -89,10 +89,12 @@ public struct InMemoryStorage: Hashable, Sendable {
 
     subscript<Value: Sendable>(key: String, default defaultValue: Value) -> Value {
       storage.withLock { storage in
-        let value = (storage[key] as? Value) ?? {
-          storage[key] = defaultValue
-          return defaultValue
-        }()
+        let value =
+          (storage[key] as? Value)
+          ?? {
+            storage[key] = defaultValue
+            return defaultValue
+          }()
         return value
       }
     }

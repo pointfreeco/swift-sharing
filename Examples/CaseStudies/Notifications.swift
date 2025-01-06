@@ -7,9 +7,9 @@ struct NotificationsView: SwiftUICaseStudy {
     This application demonstrates how to use the `@SharedReader` tool to introduce a piece of \
     read-only state to your feature whose true value lives in an external system. In this case, \
     the state is the number of times a screenshot is taken, which is counted from the \
-    `userDidTakeScreenshotNotification` notification, as well as the number of times the app has \ 
+    `userDidTakeScreenshotNotification` notification, as well as the number of times the app has \
     been backgrounded, which is counted from the `willResignActiveNotification` notification.
-    
+
     Run this application in the simulator, and take a few screenshots by going to \
     *Device › Trigger Screenshot* in the menu, and observe that the UI counts the number of times \
     that happens. And then background the app and re-open the app to see that the UI counts the \

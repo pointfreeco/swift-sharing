@@ -138,10 +138,11 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
       }
     #endif
     let observation = ValueObservation.tracking(request.fetch)
-    let dropFirst = switch context {
-    case .initialValue: false
-    case .userInitiated: true
-    }
+    let dropFirst =
+      switch context {
+      case .initialValue: false
+      case .userInitiated: true
+      }
     let cancellable = observation.publisher(in: database, scheduling: scheduler)
       .dropFirst(dropFirst ? 1 : 0)
       .sink { completion in

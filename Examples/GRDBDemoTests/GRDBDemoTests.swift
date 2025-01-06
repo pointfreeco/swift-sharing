@@ -24,11 +24,11 @@ struct GRDBDemoTests {
 
     #expect(
       model.players
-      == [
-        Player(id: 1, name: "Blob 1", isInjured: false),
-        Player(id: 2, name: "Blob 2", isInjured: true),
-        Player(id: 3, name: "Blob 3", isInjured: false),
-      ]
+        == [
+          Player(id: 1, name: "Blob 1", isInjured: false),
+          Player(id: 2, name: "Blob 2", isInjured: true),
+          Player(id: 3, name: "Blob 3", isInjured: false),
+        ]
     )
 
     model.$order.withLock { $0 = .isInjured }
@@ -36,11 +36,11 @@ struct GRDBDemoTests {
     try await Task.sleep(for: .milliseconds(100))
     #expect(
       model.players
-      == [
-        Player(id: 2, name: "Blob 2", isInjured: true),
-        Player(id: 1, name: "Blob 1", isInjured: false),
-        Player(id: 3, name: "Blob 3", isInjured: false),
-      ]
+        == [
+          Player(id: 2, name: "Blob 2", isInjured: true),
+          Player(id: 1, name: "Blob 1", isInjured: false),
+          Player(id: 3, name: "Blob 3", isInjured: false),
+        ]
     )
   }
 
@@ -52,10 +52,10 @@ struct GRDBDemoTests {
     try await Task.sleep(for: .milliseconds(100))
     #expect(
       model.players
-      == [
-        Player(id: 1, name: "Blob 1", isInjured: false),
-        Player(id: 3, name: "Blob 3", isInjured: false),
-      ]
+        == [
+          Player(id: 1, name: "Blob 1", isInjured: false),
+          Player(id: 3, name: "Blob 3", isInjured: false),
+        ]
     )
   }
 }

@@ -99,9 +99,12 @@ extension Shared {
   ///   loading and saving the shared reference's value from some external source.
   public init<Key: SharedKey<Value>>(require key: Key) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(context: .userInitiated, continuation: LoadContinuation { result in
-        continuation.resume(with: result)
-      })
+      key.load(
+        context: .userInitiated,
+        continuation: LoadContinuation { result in
+          continuation.resume(with: result)
+        }
+      )
     }
     guard let value else { throw LoadError() }
     self.init(rethrowing: value, key, isPreloaded: true)

@@ -49,13 +49,15 @@ public struct SharedChangeTracker: Hashable, Sendable {
       column: UInt
     ) {
       lock.withLock {
-        var change = storage[ObjectIdentifier(key)] as? Change<Value> ?? Change(
-          reference: key,
-          fileID: fileID,
-          filePath: filePath,
-          line: line,
-          column: column
-        )
+        var change =
+          storage[ObjectIdentifier(key)] as? Change<Value>
+          ?? Change(
+            reference: key,
+            fileID: fileID,
+            filePath: filePath,
+            line: line,
+            column: column
+          )
         defer { storage[ObjectIdentifier(key)] = change }
         change.value = value
       }
@@ -148,7 +150,7 @@ public struct SharedChangeTracker: Hashable, Sendable {
   }
 }
 
-fileprivate protocol AnyChange<Value> {
+private protocol AnyChange<Value> {
   associatedtype Value
   var key: any MutableReference { get }
   var value: Value { get }

@@ -22,7 +22,7 @@ let package = Package(
         .product(name: "JavaScriptEventLoop", package: "JavaScriptKit"),
         .product(name: "JavaScriptKit", package: "JavaScriptKit"),
       ]
-    ),
+    )
   ],
   swiftLanguageModes: [.v6]
 )

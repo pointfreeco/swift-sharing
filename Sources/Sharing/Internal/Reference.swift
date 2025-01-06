@@ -266,9 +266,12 @@ final class _PersistentReference<Key: SharedReaderKey>:
       loadError = nil
       let newValue = try await withUnsafeThrowingContinuation { continuation in
         let key = key
-        key.load(context: .userInitiated, continuation: LoadContinuation("\(key)") { result in
-          continuation.resume(with: result)
-        })
+        key.load(
+          context: .userInitiated,
+          continuation: LoadContinuation("\(key)") { result in
+            continuation.resume(with: result)
+          }
+        )
       }
       guard let newValue else { return }
       wrappedValue = newValue
