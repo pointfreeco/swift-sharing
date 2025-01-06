@@ -2,13 +2,13 @@ import Foundation
 import Sharing
 import Synchronization
 
-extension SharedReaderKey where Self == FactAPIKey {
+extension SharedReaderKey where Self == FactKey {
   static func fact(_ number: Int?) -> Self {
     Self(number: number)
   }
 }
 
-final class FactAPIKey: SharedReaderKey {
+final class FactKey: SharedReaderKey {
   let id = UUID()
   let number: Int?
   let loadTask = Mutex<Task<Void, Never>?>(nil)
