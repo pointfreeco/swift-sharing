@@ -15,11 +15,6 @@ public protocol SharedKey<Value>: SharedReaderKey {
   /// - Parameters:
   ///   - value: The value to save.
   ///   - context: The context of saving a value.
-  ///
-  ///   Tells the shared key to save the value as soon as possible. A key may choose
-  ///     by default to delay writing to an external source in some way, for example throttling or
-  ///     debouncing, if `immediately` is `false`. If `immediately` is `true` it should bypass these
-  ///     delays.
   ///   - continuation: A continuation that should be notified upon the completion of saving a
   ///     shared value.
   func save(_ value: Value, context: SaveContext, continuation: SaveContinuation)

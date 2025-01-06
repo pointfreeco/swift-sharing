@@ -40,23 +40,23 @@ final class PlayersModel {
     .store(in: &cancellables)
   }
 
-  func updatePlayerQuery() async {
+  func deleteItems(offsets: IndexSet) {
     do {
-      let players = try await SharedReader(
-        require: .fetch(Players(order: order), animation: .default)
-      )
-      withAnimation {
-        $players = players
+      try database.write { db in
+        _ = try Player.deleteAll(db, keys: offsets.map { players[$0].id })
       }
     } catch {
       reportIssue(error)
     }
   }
 
-  func deleteItems(offsets: IndexSet) {
+  private func updatePlayerQuery() async {
     do {
-      try database.write { db in
-        _ = try Player.deleteAll(db, keys: offsets.map { players[$0].id })
+      let players = try await SharedReader(
+        require: .fetch(Players(order: order), animation: .default)
+      )
+      withAnimation {
+        $players = players
       }
     } catch {
       reportIssue(error)

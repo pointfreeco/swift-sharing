@@ -9,9 +9,9 @@ import Testing
 
   @Test func isLoading() {
     @SharedReader(Key(testScheduler: testScheduler)) var value = 0
-    #expect($value.isLoading)
+    #expect($value.isLoading == true)
     testScheduler.advance()
-    #expect(!$value.isLoading)
+    #expect($value.isLoading == false)
     #expect(value == 42)
   }
 
@@ -19,6 +19,7 @@ import Testing
     @SharedReader(Key(testScheduler: testScheduler)) var value = 0
     _ = { testScheduler.advance() }()
     #expect(value == 42)
+    #expect($value.isLoading == false)
 
     $value = SharedReader(wrappedValue: 0, Key(testScheduler: testScheduler))
     #expect($value.isLoading == true)
