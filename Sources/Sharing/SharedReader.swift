@@ -165,7 +165,7 @@ public struct SharedReader<Value> {
   /// var body: some View {
   ///   if let loadError = $users.loadError {
   ///     ContentUnavailableView {
-  ///       Label("Failed to users", systemImage: "xmark.circle")
+  ///       Label("Failed to load users", systemImage: "xmark.circle")
   ///     } description: {
   ///       Text(loadError.localizedDescription)
   ///     }

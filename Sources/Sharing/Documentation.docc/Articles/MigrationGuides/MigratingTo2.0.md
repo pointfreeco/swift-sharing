@@ -7,11 +7,11 @@ Sharing 2.0 introduces better support for error handling and concurrency.
 ### Built-in persistence strategies
 
 If you are using Sharing's built-in strategies, including `appStorage`, `fileStorage`, and
-`inMemory`, Sharing 2.0 will for the most part be a backwards-compatible update (with a few
-exceptions related to new functionality).
+`inMemory`, Sharing 2.0 is for the most part a backwards-compatible update, with a few exceptions
+related to new functionality.
 
-A few synchronous APIs have introduced backwards-incompatible changes to support Swift concurrency
-and error handling:
+This includes a few synchronous APIs that have introduced backwards-incompatible changes to support
+Swift concurrency and error handling:
 
 | 1.0                         | 2.0                               |
 | --------------------------- | --------------------------------- |
@@ -19,10 +19,50 @@ and error handling:
 | `$shared.save()`            | `try await $shared.save()`        |
 | `try Shared(require: .key)` | `try await Shared(require: .key)` |
 
+These APIs give you and your users greater insight into the status of loading or saving their data
+to an external source.
+
+For example, it is now possible to reload a shared value from a refreshable SwiftUI list using
+simple constructs:
+
+```swift
+.refreshable {
+  try? await $shared.load()
+}
+```
+
+In addition to these actively throwing, asynchronous APIs, a number of passive properties have been
+added to the `@Shared` and `@SharedReader` property wrappers that can be used to probe for
+information regarding load and error states:
+
+  * ``Shared/isLoading``: Whether or not the property is in the process of loading data from an
+    external source.
+  * ``Shared/loadError``: If present, an error that describes why the external source failed to
+    load the associated data.
+  * ``Shared/saveError``: If present, an error that describes why the external source failed to
+    save the associated data.
+
+These properties can be used to surface more precise state from `@Shared` values that was previously
+impossible:
+
+```swift
+if $content.isLoading {
+  ProgressView()
+} else if let loadError = $content.loadError {
+  ContentUnavailableView {
+    Label("Failed to load content", systemImage: "xmark.circle")
+  } description: {
+    Text(loadError.localizedDescription)
+  }
+} else {
+  MyView(content: content)
+}
+```
+
 ### Custom persistence strategies
 
 The ``SharedReaderKey`` and ``SharedKey`` protocols have been updated to allow for error handling
-and concurrency in their requirements, [`load`](<doc:SharedReaderKey/load(context:continuation:)>), 
+and concurrency in their requirements: [`load`](<doc:SharedReaderKey/load(context:continuation:)>), 
 [`subscribe`](<doc:SharedReaderKey/subscribe(context:subscriber:)>), and 
 [`save`](<doc:SharedKey/save(_:context:continuation:)>):
 
