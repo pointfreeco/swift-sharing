@@ -413,5 +413,5 @@
     return encoder
   }()
 
-  private let stubBytes = Data("co.pointfree.sharing.fileStorage.stub".utf8)
+  private let stubBytes = Data("co.pointfree.Sharing.FileStorage.stub".utf8)
 #endif

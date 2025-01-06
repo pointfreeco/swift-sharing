@@ -17,7 +17,7 @@
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
         expectNoDifference(
-          fileSystem.value, [.fileURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)]
+          fileSystem.value, [.fileURL: Data("co.pointfree.Sharing.FileStorage.stub".utf8)]
         )
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -31,7 +31,7 @@
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
         expectNoDifference(
-          fileSystem.value, [.utf8StringURL: Data("co.pointfree.sharing.fileStorage.stub".utf8)]
+          fileSystem.value, [.utf8StringURL: Data("co.pointfree.Sharing.FileStorage.stub".utf8)]
         )
         $string.withLock { $0 = "hello" }
         expectNoDifference(
@@ -299,7 +299,7 @@
           try await Task.sleep(nanoseconds: 1_200_000_000)
           expectNoDifference(users, [.blob])
           #expect(
-            try Data(contentsOf: .fileURL) == Data("co.pointfree.sharing.fileStorage.stub".utf8)
+            try Data(contentsOf: .fileURL) == Data("co.pointfree.Sharing.FileStorage.stub".utf8)
           )
         }
       }
@@ -393,7 +393,7 @@
     fileprivate func users(for url: URL) throws -> [User]? {
       guard
         let data = self[url],
-        data != Data("co.pointfree.sharing.fileStorage.stub".utf8)
+        data != Data("co.pointfree.Sharing.FileStorage.stub".utf8)
       else { return nil }
       return try JSONDecoder().decode([User].self, from: data)
     }
