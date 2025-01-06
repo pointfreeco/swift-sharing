@@ -93,6 +93,8 @@ public struct Shared<Value> {
   ///   }
   /// }
   /// ```
+  ///
+  /// To mutate this value use ``withLock(_:fileID:filePath:line:column:)``.
   #if compiler(>=6)
     public var wrappedValue: Value {
       get {
