@@ -14,7 +14,7 @@ import IssueReporting
 /// > ``Shared/load()`` in a suspended state indefinitely and leaks any associated resources.
 /// > `LoadContinuation` reports an issue if either of these invariants is violated.
 public struct LoadContinuation<Value>: Sendable {
-  private let box: ContinuationBox<Value?>
+  private let box: ContinuationBox<Value>
 
   package init(
     _ description: @autoclosure @escaping @Sendable () -> String = "",
@@ -156,11 +156,11 @@ public struct SharedSubscription: Sendable {
 /// > ``Shared/save()`` in a suspended state indefinitely and leaks any associated resources.
 /// > `SaveContinuation` reports an issue if either of these invariants is violated.
 public struct SaveContinuation: Sendable {
-  private let box: ContinuationBox<Void>
+  private let box: ContinuationBox<Never>
 
   package init(
     _ description: @autoclosure @escaping @Sendable () -> String = "",
-    callback: @escaping @Sendable (Result<Void, any Error>) -> Void
+    callback: @escaping @Sendable (Result<Never?, any Error>) -> Void
   ) {
     self.box = ContinuationBox(
       callback: callback,
@@ -191,17 +191,17 @@ public struct SaveContinuation: Sendable {
   /// - Parameter result: A value to either return or throw from the
   ///   continuation.
   public func resume(with result: Result<Void, any Error>) {
-    box.resume(with: result)
+    box.resume(with: result.map { nil })
   }
 }
 
 private final class ContinuationBox<Value>: Sendable {
-  private let callback: Mutex<(@Sendable (Result<Value, any Error>) -> Void)?>
+  private let callback: Mutex<(@Sendable (Result<Value?, any Error>) -> Void)?>
   private let description: @Sendable () -> String
   private let resumeCount = Mutex(0)
 
   init(
-    callback: @escaping @Sendable (Result<Value, any Error>) -> Void,
+    callback: @escaping @Sendable (Result<Value?, any Error>) -> Void,
     description: @escaping @Sendable () -> String
   ) {
     self.callback = Mutex(callback)
@@ -213,14 +213,15 @@ private final class ContinuationBox<Value>: Sendable {
     if !isComplete {
       reportIssue(
         """
-        \(description()) leaked its continuation without resuming it. This may cause tasks \
-        waiting on it to remain suspended forever.
+        \(description()) leaked its continuation without one of its resume methods being \
+        invoked. This will cause tasks waiting on it to resume immediately.
         """
       )
+      callback.withLock { $0?(.success(nil)) }
     }
   }
 
-  func resume(with result: Result<Value, any Error>) {
+  func resume(with result: Result<Value?, any Error>) {
     let resumeCount = resumeCount.withLock {
       $0 += 1
       return $0

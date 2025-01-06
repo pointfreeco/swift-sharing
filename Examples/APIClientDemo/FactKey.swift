@@ -8,6 +8,7 @@ extension SharedReaderKey where Self == FactKey {
   }
 }
 
+// NB: TODO: Basics explanation of why this is the way it is
 final class FactKey: SharedReaderKey {
   let id = UUID()
   let number: Int?
