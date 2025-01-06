@@ -56,7 +56,7 @@ extension DependencyValues {
     static var testValue: any DatabaseWriter {
       reportIssue(
         """
-        A blank, in-memory database is being used. To set the database that is used by the 'query' \
+        A blank, in-memory database is being used. To set the database that is used by the 'fetch' \
         key you can use the 'prepareDependencies' tool as soon as your app launches, such as in \
         your app or scene delegate in UIKit, or the app entry point in SwiftUI:
 
