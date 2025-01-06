@@ -1,6 +1,6 @@
-import ConcurrencyExtras
 import Foundation
 import Sharing
+import Synchronization
 
 extension SharedReaderKey where Self == FactAPIKey {
   static func fact(_ number: Int?) -> Self {
@@ -11,8 +11,8 @@ extension SharedReaderKey where Self == FactAPIKey {
 final class FactAPIKey: SharedReaderKey {
   let id = UUID()
   let number: Int?
-  let loadTask = LockIsolated<Task<Void, Never>?>(nil)
-  
+  let loadTask = Mutex<Task<Void, Never>?>(nil)
+
   init(number: Int?) {
     self.number = number
   }
@@ -22,7 +22,7 @@ final class FactAPIKey: SharedReaderKey {
       continuation.resume(returning: nil)
       return
     }
-    loadTask.withValue { task in
+    loadTask.withLock { task in
       task?.cancel()
       task = Task {
         do {
