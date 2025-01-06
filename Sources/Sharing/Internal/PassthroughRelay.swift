@@ -6,7 +6,7 @@
     typealias Failure = Never
 
     private let lock: os_unfair_lock_t
-    private var subscriptions = ContiguousArray<Subscription>()
+    private var _subscriptions = ContiguousArray<Subscription>()
 
     init() {
       self.lock = os_unfair_lock_t.allocate(capacity: 1)
@@ -20,21 +20,32 @@
 
     func receive(subscriber: some Subscriber<Output, Never>) {
       let subscription = Subscription(upstream: self, downstream: subscriber)
-      lock.withLock { subscriptions.append(subscription) }
+      lock.withLock { _subscriptions.append(subscription) }
       subscriber.receive(subscription: subscription)
     }
 
     func send(_ value: Output) {
-      for subscription in lock.withLock({ subscriptions }) {
+      for subscription in lock.withLock({ _subscriptions }) {
         subscription.receive(value)
+      }
+    }
+
+    func send(completion: Subscribers.Completion<Never>) {
+      let subscriptions = lock.withLock {
+        let subscriptions = _subscriptions
+        _subscriptions.removeAll()
+        return subscriptions
+      }
+      for subscription in subscriptions {
+        subscription.receive(completion: completion)
       }
     }
 
     private func remove(_ subscription: Subscription) {
       lock.withLock {
-        guard let index = subscriptions.firstIndex(of: subscription)
+        guard let index = _subscriptions.firstIndex(of: subscription)
         else { return }
-        subscriptions.remove(at: index)
+        _subscriptions.remove(at: index)
       }
     }
 
@@ -86,6 +97,14 @@
           lock.unlock()
           let moreDemand = downstream.receive(value)
           lock.withLock { demand += moreDemand }
+        }
+      }
+
+      func receive(completion: Subscribers.Completion<Never>) {
+        lock.withLock {
+          downstream?.receive(completion: completion)
+          downstream = nil
+          upstream = nil
         }
       }
 

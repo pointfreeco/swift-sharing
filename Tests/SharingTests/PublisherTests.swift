@@ -35,5 +35,39 @@
       $value.withLock { $0 = 1729 }
       #expect(values.withLock(\.self) == [0, 42, 1729])
     }
+
+    @MainActor
+    @Test func persistentReferenceCompletes() async {
+      var cancellables: Set<AnyCancellable> = []
+      let didComplete = Mutex(false)
+      do {
+        @Shared(.inMemory("count")) var value = 0
+        $value.publisher
+          .sink { _ in
+            didComplete.withLock { $0 = true }
+          } receiveValue: { _ in
+
+          }
+          .store(in: &cancellables)
+      }
+      #expect(didComplete.withLock { $0 })
+    }
+
+    @MainActor
+    @Test func boxCompletes() async {
+      var cancellables: Set<AnyCancellable> = []
+      let didComplete = Mutex(false)
+      do {
+        @Shared(value: 0) var value
+        $value.publisher
+          .sink { _ in
+            didComplete.withLock { $0 = true }
+          } receiveValue: { _ in
+
+          }
+          .store(in: &cancellables)
+      }
+      #expect(didComplete.withLock { $0 })
+    }
   }
 #endif
