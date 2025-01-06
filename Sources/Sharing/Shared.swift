@@ -270,7 +270,21 @@ public struct Shared<Value> {
     SharedReader(self)[dynamicMember: keyPath]
   }
 
-  /// Whether or not an associated shared key is loading data.
+  /// Requests an up-to-date value from an external source.
+  ///
+  /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
+  /// reload its value from the associated external source.
+  ///
+  /// Most of the time it is not necessary to call this method, as persistence strategies will often
+  /// subscribe directly to the external source and automatically keep the shared reference
+  /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
+  /// their external source. In these cases, you should call this method whenever you need the most
+  /// up-to-date value.
+  public func load() async throws {
+    try await reference.load()
+  }
+
+  /// Whether or not an associated shared key is loading data from an external source.
   public var isLoading: Bool {
     reference.isLoading
   }
@@ -302,28 +316,6 @@ public struct Shared<Value> {
     reference.loadError
   }
 
-  /// An error encountered during the most recent attempt to save data.
-  ///
-  /// This value is `nil` unless a save attempt failed. It contains the latest error from the
-  /// underlying ``SharedKey``.
-  public var saveError: (any Error)? {
-    reference.saveError
-  }
-
-  /// Requests an up-to-date value from an external source.
-  ///
-  /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
-  /// reload its value from the associated external source.
-  ///
-  /// Most of the time it is not necessary to call this method, as persistence strategies will often
-  /// subscribe directly to the external source and automatically keep the shared reference
-  /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
-  /// their external source. In these cases, you should call this method whenever you need the most
-  /// up-to-date value.
-  public func load() async throws {
-    try await reference.load()
-  }
-
   /// Requests the underlying value be persisted to an external source.
   ///
   /// When a shared reference is powered by a ``SharedKey``, this method will tell it to save its
@@ -335,6 +327,14 @@ public struct Shared<Value> {
   /// strategy to save more eagerly.
   public func save() async throws {
     try await reference.save()
+  }
+
+  /// An error encountered during the most recent attempt to save data.
+  ///
+  /// This value is `nil` unless a save attempt failed. It contains the latest error from the
+  /// underlying ``SharedKey``.
+  public var saveError: (any Error)? {
+    reference.saveError
   }
 
   private final class Box: @unchecked Sendable {

@@ -154,6 +154,25 @@ public struct SharedReader<Value> {
     return open(reference)
   }
 
+  /// Requests an up-to-date value from an external source.
+  ///
+  /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
+  /// reload its value from the associated external source.
+  ///
+  /// Most of the time it is not necessary to call this method, as persistence strategies will often
+  /// subscribe directly to the external source and automatically keep the shared reference
+  /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
+  /// their external source. In these cases, you should call this method whenever you need the most
+  /// up-to-date value.
+  public func load() async throws {
+    try await reference.load()
+  }
+
+  /// Whether or not an associated shared key is loading data from an external source.
+  public var isLoading: Bool {
+    reference.isLoading
+  }
+
   /// An error encountered during the most recent attempt to load data.
   ///
   /// This value is `nil` unless a load attempt failed. It contains the latest error from the
@@ -179,25 +198,6 @@ public struct SharedReader<Value> {
   /// > Its value will update once a new load succeeds.
   public var loadError: (any Error)? {
     reference.loadError
-  }
-
-  /// Whether or not an associated shared key is loading data.
-  public var isLoading: Bool {
-    reference.isLoading
-  }
-
-  /// Requests an up-to-date value from an external source.
-  ///
-  /// When a shared reference is powered by a ``SharedReaderKey``, this method will tell it to
-  /// reload its value from the associated external source.
-  ///
-  /// Most of the time it is not necessary to call this method, as persistence strategies will often
-  /// subscribe directly to the external source and automatically keep the shared reference
-  /// synchronized. Some persistence strategies, however, may not have the ability to subscribe to
-  /// their external source. In these cases, you should call this method whenever you need the most
-  /// up-to-date value.
-  public func load() async throws {
-    try await reference.load()
   }
 
   private final class Box: @unchecked Sendable {
