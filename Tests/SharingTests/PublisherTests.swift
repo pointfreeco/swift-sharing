@@ -40,20 +40,4 @@ import Testing
     #expect(values.value == [0, 42, 1729])
   }
 }
-
-private struct Key: SharedReaderKey {
-  let id = UUID()
-  let testScheduler: TestSchedulerOf<DispatchQueue>
-  func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
-    testScheduler.schedule {
-      continuation.resume(returning: 42)
-    }
-  }
-  func subscribe(
-    context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
-  ) -> SharedSubscription {
-    SharedSubscription {}
-  }
-}
 #endif
-
