@@ -128,5 +128,5 @@ Any `@Shared` value can be made read-only via ``SharedReader/init(_:)-9wqv4``:
 @Shared(.appStorage("isHapticsEnabled")) var isHapticsEnabled = true
 
 // Child feature only needs to observe changes to the option
-Child(isHapticsEnabled: SharedReader($isHapticsEnabled)
+Child(isHapticsEnabled: SharedReader($isHapticsEnabled))
 ```

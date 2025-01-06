@@ -37,7 +37,8 @@ struct LocalStorageKey<Value: Codable & Sendable>: SharedKey {
           key,
           String(decoding: JSONEncoder().encode(value), as: UTF8.self)
         )
-      })
+      }
+    )
   }
 
   private func getAndDecodeItem() throws -> Value? {
