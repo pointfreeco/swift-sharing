@@ -8,7 +8,10 @@ extension SharedReaderKey where Self == FactKey {
   }
 }
 
-// NB: TODO: Basics explanation of why this is the way it is
+// NB: This 'SharedReaderKey` conformance is designed to allow one to hold onto a 'fact: String?'
+//     in their featues, while secretly it is powered by a network request to fetch the fact.
+//     Conformances to 'SharedReaderKey' must be Sendable, and so this is why the 'loadTask'
+//     variable is held in a mutex.
 final class FactKey: SharedReaderKey {
   let id = UUID()
   let number: Int?
@@ -27,10 +30,12 @@ final class FactKey: SharedReaderKey {
       task?.cancel()
       task = Task {
         do {
+          // NB: This dependence on 'URLSession.shared' should be hidden behind a dependency
+          //     so that features that use this shared state are still testable.
           let (data, _) = try await URLSession.shared.data(
             from: URL(string: "http://numbersapi.com/\(number)")!
           )
-          // The Numbers API can be quite fast. Let's simulate a slower connection.
+          // NB: The Numbers API can be quite fast. Let's simulate a slower connection.
           try await Task.sleep(for: .seconds(1))
           continuation.resume(returning: String(decoding: data, as: UTF8.self))
         } catch {
