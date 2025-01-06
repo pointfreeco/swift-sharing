@@ -21,3 +21,105 @@ and error handling:
 
 ### Custom persistence strategies
 
+The ``SharedReaderKey`` and ``SharedKey`` protocols have been updated to allow for error handling
+and concurrency in their requirements, [`load`](<doc:SharedReaderKey/load(context:continuation:)>), 
+[`subscribe`](<doc:SharedReaderKey/subscribe(context:subscriber:)>), and 
+[`save`](<doc:SharedKey/save(_:context:continuation:)>):
+
+##### Updates to loading
+
+The `load` requirement of ``SharedReaderKey`` in 1.0 was as simple as this:
+
+```swift
+func load(initialValue: Value?) -> Value?
+```
+
+It's only job was to return an optional `Value` that represent loading the value from the external
+storage system (e.g. user defaults, file system, etc.). However, there were a few problems with
+this signature:
+
+1. It does not allow for asynchronous or throwing work to load the data.
+1. The `initialValue` argument is not very descriptive and it wasn't clear what it represented.
+1. It wasn't clear why `load` returned and optional, nor was it clear what would happen if one 
+returned `nil`.
+
+These probems are all fixed with the following updated signature for `load` in ``SharedReaderKey``:
+
+```swift
+func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>)
+```
+
+This fixes the above 3 problems in the following way:
+
+1. One can now load the value asynchronously, and when the value is finished loading it can be
+fed back into the shared state by invoking a `resume` method on ``LoadContinuation``. Further, there
+is a ``LoadContinuation/resume(throwing:)`` method for emitting a loading error.
+1. The `context` argument knows the manner in which this `load` method is being invoked, i.e. the
+value is being loaded implicitly by initializing the `@Shared` property wrapper,or the value is
+being loaded explicitly by invoking the ``SharedReader/load()`` method. This information 
+1. The ``LoadContinuation`` makes explicit the various ways one can resume when the load is 
+complete. You can either invoke ``LoadContinuation/resume(returning:)`` if a value successfully 
+loaded, or invoke ``LoadContinuation/resume(throwing:)`` if an error occured, or invoke 
+``LoadContinuation/resumeReturningInitialValue()`` if no value was found in the external storage
+and you want to use the initial value provided to `@Shared` when created.
+
+##### Updates to subscribing
+
+The `subscribe` requirement of ``SharedReaderKey`` has undergone changes similar to `load`. In 1.0
+the requirement was defined like so:
+
+```swift
+func subscribe(
+  initialValue: Value?, 
+  didSet receiveValue: @escaping @Sendable (Value?) -> Void
+) -> SharedSubscription
+```
+
+This allows a conformance to subscribe to changes in the external storage system, and when a change
+occures it can replay that change back to `@Shared` state by invoking the `receiveValue` closure.
+
+This method has many of the same problems as `load`, such as confusion of what `initialValue`
+represents and what `nil` represents for the optionals, as well as the inability to throw errors
+when something goes wrong during the subscription.
+
+These problems are all fixed with the new signature:
+
+```swift
+func subscribe(
+  context: LoadContext<Value>, 
+  subscriber: SharedSubscriber<Value>
+) -> SharedSubscription
+```
+
+This new version of `subscribe` is handed the ``LoadContext`` that lets you know the context the
+subscription is being performed, and the ``SharedSubscriber`` allows you to emit errors by invoking
+the ``SharedSubscriber/yield(throwing:)`` method.
+
+##### Updates to saving
+
+And finally, the `save` also underwent some changes that are similar to `load` and `subscribe`.
+Its prior form looked like this:
+
+```swift
+func save(_ value: Value, immediately: Bool)
+```
+
+This form has the problem that it does not support asynchrony or error throwing, and there was 
+confusion of what `immediately` meant. That boolean was intended to communicate to the implementor
+of this method that the value should be saved right away, and not be throttled.
+
+The new form of this method fixes these problems:
+
+```swift
+func save(_ value: Value, context: SaveContext, continuation: SaveContinuation)
+```
+
+The ``SaveContext`` lets you know if the `save` is being invoked merely because the value of the
+`@Shared` state changed, or because of user initiation by explicitly invoking the ``Shared/save()``
+method. It is the latter case that you may want to bypass any throttling logic and save the data
+immediately.
+
+And the ``SaveContinuation`` allows you to perform the saving logic asynchronously by resuming it
+after the saving work has finished. You can either invoke ``SaveContinuation/resume()`` to indicate
+that saving finished successfully, or ``SaveContinuation/resume(throwing:)`` to indicate that
+an error occured.
