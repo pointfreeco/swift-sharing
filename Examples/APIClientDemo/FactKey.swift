@@ -29,6 +29,7 @@ final class FactAPIKey: SharedReaderKey {
           let (data, _) = try await URLSession.shared.data(
             from: URL(string: "http://numbersapi.com/\(number)")!
           )
+          // The Numbers API can be quite fast. Let's simulate a slower connection.
           try await Task.sleep(for: .seconds(1))
           continuation.resume(returning: String(decoding: data, as: UTF8.self))
         } catch {

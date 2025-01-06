@@ -5,7 +5,7 @@ import SwiftUI
 private let readMe = """
   This app demonstrates how one can use data from an external API service to power the state held \
   in a '@SharedReader' property. The 'fact' property represents a fact loaded from a server about \
-  a number. The way you fetch a new fact for a number is by assign '$fact' with a new \
+  a number. The way you fetch a new fact for a number is by assigning '$fact' with a new \
   '@SharedReader' instance that provides the number.
   """
 

@@ -1,6 +1,5 @@
 #if canImport(Combine)
   import Combine
-  import CombineSchedulers
   import Foundation
   import Sharing
   import Testing

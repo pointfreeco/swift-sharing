@@ -5,8 +5,7 @@ import GRDB
 import Sharing
 import SwiftUI
 
-@MainActor
-private let readMe: LocalizedStringKey = """
+private let readMe = """
   This app demonstrates a simple way to persist data with GRDB. It introduces a new \
   `SharedReaderKey` conformance, `fetch`, which queries a database for populating state. When the \
   database is updated the state will automatically be refreshed.
