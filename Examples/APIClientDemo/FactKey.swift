@@ -29,6 +29,7 @@ final class FactAPIKey: SharedReaderKey {
           let (data, _) = try await URLSession.shared.data(
             from: URL(string: "http://numbersapi.com/\(number)")!
           )
+          try await Task.sleep(for: .seconds(1))
           continuation.resume(returning: String(decoding: data, as: UTF8.self))
         } catch {
           continuation.resume(throwing: error)
