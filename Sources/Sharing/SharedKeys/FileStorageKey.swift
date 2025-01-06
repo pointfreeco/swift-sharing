@@ -132,7 +132,7 @@
               guard let self else { return }
               state.withValue { state in
                 let modificationDate =
-                  (try? storage.attributesOfItemAtPath(url.path)[.modificationDate]
+                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
                     as? Date)
                   ?? Date.distantPast
                 guard
@@ -145,7 +145,7 @@
                 guard state.workItem == nil
                 else { return }
 
-                subscriber.yield(with: Result { try decode(storage.load(url)) })
+                subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
               }
             }
             let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
@@ -199,12 +199,12 @@
                   }
                   guard
                     let value = state.value,
-                    let data = try? encode(value)
+                    let data = try? self.encode(value)
                   else { return }
                   let result = Result {
-                    try save(
+                    try self.save(
                       data: data,
-                      url: url,
+                      url: self.url,
                       modificationDates: &state.modificationDates
                     )
                   }

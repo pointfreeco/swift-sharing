@@ -209,7 +209,7 @@ private final class ContinuationBox<Value>: Sendable {
   }
 
   deinit {
-    let isComplete = resumeCount.withLock(\.self) > 0
+    let isComplete = resumeCount.withLock { $0 } > 0
     if !isComplete {
       reportIssue(
         """
