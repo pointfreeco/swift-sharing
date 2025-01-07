@@ -197,7 +197,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private var _referenceCount = 0
   private var subscription: SharedSubscription?
 
-  init(key: Key, value initialValue: Key.Value, isPreloaded: Bool) {
+  init(key: Key, value initialValue: Key.Value, skipInitialLoad: Bool) {
     self.key = key
     self.value = initialValue
     let callback: @Sendable (Result<Value?, any Error>) -> Void = { [weak self] result in
@@ -211,16 +211,16 @@ final class _PersistentReference<Key: SharedReaderKey>:
         wrappedValue = newValue ?? initialValue
       }
     }
-    let context: LoadContext<Key.Value> = isPreloaded
-      ? .userInitiated
-      : .initialValue(initialValue)
-    if !isPreloaded {
+    if !skipInitialLoad {
       isLoading = true
       key.load(
-        context: context,
+        context: .initialValue(initialValue),
         continuation: LoadContinuation("\(key)", callback: callback)
       )
     }
+    let context: LoadContext<Key.Value> = skipInitialLoad
+      ? .userInitiated
+      : .initialValue(initialValue)
     self.subscription = key.subscribe(
       context: context,
       subscriber: SharedSubscriber(callback: callback)

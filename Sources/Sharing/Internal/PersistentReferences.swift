@@ -17,7 +17,7 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
   func value<Key: SharedReaderKey>(
     forKey key: Key,
     default value: @autoclosure () throws -> Key.Value,
-    isPreloaded: Bool
+    skipInitialLoad: Bool
   ) rethrows -> _ManagedReference<Key> {
     try lock.withLock {
       guard var pair = storage[key.id] as? Pair<Key> else {
@@ -25,7 +25,7 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
         let persistentReference = _PersistentReference(
           key: key,
           value: value,
-          isPreloaded: isPreloaded
+          skipInitialLoad: skipInitialLoad
         )
         storage[key.id] = Pair(cachedValue: value, reference: persistentReference)
         return _ManagedReference(persistentReference)
@@ -33,8 +33,8 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
       guard let persistentReference = pair.reference else {
         let persistentReference = _PersistentReference(
           key: key,
-          value: isPreloaded ? (try? value()) ?? pair.cachedValue : pair.cachedValue,
-          isPreloaded: isPreloaded
+          value: skipInitialLoad ? (try? value()) ?? pair.cachedValue : pair.cachedValue,
+          skipInitialLoad: skipInitialLoad
         )
         pair.reference = persistentReference
         storage[key.id] = pair

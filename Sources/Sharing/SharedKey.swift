@@ -49,7 +49,7 @@ extension Shared {
     _ key: some SharedKey<Value>
   ) {
     @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key, isPreloaded: false)
+    self.init(rethrowing: wrappedValue(), key, skipInitialLoad: false)
   }
 
   /// Creates a shared reference to an optional value using a shared key.
@@ -95,7 +95,7 @@ extension Shared {
       reference = persistentReferences.value(
         forKey: key,
         default: wrappedValue,
-        isPreloaded: true
+        skipInitialLoad: true
       )
     }
     try await reference.load()
@@ -119,7 +119,7 @@ extension Shared {
       )
     }
     guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key, isPreloaded: true)
+    self.init(rethrowing: value, key, skipInitialLoad: true)
     if let loadError { throw loadError }
   }
 
@@ -130,14 +130,14 @@ extension Shared {
 
   private init(
     rethrowing value: @autoclosure () throws -> Value, _ key: some SharedKey<Value>,
-    isPreloaded: Bool
+    skipInitialLoad: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences
     self.init(
       reference: try persistentReferences.value(
         forKey: key,
         default: try value(),
-        isPreloaded: isPreloaded
+        skipInitialLoad: skipInitialLoad
       )
     )
   }
