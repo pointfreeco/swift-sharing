@@ -362,8 +362,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
   }
 }
 
-import SwiftUI
-
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
   var saveError: (any Error)? {
     get {
