@@ -26,33 +26,30 @@ struct ContentView: View {
         }
       }
     }
-    .toolbar {
-      Button("About") { isAboutPresented = true }
-    }
-    .sheet(isPresented: $isAboutPresented) {
-      Form {
-        Text(readMe)
-      }
-    }
     .task(id: count) {
       do {
-        $fact = try await SharedReader(require: .fact(nil))
+        try await $fact.load(.fact(nil))
       } catch {
         reportIssue(error)
       }
     }
     .refreshable {
       do {
-        $fact = try await SharedReader(require: .fact(count))
+        try await $fact.load(.fact(count))
       } catch {
         reportIssue(error)
       }
     }
+
     VStack(spacing: 24) {
       if $fact.isLoading {
         ProgressView()
       } else if let loadError = $fact.loadError {
-        Text(loadError.localizedDescription)
+        ContentUnavailableView {
+          Label("Failed to load fact", systemImage: "xmark.circle")
+        } description: {
+          Text(loadError.localizedDescription)
+        }
       } else if let fact {
         Text(fact)
       }
@@ -61,6 +58,14 @@ struct ContentView: View {
       }
     }
     .padding()
+    .toolbar {
+      Button("About") { isAboutPresented = true }
+    }
+    .sheet(isPresented: $isAboutPresented) {
+      Form {
+        Text(readMe)
+      }
+    }
   }
 }
 

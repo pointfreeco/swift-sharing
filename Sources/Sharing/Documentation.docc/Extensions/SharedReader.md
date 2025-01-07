@@ -78,8 +78,9 @@ if remoteConfig.isToggleEnabled {
 
 ### Loading the value
 
-- ``load()``
 - ``isLoading``
+- ``load()``
+- ``load(_:)``
 - ``init(require:)``
 
 ### Error handling

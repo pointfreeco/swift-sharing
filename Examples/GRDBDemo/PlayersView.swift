@@ -52,12 +52,7 @@ final class PlayersModel {
 
   private func updatePlayerQuery() async {
     do {
-      let players = try await SharedReader(
-        require: .fetch(Players(order: order), animation: .default)
-      )
-      withAnimation {
-        $players = players
-      }
+      try await $players.load(.fetch(Players(order: order), animation: .default))
     } catch {
       reportIssue(error)
     }

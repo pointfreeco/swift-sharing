@@ -190,7 +190,7 @@ private struct FetchOne<Value: DatabaseValueConvertible>: FetchKeyRequest {
 
 private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
-  func immediateInitialValue() -> Bool { true }
+  func immediateInitialValue() -> Bool { isTesting }
   func schedule(_ action: @escaping @Sendable () -> Void) {
     if let animation {
       DispatchQueue.main.async {

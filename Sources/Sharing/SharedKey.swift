@@ -84,6 +84,23 @@ extension Shared {
     self.init(wrappedValue: wrappedValue(), key)
   }
 
+  /// Replaces a shared reference's key and attempts to load its value.
+  ///
+  /// - Parameter key: A shared key associated with the shared reference. It is responsible for
+  ///   loading and saving the shared reference's value from some external source.
+  public func load(_ key: some SharedKey<Value>) async throws {
+    await MainActor.run {
+      reference.touch()
+      @Dependency(PersistentReferences.self) var persistentReferences
+      reference = persistentReferences.value(
+        forKey: key,
+        default: wrappedValue,
+        isPreloaded: true
+      )
+    }
+    try await reference.load()
+  }
+
   /// Creates a shared reference to a value using a shared key by loading it from its external
   /// source.
   ///

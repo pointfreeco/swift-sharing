@@ -9,7 +9,7 @@ extension SharedReaderKey where Self == FactKey {
 }
 
 // NB: This 'SharedReaderKey` conformance is designed to allow one to hold onto a 'fact: String?'
-//     in their featues, while secretly it is powered by a network request to fetch the fact.
+//     in their features, while secretly it is powered by a network request to fetch the fact.
 //     Conformances to 'SharedReaderKey' must be Sendable, and so this is why the 'loadTask'
 //     variable is held in a mutex.
 final class FactKey: SharedReaderKey {
@@ -37,6 +37,14 @@ final class FactKey: SharedReaderKey {
           )
           // NB: The Numbers API can be quite fast. Let's simulate a slower connection.
           try await Task.sleep(for: .seconds(1))
+          // NB: Simulate errors from the API for negative numbers.
+          guard number >= 0 else {
+            struct BoringNumber: LocalizedError {
+              let number: Int
+              var errorDescription: String? { "\(number) is a boring number." }
+            }
+            throw BoringNumber(number: number)
+          }
           continuation.resume(returning: String(decoding: data, as: UTF8.self))
         } catch {
           continuation.resume(throwing: error)
