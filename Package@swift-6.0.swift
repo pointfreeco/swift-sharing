@@ -30,6 +30,7 @@ let package = Package(
     .target(
       name: "Sharing",
       dependencies: [
+        "Sharing1",
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
@@ -49,6 +50,10 @@ let package = Package(
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       exclude: ["Sharing.xctestplan"]
+    ),
+    .target(
+      name: "Sharing1",
+      path: "Sources/VersionMarkerModules/Sharing1"
     ),
   ],
   swiftLanguageModes: [.v6]
