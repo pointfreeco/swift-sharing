@@ -211,15 +211,18 @@ final class _PersistentReference<Key: SharedReaderKey>:
         wrappedValue = newValue ?? initialValue
       }
     }
+    let context: LoadContext<Key.Value> = isPreloaded
+      ? .userInitiated
+      : .initialValue(initialValue)
     if !isPreloaded {
       isLoading = true
       key.load(
-        context: .initialValue(initialValue),
+        context: context,
         continuation: LoadContinuation("\(key)", callback: callback)
       )
     }
     self.subscription = key.subscribe(
-      context: .initialValue(initialValue),
+      context: context,
       subscriber: SharedSubscriber(callback: callback)
     )
   }

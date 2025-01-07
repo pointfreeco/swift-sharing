@@ -85,9 +85,9 @@ protocol FetchKeyRequest<Value>: Hashable, Sendable {
 }
 
 struct FetchKey<Value: Sendable>: SharedReaderKey {
+  let animation: Animation?
   let database: any DatabaseWriter
   let request: any FetchKeyRequest<Value>
-  let scheduler: any ValueObservationScheduler
   #if DEBUG
     let isDefaultDatabase: Bool
   #endif
@@ -98,7 +98,7 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
 
   init(request: some FetchKeyRequest<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var database
-    self.scheduler = .animation(animation)
+    self.animation = animation
     self.database = database
     self.request = request
     #if DEBUG
@@ -125,7 +125,10 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
       let result = dbResult.flatMap { db in
         Result { try request.fetch(db) }
       }
-      scheduler.schedule { continuation.resume(with: result.map(Optional.some)) }
+      scheduler(for: context).schedule {
+        print("resuming")
+        continuation.resume(with: result.map(Optional.some))
+      }
     }
   }
 
@@ -143,7 +146,7 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
       case .initialValue: false
       case .userInitiated: true
       }
-    let cancellable = observation.publisher(in: database, scheduling: scheduler)
+    let cancellable = observation.publisher(in: database, scheduling: scheduler(for: context))
       .dropFirst(dropFirst ? 1 : 0)
       .sink { completion in
         switch completion {
@@ -153,11 +156,22 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
           break
         }
       } receiveValue: { newValue in
+        print("yielding")
         subscriber.yield(newValue)
       }
     return SharedSubscription {
       cancellable.cancel()
     }
+  }
+
+  private func scheduler(for context: LoadContext<Value>) -> any ValueObservationScheduler {
+    let immediateInitialValue =
+      switch context {
+      case .initialValue: true
+      case .userInitiated: false
+      }
+
+    return .animation(animation, immediateInitialValue: immediateInitialValue)
   }
 }
 
@@ -190,7 +204,12 @@ private struct FetchOne<Value: DatabaseValueConvertible>: FetchKeyRequest {
 
 private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
-  func immediateInitialValue() -> Bool { isTesting }
+  let _immediateInitialValue: Bool
+  init(animation: Animation?, immediateInitialValue: Bool) {
+    self.animation = animation
+    self._immediateInitialValue = immediateInitialValue
+  }
+  func immediateInitialValue() -> Bool { _immediateInitialValue }
   func schedule(_ action: @escaping @Sendable () -> Void) {
     if let animation {
       DispatchQueue.main.async {
@@ -205,8 +224,14 @@ private struct AnimatedScheduler: ValueObservationScheduler {
 }
 
 extension ValueObservationScheduler where Self == AnimatedScheduler {
-  fileprivate static func animation(_ animation: Animation?) -> Self {
-    AnimatedScheduler(animation: animation)
+  fileprivate static func animation(
+    _ animation: Animation?,
+    immediateInitialValue: Bool
+  ) -> Self {
+    AnimatedScheduler(
+      animation: animation,
+      immediateInitialValue: immediateInitialValue
+    )
   }
 }
 
