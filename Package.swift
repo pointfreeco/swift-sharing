@@ -30,6 +30,7 @@ let package = Package(
     .target(
       name: "Sharing",
       dependencies: [
+        "Sharing1",
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
@@ -41,6 +42,10 @@ let package = Package(
       resources: [
         .process("PrivacyInfo.xcprivacy")
       ]
+    ),
+    .target(
+      name: "Sharing1",
+      path: "Sources/VersionMarkerModules/Sharing1"
     ),
   ]
 )
