@@ -52,12 +52,6 @@ final class PlayersModel {
 
   private func updatePlayerQuery() async {
     do {
-//      let players = try await SharedReader(
-//        require: .fetch(Players(order: order), animation: .default)
-//      )
-//      withAnimation {
-//        $players = players
-//      }
       try await $players.load(.fetch(Players(order: order), animation: .default))
     } catch {
       reportIssue(error)
@@ -93,7 +87,6 @@ struct PlayersView: View {
   let model: PlayersModel
 
   var body: some View {
-    let _ = Self._printChanges()
     NavigationStack {
       List {
         if !model.players.isEmpty {
