@@ -156,7 +156,6 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
           break
         }
       } receiveValue: { newValue in
-        print("yielding")
         subscriber.yield(newValue)
       }
     return SharedSubscription {

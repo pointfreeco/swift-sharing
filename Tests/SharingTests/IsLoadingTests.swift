@@ -35,13 +35,32 @@ import Testing
     _ = { testScheduler.advance() }()
     #expect(value == 42)
 
-    Task {
+    let task = Task {
       $value = try await SharedReader(require: Key(testScheduler: testScheduler))
     }
     try await Task.sleep(for: .seconds(0.1))
     #expect($value.isLoading == false)
     #expect(value == 42)
     _ = { testScheduler.advance() }()
+    try await task.value
+    #expect($value.isLoading == false)
+    #expect(value == 42)
+  }
+
+  @MainActor
+  @Test func isLoadingLoadKey() async throws {
+    @SharedReader(Key(testScheduler: testScheduler)) var value = 0
+    _ = { testScheduler.advance() }()
+    #expect(value == 42)
+
+    let task = Task {
+      try await $value.load(Key(testScheduler: testScheduler))
+    }
+    try await Task.sleep(for: .seconds(0.1))
+    #expect($value.isLoading == true)
+    #expect(value == 42)
+    _ = { testScheduler.advance() }()
+    try await task.value
     #expect($value.isLoading == false)
     #expect(value == 42)
   }

@@ -93,6 +93,7 @@ struct PlayersView: View {
   let model: PlayersModel
 
   var body: some View {
+    let _ = Self._printChanges()
     NavigationStack {
       List {
         if !model.players.isEmpty {

@@ -274,22 +274,29 @@ final class _PersistentReference<Key: SharedReaderKey>:
     }
   }
 
+  @MainActor
   func load() async throws {
     isLoading = true
     defer { isLoading = false }
     do {
       loadError = nil
-      let newValue = try await withUnsafeThrowingContinuation { continuation in
+      try await withUnsafeThrowingContinuation { continuation in
         let key = key
         key.load(
           context: .userInitiated,
           continuation: LoadContinuation("\(key)") { result in
-            continuation.resume(with: result)
+            switch result {
+            case .success(.some(let newValue)):
+              self.wrappedValue = newValue
+              continuation.resume()
+            case .success(.none):
+              continuation.resume()
+            case .failure(let error):
+              continuation.resume(throwing: error)
+            }
           }
         )
       }
-      guard let newValue else { return }
-      wrappedValue = newValue
     } catch {
       loadError = error
     }
@@ -355,6 +362,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
     String(reflecting: key)
   }
 }
+
+import SwiftUI
 
 extension _PersistentReference: MutableReference, Equatable where Key: SharedKey {
   var saveError: (any Error)? {

@@ -157,18 +157,15 @@ extension SharedReader {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
   public func load(_ key: some SharedReaderKey<Value>) async throws {
-    let oldReference = reference
-    defer {
-      oldReference.touch()
-    }
-//    await MainActor.run {
+    await MainActor.run {
+      reference.touch()
       @Dependency(PersistentReferences.self) var persistentReferences
       reference = persistentReferences.value(
         forKey: key,
         default: wrappedValue,
         isPreloaded: true
       )
-//    }
+    }
     try await reference.load()
   }
 
