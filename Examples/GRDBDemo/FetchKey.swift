@@ -59,7 +59,7 @@ extension DependencyValues {
         A blank, in-memory database is being used. To set the database that is used by the 'fetch' \
         key you can use the 'prepareDependencies' tool as soon as your app launches, such as in \
         your app or scene delegate in UIKit, or the app entry point in SwiftUI:
-
+        
             @main
             struct MyApp: App {
               init() {
@@ -67,7 +67,7 @@ extension DependencyValues {
                   $0.defaultDatabase = try! DatabaseQueue(/* ... */)
                 }
               }
-
+        
               // ...
             }
         """
@@ -85,12 +85,12 @@ protocol FetchKeyRequest<Value>: Hashable, Sendable {
 }
 
 struct FetchKey<Value: Sendable>: SharedReaderKey {
-  let animation: Animation?
   let database: any DatabaseWriter
   let request: any FetchKeyRequest<Value>
-  #if DEBUG
-    let isDefaultDatabase: Bool
-  #endif
+  let scheduler: any ValueObservationScheduler
+#if DEBUG
+  let isDefaultDatabase: Bool
+#endif
 
   typealias ID = FetchKeyID
 
@@ -98,21 +98,21 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
 
   init(request: some FetchKeyRequest<Value>, animation: Animation? = nil) {
     @Dependency(\.defaultDatabase) var database
-    self.animation = animation
+    self.scheduler = .animation(animation)
     self.database = database
     self.request = request
-    #if DEBUG
-      self.isDefaultDatabase = database.configuration.label == .defaultDatabaseLabel
-    #endif
+#if DEBUG
+    self.isDefaultDatabase = database.configuration.label == .defaultDatabaseLabel
+#endif
   }
 
   func load(context: LoadContext<Value>, continuation: LoadContinuation<Value>) {
-    #if DEBUG
-      guard !isDefaultDatabase else {
-        continuation.resumeReturningInitialValue()
-        return
-      }
-    #endif
+#if DEBUG
+    guard !isDefaultDatabase else {
+      continuation.resumeReturningInitialValue()
+      return
+    }
+#endif
     guard case .userInitiated = context else {
       continuation.resumeReturningInitialValue()
       return
@@ -125,27 +125,25 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
       let result = dbResult.flatMap { db in
         Result { try request.fetch(db) }
       }
-      scheduler(for: context).schedule {
-        continuation.resume(with: result.map(Optional.some))
-      }
+      scheduler.schedule { continuation.resume(with: result.map(Optional.some)) }
     }
   }
 
   func subscribe(
     context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription {
-    #if DEBUG
-      guard !isDefaultDatabase else {
-        return SharedSubscription {}
-      }
-    #endif
+#if DEBUG
+    guard !isDefaultDatabase else {
+      return SharedSubscription {}
+    }
+#endif
     let observation = ValueObservation.tracking(request.fetch)
     let dropFirst =
-      switch context {
-      case .initialValue: false
-      case .userInitiated: true
-      }
-    let cancellable = observation.publisher(in: database, scheduling: scheduler(for: context))
+    switch context {
+    case .initialValue: false
+    case .userInitiated: true
+    }
+    let cancellable = observation.publisher(in: database, scheduling: scheduler)
       .dropFirst(dropFirst ? 1 : 0)
       .sink { completion in
         switch completion {
@@ -160,16 +158,6 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
     return SharedSubscription {
       cancellable.cancel()
     }
-  }
-
-  private func scheduler(for context: LoadContext<Value>) -> any ValueObservationScheduler {
-    let immediateInitialValue =
-      switch context {
-      case .initialValue: true
-      case .userInitiated: false
-      }
-
-    return .animation(animation, immediateInitialValue: immediateInitialValue)
   }
 }
 
@@ -202,12 +190,7 @@ private struct FetchOne<Value: DatabaseValueConvertible>: FetchKeyRequest {
 
 private struct AnimatedScheduler: ValueObservationScheduler {
   let animation: Animation?
-  let _immediateInitialValue: Bool
-  init(animation: Animation?, immediateInitialValue: Bool) {
-    self.animation = animation
-    self._immediateInitialValue = immediateInitialValue
-  }
-  func immediateInitialValue() -> Bool { _immediateInitialValue }
+  func immediateInitialValue() -> Bool { true }
   func schedule(_ action: @escaping @Sendable () -> Void) {
     if let animation {
       DispatchQueue.main.async {
@@ -222,19 +205,14 @@ private struct AnimatedScheduler: ValueObservationScheduler {
 }
 
 extension ValueObservationScheduler where Self == AnimatedScheduler {
-  fileprivate static func animation(
-    _ animation: Animation?,
-    immediateInitialValue: Bool
-  ) -> Self {
-    AnimatedScheduler(
-      animation: animation,
-      immediateInitialValue: immediateInitialValue
-    )
+  fileprivate static func animation(_ animation: Animation?) -> Self {
+    AnimatedScheduler(animation: animation)
   }
 }
 
 #if DEBUG
-  extension String {
-    fileprivate static let defaultDatabaseLabel = "co.pointfree.SharingGRDB.testValue"
-  }
+extension String {
+  fileprivate static let defaultDatabaseLabel = "co.pointfree.SharingGRDB.testValue"
+}
 #endif
+
