@@ -47,9 +47,5 @@ let package = Package(
       name: "Sharing1",
       path: "Sources/VersionMarkerModules/Sharing1"
     ),
-    .target(
-      name: "Sharing2",
-      path: "Sources/VersionMarkerModules/Sharing2"
-    ),
   ]
 )
