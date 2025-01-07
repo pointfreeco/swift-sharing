@@ -274,7 +274,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
     }
   }
 
-  @MainActor
   func load() async throws {
     isLoading = true
     defer { isLoading = false }
