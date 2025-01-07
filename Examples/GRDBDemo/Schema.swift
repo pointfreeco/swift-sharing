@@ -50,7 +50,7 @@ extension DatabaseWriter where Self == DatabaseQueue {
     var configuration = Configuration()
     configuration.prepareDatabase { db in
       db.trace { event in
-        //print(event)
+        print(event)
       }
     }
     let databaseQueue: DatabaseQueue

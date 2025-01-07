@@ -126,7 +126,6 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
         Result { try request.fetch(db) }
       }
       scheduler(for: context).schedule {
-        print("resuming")
         continuation.resume(with: result.map(Optional.some))
       }
     }
