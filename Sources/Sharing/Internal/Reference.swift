@@ -298,6 +298,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     } catch {
       loadError = error
+      throw error
     }
   }
 
