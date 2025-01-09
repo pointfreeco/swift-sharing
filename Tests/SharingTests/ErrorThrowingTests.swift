@@ -27,8 +27,8 @@ import Testing
     #expect($value.saveError is SaveError)
   }
 
-  @Test func loadError() {
-    struct Key: Hashable, Sendable, SharedReaderKey {
+  @Test func implicitLoadError() {
+    struct Key: Sendable, SharedReaderKey {
       let id = UUID()
       func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
         continuation.resume(throwing: LoadError())
@@ -46,6 +46,55 @@ import Testing
       #expect($count.loadError != nil)
     } matching: {
       $0.description == "Caught error: LoadError()"
+    }
+  }
+
+  @Test func explicitLoadError() async {
+    final class Key: Sendable, SharedReaderKey {
+      let id = UUID()
+      let result = Mutex<Result<Int?, any Error>>(.success(42))
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        continuation.resume(with: result.withLock(\.self))
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        SharedSubscription {}
+      }
+    }
+
+    let key = Key()
+    @SharedReader(key) var count = 0
+    #expect(count == 42)
+
+    struct LoadError: Error {}
+    key.result.withLock { $0 = .failure(LoadError())}
+
+    await withKnownIssue {
+      await #expect(throws: LoadError.self) {
+        try await $count.load()
+      }
+    } matching: {
+      $0.error is LoadError
+    }
+  }
+
+  @Test func explicitRequireError() async {
+    struct LoadError: Error {}
+    struct Key: Sendable, SharedReaderKey {
+      let id = UUID()
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        continuation.resume(throwing: LoadError())
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        SharedSubscription {}
+      }
+    }
+
+    await #expect(throws: LoadError.self) {
+      try await SharedReader(require: Key())
     }
   }
 
