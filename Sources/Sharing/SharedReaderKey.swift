@@ -94,15 +94,13 @@ extension SharedReader {
     wrappedValue: @autoclosure () -> Value,
     _ key: some SharedKey<Value>
   ) {
-    @Dependency(PersistentReferences.self) var persistentReferences
-    self.init(rethrowing: wrappedValue(), key, skipInitialLoad: false)
+    self.init(wrappedValue: wrappedValue(), key)
   }
 
   /// Creates a shared reference to an optional, read-only value using a shared key.
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
-  @_disfavoredOverload
   public init<Wrapped>(_ key: some SharedReaderKey<Value>) where Value == Wrapped? {
     self.init(wrappedValue: nil, key)
   }
@@ -110,7 +108,7 @@ extension SharedReader {
   @_disfavoredOverload
   @_documentation(visibility: private)
   public init<Wrapped>(_ key: some SharedKey<Value>) where Value == Wrapped? {
-    self.init(wrappedValue: nil, key)
+    self.init(key)
   }
 
   /// Creates a shared reference to a read-only value using a shared key with a default value.
@@ -124,7 +122,7 @@ extension SharedReader {
   @_disfavoredOverload
   @_documentation(visibility: private)
   public init(_ key: (some SharedKey<Value>).Default) {
-    self.init(wrappedValue: key.defaultValue(), key)
+    self.init(key)
   }
 
   /// Creates a shared reference to a read-only value using a shared key by overriding its
@@ -158,12 +156,13 @@ extension SharedReader {
   ///   loading the shared reference's value from some external source.
   public func load(_ key: some SharedReaderKey<Value>) async throws {
     await MainActor.run {
-      reference.touch()
       @Dependency(PersistentReferences.self) var persistentReferences
-      reference = persistentReferences.value(
-        forKey: key,
-        default: wrappedValue,
-        skipInitialLoad: true
+      projectedValue = SharedReader(
+        reference: persistentReferences.value(
+          forKey: key,
+          default: wrappedValue,
+          skipInitialLoad: true
+        )
       )
     }
     try await reference.load()
@@ -172,16 +171,7 @@ extension SharedReader {
   @_disfavoredOverload
   @_documentation(visibility: private)
   public func load(_ key: some SharedKey<Value>) async throws {
-    await MainActor.run {
-      reference.touch()
-      @Dependency(PersistentReferences.self) var persistentReferences
-      reference = persistentReferences.value(
-        forKey: key,
-        default: wrappedValue,
-        skipInitialLoad: true
-      )
-    }
-    try await reference.load()
+    try await load(key)
   }
 
   /// Creates a shared reference to a read-only value using a shared key by loading it from its
@@ -195,7 +185,7 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
-  public init<Key: SharedReaderKey<Value>>(require key: Key) async throws {
+  public init(require key: some SharedReaderKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
       key.load(
         context: .userInitiated,
@@ -211,18 +201,8 @@ extension SharedReader {
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init<Key: SharedKey<Value>>(require key: Key) async throws {
-    let value = try await withUnsafeThrowingContinuation { continuation in
-      key.load(
-        context: .userInitiated,
-        continuation: LoadContinuation { result in
-          continuation.resume(with: result)
-        }
-      )
-    }
-    guard let value else { throw LoadError() }
-    self.init(rethrowing: value, key, skipInitialLoad: true)
-    if let loadError { throw loadError }
+  public init(require key: some SharedKey<Value>) async throws {
+    try await self.init(require: key)
   }
 
   @available(*, unavailable, message: "Assign a default value")

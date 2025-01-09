@@ -90,12 +90,13 @@ extension Shared {
   ///   loading and saving the shared reference's value from some external source.
   public func load(_ key: some SharedKey<Value>) async throws {
     await MainActor.run {
-      reference.touch()
       @Dependency(PersistentReferences.self) var persistentReferences
-      reference = persistentReferences.value(
-        forKey: key,
-        default: wrappedValue,
-        skipInitialLoad: true
+      projectedValue = Shared(
+        reference: persistentReferences.value(
+          forKey: key,
+          default: wrappedValue,
+          skipInitialLoad: true
+        )
       )
     }
     try await reference.load()
@@ -112,7 +113,7 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init<Key: SharedKey<Value>>(require key: Key) async throws {
+  public init(require key: some SharedKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
       key.load(
         context: .userInitiated,

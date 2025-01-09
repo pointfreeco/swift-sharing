@@ -218,7 +218,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
         continuation: LoadContinuation("\(key)", callback: callback)
       )
     }
-    let context: LoadContext<Key.Value> = skipInitialLoad
+    let context: LoadContext<Key.Value> =
+      skipInitialLoad
       ? .userInitiated
       : .initialValue(initialValue)
     self.subscription = key.subscribe(
