@@ -103,7 +103,7 @@ struct PlayersView: View {
             }
             .onDelete(perform: model.deleteItems)
           } header: {
-            Text("^[\(model.uninjuredCount) player](inflect: true) are available")
+            Text("^[\(model.uninjuredCount) player](inflect: true) available")
           }
         }
       }
