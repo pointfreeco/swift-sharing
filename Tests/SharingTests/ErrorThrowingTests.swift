@@ -4,6 +4,7 @@ import Testing
 
 @Suite struct ErrorThrowingTests {
   @Test func saveErrorWhenInvokingSave() async {
+    struct SaveError: Error {}
     struct Key: SharedKey {
       var id: some Hashable { 0 }
       func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
@@ -162,6 +163,83 @@ import Testing
     #expect($count.loadError == nil)
     #expect($count.saveError == nil)
   }
-}
 
-private struct SaveError: Error {}
+  @Test func loadErrorSticksAround() async throws {
+    final class Key: Sendable, SharedReaderKey {
+      let id = UUID()
+      let continuation = Mutex<LoadContinuation<Int>?>(nil)
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        self.continuation.withLock { $0 = continuation }
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        SharedSubscription {}
+      }
+    }
+
+    let key = Key()
+    @SharedReader(key) var count = 0
+    #expect($count.isLoading)
+    #expect($count.loadError == nil)
+
+    struct LoadError: Error {}
+    withKnownIssue {
+      key.continuation.withLock { $0?.resume(throwing: LoadError()) }
+    }
+
+    #expect(!$count.isLoading)
+    #expect($count.loadError != nil)
+
+    let task = Task { [$count] in try await $count.load() }
+    try await Task.sleep(for: .seconds(0.1))
+
+    #expect($count.isLoading)
+    #expect($count.loadError != nil)
+
+    key.continuation.withLock { $0?.resume(returning: 42) }
+    try await task.value
+
+    #expect(!$count.isLoading)
+    #expect($count.loadError == nil)
+  }
+
+  @Test func saveErrorSticksAround() async throws {
+    final class Key: Sendable, SharedKey {
+      let id = UUID()
+      let continuation = Mutex<SaveContinuation?>(nil)
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        continuation.resumeReturningInitialValue()
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        SharedSubscription {}
+      }
+      func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
+        self.continuation.withLock { $0 = continuation }
+      }
+    }
+
+    let key = Key()
+    @Shared(key) var count = 0
+    #expect($count.saveError == nil)
+
+    $count.withLock { $0 += 1 }
+
+    struct SaveError: Error {}
+    withKnownIssue {
+      key.continuation.withLock { $0?.resume(throwing: SaveError()) }
+    }
+
+    #expect($count.saveError != nil)
+
+    $count.withLock { $0 += 1 }
+
+    #expect($count.saveError != nil)
+
+    key.continuation.withLock { $0?.resume() }
+
+    #expect($count.saveError == nil)
+  }
+}

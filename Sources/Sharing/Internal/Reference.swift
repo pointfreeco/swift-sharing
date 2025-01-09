@@ -278,7 +278,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
     isLoading = true
     defer { isLoading = false }
     do {
-      loadError = nil
       try await withUnsafeThrowingContinuation { continuation in
         let key = key
         key.load(
@@ -296,6 +295,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
           }
         )
       }
+      loadError = nil
     } catch {
       loadError = error
     }
@@ -403,7 +403,6 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
     try withMutation(keyPath: \.value) {
-      saveError = nil
       defer {
         let key = key
         key.save(
@@ -414,6 +413,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
             switch result {
             case .success:
               loadError = nil
+              saveError = nil
             case let .failure(error):
               saveError = error
             }
