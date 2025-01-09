@@ -8,39 +8,46 @@ extension SharedReaderKey {
   /// A key that can query for data in a SQLite database.
   static func fetch<Value>(
     _ request: some FetchKeyRequest<Value>,
+    database: (any DatabaseReader)? = nil,
     animation: Animation? = nil
   ) -> Self
   where Self == FetchKey<Value> {
-    FetchKey(request: request, animation: animation)
+    FetchKey(request: request, database: database, animation: animation)
   }
 
   /// A key that can query for a collection of data in a SQLite database.
   static func fetch<Value: RangeReplaceableCollection>(
     _ request: some FetchKeyRequest<Value>,
+    database: (any DatabaseReader)? = nil,
     animation: Animation? = nil
   ) -> Self
   where Self == FetchKey<Value>.Default {
-    Self[.fetch(request, animation: animation), default: Value()]
+    Self[.fetch(request, database: database, animation: animation), default: Value()]
   }
 
   /// A key that can query for a collection of data in a SQLite database.
   static func fetchAll<Value: FetchableRecord>(
     sql: String,
     arguments: StatementArguments = StatementArguments(),
+    database: (any DatabaseReader)? = nil,
     animation: Animation? = nil
   ) -> Self
   where Self == FetchKey<[Value]>.Default {
-    Self[.fetch(FetchAll(sql: sql, arguments: arguments), animation: animation), default: []]
+    Self[
+      .fetch(FetchAll(sql: sql, arguments: arguments), database: database, animation: animation),
+      default: []
+    ]
   }
 
   /// A key that can query for a value in a SQLite database.
   static func fetchOne<Value: DatabaseValueConvertible>(
     sql: String,
     arguments: StatementArguments = StatementArguments(),
+    database: (any DatabaseReader)? = nil,
     animation: Animation? = nil
   ) -> Self
   where Self == FetchKey<Value> {
-    .fetch(FetchOne(sql: sql, arguments: arguments), animation: animation)
+    .fetch(FetchOne(sql: sql, arguments: arguments), database: database, animation: animation)
   }
 }
 
@@ -85,7 +92,7 @@ protocol FetchKeyRequest<Value>: Hashable, Sendable {
 }
 
 struct FetchKey<Value: Sendable>: SharedReaderKey {
-  let database: any DatabaseWriter
+  let database: any DatabaseReader
   let request: any FetchKeyRequest<Value>
   let scheduler: any ValueObservationScheduler
   #if DEBUG
@@ -96,13 +103,17 @@ struct FetchKey<Value: Sendable>: SharedReaderKey {
 
   var id: ID { ID(rawValue: request) }
 
-  init(request: some FetchKeyRequest<Value>, animation: Animation? = nil) {
-    @Dependency(\.defaultDatabase) var database
+  init(
+    request: some FetchKeyRequest<Value>,
+    database: (any DatabaseReader)? = nil,
+    animation: Animation? = nil
+  ) {
+    @Dependency(\.defaultDatabase) var defaultDatabase
     self.scheduler = .animation(animation)
-    self.database = database
+    self.database = database ?? defaultDatabase
     self.request = request
     #if DEBUG
-      self.isDefaultDatabase = database.configuration.label == .defaultDatabaseLabel
+      self.isDefaultDatabase = self.database.configuration.label == .defaultDatabaseLabel
     #endif
   }
 
