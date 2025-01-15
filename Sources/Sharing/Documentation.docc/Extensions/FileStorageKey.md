@@ -43,7 +43,7 @@ If you really do want to use the live file system in your previews, you can use
 
 ```swift
 #Preview {
-  let _ = prepareDependencies { $0.defaultFileSystem = .inMemory }
+  let _ = prepareDependencies { $0.defaultFileStorage = .fileSystem }
   // ...
 }
 ```
@@ -51,7 +51,7 @@ If you really do want to use the live file system in your previews, you can use
 And if you want to use the live file system in your tests you can use the `dependency` test trait:
 
 ```swift
-@Test(.dependency(\.defaultFileStorage, .inMemory))
+@Test(.dependency(\.defaultFileStorage, .fileSystem))
 func basics() {
   // ...
 }
