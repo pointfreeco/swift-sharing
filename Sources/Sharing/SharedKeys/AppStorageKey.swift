@@ -414,14 +414,14 @@
             """
           )
         }
-        let previousValue = LockIsolated(context.initialValue)
+        let previousValue = Mutex(context.initialValue)
         let userDefaultsDidChange = NotificationCenter.default.addObserver(
           forName: UserDefaults.didChangeNotification,
           object: store.wrappedValue,
           queue: nil
         ) { _ in
           let newValue = lookupValue(default: context.initialValue)
-          defer { previousValue.withValue { $0 = newValue } }
+          defer { previousValue.withLock { $0 = newValue } }
           func isEqual<T>(_ lhs: T, _ rhs: T) -> Bool? {
             func open<U: Equatable>(_ lhs: U) -> Bool {
               lhs == rhs as? U
@@ -430,7 +430,7 @@
             return open(lhs)
           }
           guard
-            !(isEqual(newValue, previousValue.value) ?? false)
+            !(isEqual(newValue, previousValue.withLock { $0 }) ?? false)
               || (isEqual(newValue, context.initialValue) ?? true)
           else {
             return

@@ -184,11 +184,11 @@
 
     @Test func testPersistenceKeySubscription() async throws {
       let persistenceKey: AppStorageKey<Int> = .appStorage("shared")
-      let changes = LockIsolated<[Result<Int?, any Error>]>([])
+      let changes = Mutex<[Result<Int?, any Error>]>([])
       var subscription: Optional = persistenceKey.subscribe(
         context: .userInitiated,
         subscriber: SharedSubscriber { value in
-          changes.withValue { $0.append(value) }
+          changes.withLock { $0.append(value) }
         }
       )
       @Dependency(\.defaultAppStorage) var userDefaults
@@ -197,7 +197,7 @@
       subscription?.cancel()
       userDefaults.set(123, forKey: "shared")
       subscription = nil
-      #expect(try [1, 42] == changes.value.map { try $0.get() })
+      #expect(try [1, 42] == changes.withLock { $0 }.map { try $0.get() })
       await confirmation { confirm in
         persistenceKey.load(
           context: .userInitiated,

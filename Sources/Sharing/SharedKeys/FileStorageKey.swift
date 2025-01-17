@@ -117,9 +117,9 @@
     public func subscribe(
       context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
-      let cancellable = LockIsolated<SharedSubscription?>(nil)
+      let cancellable = Mutex<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
-        cancellable.withValue { [weak self] in
+        cancellable.withLock { [weak self] in
           $0?.cancel()
           guard let self else { return }
           do {
@@ -168,7 +168,7 @@
       }
       setUpSources()
       return SharedSubscription {
-        cancellable.withValue { $0?.cancel() }
+        cancellable.withLock { $0?.cancel() }
       }
     }
 
