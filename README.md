@@ -18,7 +18,7 @@ defaults, the file system, and more.
 ## Learn more
 
 This library was motivated and designed over the course of many episodes on
-[Point-Free](https://www.pointfree.co), a video series exploring functional programming and the
+[Point-Free](https://www.pointfree.co), a video series exploring advanced programming topics in the
 Swift language, hosted by [Brandon Williams](https://twitter.com/mbrandonw) and [Stephen
 Celis](https://twitter.com/stephencelis).
 
