@@ -124,10 +124,9 @@
         guard case .some = downstream else { return }
         self.demand += demand
         guard let upstream else { return }
-        upstream.lock.withLock {
-          for subscription in upstream._upstreams {
-            subscription.request(.unlimited)
-          }
+        let subscriptions = upstream.lock.withLock { upstream._upstreams }
+        for subscription in subscriptions {
+          subscription.request(.unlimited)
         }
       }
 
