@@ -16,7 +16,7 @@ import IssueReporting
 public struct LoadContinuation<Value>: Sendable {
   private let box: ContinuationBox<Value>
 
-  package init(
+  public init(
     _ description: @autoclosure @escaping @Sendable () -> String = "",
     callback: @escaping @Sendable (Result<Value?, any Error>) -> Void
   ) {
@@ -68,7 +68,7 @@ public struct LoadContinuation<Value>: Sendable {
 public struct SharedSubscriber<Value>: Sendable {
   let callback: @Sendable (Result<Value?, any Error>) -> Void
 
-  package init(callback: @escaping @Sendable (Result<Value?, any Error>) -> Void) {
+  public init(callback: @escaping @Sendable (Result<Value?, any Error>) -> Void) {
     self.callback = callback
   }
 
@@ -158,7 +158,7 @@ public struct SharedSubscription: Sendable {
 public struct SaveContinuation: Sendable {
   private let box: ContinuationBox<Never>
 
-  package init(
+  public init(
     _ description: @autoclosure @escaping @Sendable () -> String = "",
     callback: @escaping @Sendable (Result<Never?, any Error>) -> Void
   ) {
