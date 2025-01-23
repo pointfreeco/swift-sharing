@@ -32,7 +32,7 @@ struct GlobalRouterView: SwiftUICaseStudy {
           case .plainView:
             PlainView()
           case .observableModel:
-            ViewWithObesrvableModel()
+            ViewWithObservableModel()
           case .viewController:
             ViewController.Representable()
               .navigationTitle(Text("UIKit controller"))
@@ -73,7 +73,8 @@ private struct PlainView: View {
       Text(
         template: """
           This screen holds onto `@Shared(.path)` directly in the view and can mutate it directly.
-          """)
+          """
+      )
       Section {
         Button("Go to plain SwiftUI view") {
           $path.withLock { $0.append(.plainView) }
@@ -90,7 +91,7 @@ private struct PlainView: View {
   }
 }
 
-private struct ViewWithObesrvableModel: View {
+private struct ViewWithObservableModel: View {
   @Observable class Model {
     @ObservationIgnored @Shared(.path) var path
   }
