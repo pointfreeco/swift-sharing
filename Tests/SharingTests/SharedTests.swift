@@ -5,6 +5,14 @@ import Sharing
 import Testing
 
 @Suite struct SharedTests {
+  @Test func projectedValue() {
+    @Shared(.inMemory("count")) var count = 0
+    let shared = $count
+
+    $count = Shared(wrappedValue: 42, .inMemory("anotherCount"))
+    #expect(shared.wrappedValue == 42)
+  }
+
   @Suite struct Persistence {
     @Test func laziness() {
       do {
