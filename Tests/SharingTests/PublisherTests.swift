@@ -78,10 +78,17 @@
       #expect(values.withLock(\.self) == [0, 42, 0])
       $value.withLock { $0 = 1729 }
       #expect(values.withLock(\.self) == [0, 42, 0, 1729])
-      store.set(123, forKey: "count")
+      $count.withLock { $0 = 123 }
       #expect(values.withLock(\.self) == [0, 42, 0, 1729])
       store.set(456, forKey: "anotherCount")
       #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456])
+
+      $value = Shared(wrappedValue: 0, .appStorage("yetAnotherCount"))
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456, 0])
+      $count.withLock { $0 = 456 }
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456, 0])
+      $value.withLock { $0 = 789 }
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456, 0, 789])
     }
 
     @MainActor
