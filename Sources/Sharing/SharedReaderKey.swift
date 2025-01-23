@@ -165,7 +165,7 @@ extension SharedReader {
         )
       )
     }
-    try await reference.load()
+    try await load()
   }
 
   @_disfavoredOverload

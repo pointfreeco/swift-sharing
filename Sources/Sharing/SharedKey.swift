@@ -99,7 +99,7 @@ extension Shared {
         )
       )
     }
-    try await reference.load()
+    try await load()
   }
 
   /// Creates a shared reference to a value using a shared key by loading it from its external

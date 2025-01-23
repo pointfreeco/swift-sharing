@@ -16,7 +16,7 @@ import PerceptionCore
 @dynamicMemberLookup
 @propertyWrapper
 public struct Shared<Value> {
-  private let box: Box
+  let box: Box
   #if canImport(SwiftUI)
     @State private var generation = 0
   #endif
@@ -337,11 +337,15 @@ public struct Shared<Value> {
     reference.saveError
   }
 
-  private final class Box: @unchecked Sendable {
+  final class Box: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     private var _reference: any MutableReference<Value>
+    #if canImport(Combine)
+      let subject = PassthroughRelay<Value>()
+      private var subjectCancellable: AnyCancellable
+    #endif
     #if canImport(SwiftUI)
-      private var cancellable: AnyCancellable?
+      private var swiftUICancellable: AnyCancellable?
     #endif
     var reference: any MutableReference<Value> {
       _read {
@@ -353,25 +357,36 @@ public struct Shared<Value> {
         lock.lock()
         defer { lock.unlock() }
         yield &_reference
+        #if canImport(Combine)
+          subjectCancellable = _reference.publisher.subscribe(subject)
+        #endif
       }
       set {
-        lock.withLock { _reference = newValue }
+        lock.withLock {
+          _reference = newValue
+          #if canImport(Combine)
+            subjectCancellable = _reference.publisher.subscribe(subject)
+          #endif
+        }
       }
     }
     init(_ reference: any MutableReference<Value>) {
       self._reference = reference
+      #if canImport(Combine)
+        subjectCancellable = _reference.publisher.subscribe(subject)
+      #endif
+    }
+    deinit {
+      #if canImport(Combine)
+        subject.send(completion: .finished)
+      #endif
     }
     #if canImport(SwiftUI)
       func subscribe(state: State<Int>) {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
         _ = state.wrappedValue
-        func open(_ publisher: some Publisher<Value, Never>) -> AnyCancellable {
-          publisher.dropFirst().sink { _ in
-            state.wrappedValue &+= 1
-          }
-        }
-        let cancellable = open(_reference.publisher)
-        lock.withLock { self.cancellable = cancellable }
+        let cancellable = subject.dropFirst().sink { _ in state.wrappedValue &+= 1 }
+        lock.withLock { swiftUICancellable = cancellable }
       }
     #endif
   }

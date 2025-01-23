@@ -63,12 +63,6 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
     self.value = wrappedValue
   }
 
-  deinit {
-    #if canImport(Combine)
-      subject.send(completion: .finished)
-    #endif
-  }
-
   var id: ObjectIdentifier { ObjectIdentifier(self) }
 
   var isLoading: Bool {
@@ -226,12 +220,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
       context: context,
       subscriber: SharedSubscriber(callback: callback)
     )
-  }
-
-  deinit {
-    #if canImport(Combine)
-      subject.send(completion: .finished)
-    #endif
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }

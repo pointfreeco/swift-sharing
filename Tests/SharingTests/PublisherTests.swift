@@ -1,5 +1,6 @@
 #if canImport(Combine)
   import Combine
+  import Dependencies
   import Foundation
   import Sharing
   import Testing
@@ -31,9 +32,82 @@
       #expect(values.withLock(\.self) == [0, 42])
 
       $value = Shared(wrappedValue: 0, .inMemory("count"))
-      #expect(values.withLock(\.self) == [0, 42])
+      #expect(values.withLock(\.self) == [0, 42, 42])
       $value.withLock { $0 = 1729 }
-      #expect(values.withLock(\.self) == [0, 42, 1729])
+      #expect(values.withLock(\.self) == [0, 42, 42, 1729])
+    }
+
+    @MainActor
+    @Test func reassignDifferentKey() {
+      @Dependency(\.defaultAppStorage) var store
+      @Shared(.appStorage("count")) var value = 0
+      let values = Mutex<[Int]>([])
+      let cancellable = $value.publisher.sink { value in values.withLock { $0.append(value) } }
+      defer { _ = cancellable }
+
+      #expect(values.withLock(\.self) == [0])
+      $value.withLock { $0 = 42 }
+      #expect(values.withLock(\.self) == [0, 42])
+
+      $value = Shared(wrappedValue: 0, .appStorage("anotherCount"))
+      #expect(values.withLock(\.self) == [0, 42, 0])
+      $value.withLock { $0 = 1729 }
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729])
+      store.set(123, forKey: "count")
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729])
+      store.set(456, forKey: "anotherCount")
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456])
+    }
+
+    @MainActor
+    @Test func reassignDifferentKey_otherShared() {
+      @Shared(.appStorage("count")) var count = 0
+      defer { _ = count }
+
+      @Dependency(\.defaultAppStorage) var store
+      @Shared(.appStorage("count")) var value = 0
+      let values = Mutex<[Int]>([])
+      let cancellable = $value.publisher.sink { value in values.withLock { $0.append(value) } }
+      defer { _ = cancellable }
+
+      #expect(values.withLock(\.self) == [0])
+      $value.withLock { $0 = 42 }
+      #expect(values.withLock(\.self) == [0, 42])
+
+      $value = Shared(wrappedValue: 0, .appStorage("anotherCount"))
+      #expect(values.withLock(\.self) == [0, 42, 0])
+      $value.withLock { $0 = 1729 }
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729])
+      store.set(123, forKey: "count")
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729])
+      store.set(456, forKey: "anotherCount")
+      #expect(values.withLock(\.self) == [0, 42, 0, 1729, 456])
+    }
+
+    @MainActor
+    @Test func reloadDifferentKey() async throws {
+      @Dependency(\.defaultAppStorage) var store
+      @Shared(.appStorage("count")) var value = 0
+      let values = Mutex<[Int]>([])
+      let cancellable = $value.publisher.sink { value in
+        values.withLock {
+          $0.append(value)
+        }
+      }
+      defer { _ = cancellable }
+
+      #expect(values.withLock(\.self) == [0])
+      $value.withLock { $0 = 42 }
+      #expect(values.withLock(\.self) == [0, 42])
+
+      try await $value.load(.appStorage("anotherCount"))
+      #expect(values.withLock(\.self) == [0, 42, 42])
+      $value.withLock { $0 = 1729 }
+      #expect(values.withLock(\.self) == [0, 42, 42, 1729])
+      store.set(123, forKey: "count")
+      #expect(values.withLock(\.self) == [0, 42, 42, 1729])
+      store.set(456, forKey: "anotherCount")
+      #expect(values.withLock(\.self) == [0, 42, 42, 1729, 456])
     }
 
     @MainActor
