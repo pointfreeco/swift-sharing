@@ -385,7 +385,7 @@ public struct Shared<Value> {
       func subscribe(state: State<Int>) {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
         _ = state.wrappedValue
-        let cancellable = subject.dropFirst().sink { _ in state.wrappedValue &+= 1 }
+        let cancellable = subject.sink { _ in state.wrappedValue &+= 1 }
         lock.withLock { swiftUICancellable = cancellable }
       }
     #endif
