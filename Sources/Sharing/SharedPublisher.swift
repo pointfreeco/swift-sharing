@@ -36,4 +36,8 @@
       box.subject.prepend(wrappedValue)
     }
   }
+
+  enum SharedPublisherLocals {
+    @TaskLocal static var isLoading = false
+  }
 #endif

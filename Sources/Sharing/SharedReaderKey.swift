@@ -157,13 +157,15 @@ extension SharedReader {
   public func load(_ key: some SharedReaderKey<Value>) async throws {
     await MainActor.run {
       @Dependency(PersistentReferences.self) var persistentReferences
-      projectedValue = SharedReader(
-        reference: persistentReferences.value(
-          forKey: key,
-          default: wrappedValue,
-          skipInitialLoad: true
+      SharedPublisherLocals.$isLoading.withValue(true) {
+        projectedValue = SharedReader(
+          reference: persistentReferences.value(
+            forKey: key,
+            default: wrappedValue,
+            skipInitialLoad: true
+          )
         )
-      )
+      }
     }
     try await load()
   }
