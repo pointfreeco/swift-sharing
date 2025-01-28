@@ -101,6 +101,7 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
+  @_disfavoredOverload
   public init<Wrapped>(_ key: some SharedReaderKey<Value>) where Value == Wrapped? {
     self.init(wrappedValue: nil, key)
   }
@@ -108,7 +109,7 @@ extension SharedReader {
   @_disfavoredOverload
   @_documentation(visibility: private)
   public init<Wrapped>(_ key: some SharedKey<Value>) where Value == Wrapped? {
-    self.init(key)
+    self.init(wrappedValue: nil, key)
   }
 
   /// Creates a shared reference to a read-only value using a shared key with a default value.

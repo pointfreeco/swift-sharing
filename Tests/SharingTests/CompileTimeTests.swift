@@ -30,8 +30,20 @@ func testSharedReaderLoadOverload() async throws {
   try await shared.load(.count)
 }
 
+func testSharedReaderKeyWithDefault() {
+  @SharedReader(.count)
+  var count1
+  @Shared(.count) var count2
+}
+
 extension SharedKey where Self == InMemoryKey<Int> {
   fileprivate static var count: Self {
     .inMemory("count")
+  }
+}
+
+extension SharedReaderKey where Self == AppStorageKey<Int?>.Default {
+  public static var count: Self {
+    Self[.appStorage("count"), default: nil]
   }
 }
