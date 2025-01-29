@@ -84,6 +84,10 @@ import Testing
       #expect(isOn == true)
     }
   }
+
+  @Test func initialValue() {
+    #expect(InMemoryKey<Bool>.Default.isOn.initialValue == false)
+  }
 }
 
 extension SharedReaderKey where Self == InMemoryKey<Bool>.Default {

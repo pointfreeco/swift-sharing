@@ -32,6 +32,11 @@ public struct _SharedKeyDefault<Base: SharedReaderKey>: SharedReaderKey {
     base.id
   }
 
+  /// The default value this key was initialized with.
+  public var initialValue: Base.Value {
+    defaultValue()
+  }
+
   /// Wraps an existing shared key in a shared key that provides a default value.
   ///
   /// - Parameters:
