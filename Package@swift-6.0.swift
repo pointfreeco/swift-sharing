@@ -5,7 +5,6 @@ import PackageDescription
 let package = Package(
   name: "swift-sharing",
   platforms: [
-    .iOS(.v16),
     .macOS(.v10_15),
     .tvOS(.v13),
     .watchOS(.v6),
