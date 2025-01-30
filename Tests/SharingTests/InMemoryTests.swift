@@ -89,5 +89,11 @@ import Testing
       @SharedReader(.inMemory("nestedOptionalCountReader")) var nestedOptionalCountReader: Int?? = .some(.none)
       #expect(nestedOptionalCountReader == .some(.none))
     }
+
+    do {
+      await #expect(throws: Error.self) {
+        try await Shared<Int?>(require: .inMemory("count"))
+      }
+    }
   }
 }
