@@ -14,10 +14,14 @@ test proves:
 
 ```swift
 @Test func externalWrite() {
-  @Shared(.appStorage("isOn")) var isOn = true
-  #expect(isOn == true)  
-  UserDefaults.standard.set(false, forKey: "isOn")
-  #expect(isOn == false)
+  withDependencies {
+    $0.defaultAppStorage = .liveValue
+  } operation: {
+    @Shared(.appStorage("isOn")) var isOn = true
+    #expect(isOn == true)
+    UserDefaults.standard.set(false, forKey: "isOn")
+    #expect(isOn == false)
+  }
 }
 ```
 
