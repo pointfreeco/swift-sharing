@@ -400,14 +400,14 @@ extension Shared: CustomStringConvertible {
 
 extension Shared: Equatable where Value: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
-    func open<T: MutableReference<Value>>(_ lhsReference: T) -> Bool {
-      func open2<S: MutableReference<Value>>(_ rhsReference: S) -> Bool {
+    func openLhs<T: MutableReference<Value>>(_ lhsReference: T) -> Bool {
+      func openRhs<S: MutableReference<Value>>(_ rhsReference: S) -> Bool {
         lhsReference == rhsReference as? T
       }
-      return open2(rhs.reference)
+      return openRhs(rhs.reference)
     }
     @Dependency(\.snapshots) var snapshots
-    if snapshots.isAsserting, open(lhs.reference) {
+    if snapshots.isAsserting, openLhs(lhs.reference) {
       snapshots.untrack(lhs.reference)
       return lhs.wrappedValue == rhs.reference.wrappedValue
     } else {
