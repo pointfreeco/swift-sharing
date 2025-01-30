@@ -66,7 +66,7 @@ import Testing
     }
   }
 
-  @Test func optionalDefault() {
+  @Test func optionalDefault() async {
     do {
       @Shared(.inMemory("count")) var count: Int? = 0
       #expect(count == 0)
