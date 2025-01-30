@@ -45,11 +45,12 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
     case .initialValue(let initialValue):
       continuation.resume(returning: store.values[key, default: initialValue])
     case .userInitiated:
-      guard let value = store.values[key] as? Value else {
+      switch store.values[key] {
+      case let .some(value as Value):
+        continuation.resume(returning: value)
+      default:
         continuation.resumeReturningInitialValue()
-        return
       }
-      continuation.resume(returning: value)
     }
   }
   public func subscribe(
@@ -93,6 +94,7 @@ public struct InMemoryStorage: Hashable, Sendable {
         case let .some(value as Value):
           return value
         default:
+          storage[key] = defaultValue
           return defaultValue
         }
       }
