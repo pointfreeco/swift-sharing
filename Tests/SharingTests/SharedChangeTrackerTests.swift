@@ -103,4 +103,22 @@ import Testing
       $count.withLock { $0 += 1 }
     }
   }
+
+  @Test func unwrappedShared() {
+    let optionalShared = Shared<Int?>(value: 1)
+    let unwrappedShared = Shared(optionalShared)!
+
+    withKnownIssue {
+      do {
+        let tracker = SharedChangeTracker()
+        tracker.track {
+          unwrappedShared.withLock { $0 += 1 }
+        }
+      }
+    } matching: {
+      $0.description == """
+        Issue recorded: Tracked unasserted changes to 'Shared<Int?>(value: Optional(2))': Optional(1) → Optional(2)
+        """
+    }
+  }
 }

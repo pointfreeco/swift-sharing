@@ -674,7 +674,7 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
     line: UInt,
     column: UInt
   ) {
-    guard base.snapshot != nil else { return }
+    guard base.wrappedValue != nil else { return }
     base.takeSnapshot(value, fileID: fileID, filePath: filePath, line: line, column: column)
   }
 
