@@ -213,7 +213,7 @@ import Testing
     }
 
     @Test func fileStorageDescription() {
-      @Shared(.fileStorage(URL(filePath: "/"))) var count = 0
+      @Shared(.fileStorage(URL(fileURLWithPath: "/"))) var count = 0
 
       #expect($count.description == #"Shared<Int>(.fileStorage(file:///))"#)
     }

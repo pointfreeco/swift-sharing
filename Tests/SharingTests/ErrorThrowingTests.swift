@@ -241,7 +241,7 @@ import Testing
     #expect($count.loadError != nil)
 
     let task = Task { [$count] in try await $count.load() }
-    try await Task.sleep(for: .seconds(0.1))
+    try await Task.sleep(nanoseconds: 100_000_000)
 
     #expect($count.isLoading)
     #expect($count.loadError != nil)

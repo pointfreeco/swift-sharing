@@ -176,7 +176,7 @@
     struct InMemoryFileStorageTests {
       let numbers = FileStorageKey<[Int]>.Default[
         .fileStorage(
-          .documentsDirectory.appending(path: "numbers.json"),
+          URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("numbers.json"),
           decode: { try JSONDecoder().decode([Int].self, from: $0) },
           encode: { try JSONEncoder().encode(Array($0.prefix(2))) }
         ),
@@ -366,7 +366,7 @@
             Dictionary((1...10).map { n in (n, m) }, uniquingKeysWith: { $1 }),
             counts
           )
-          try await Task.sleep(for: .seconds(0.001))
+          try await Task.sleep(nanoseconds: 1_000_000)
         }
       }
 
@@ -378,7 +378,7 @@
             group.addTask { [$counts] in
               for _ in 1...10 {
                 $counts.withLock { $0[0, default: 0] += 1 }
-                try? await Task.sleep(for: .seconds(0.001))
+                try? await Task.sleep(nanoseconds: 1_000_000)
               }
             }
           }

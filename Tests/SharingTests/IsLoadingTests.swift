@@ -38,7 +38,7 @@ import Testing
     let task = Task {
       $value = try await SharedReader(require: Key(testScheduler: testScheduler))
     }
-    try await Task.sleep(for: .seconds(0.1))
+    try await Task.sleep(nanoseconds: 100_000_000)
     #expect($value.isLoading == false)
     #expect(value == 42)
     _ = { testScheduler.advance() }()
@@ -56,7 +56,7 @@ import Testing
     let task = Task {
       try await $value.load(Key(testScheduler: testScheduler))
     }
-    try await Task.sleep(for: .seconds(0.1))
+    try await Task.sleep(nanoseconds: 100_000_000)
     #expect($value.isLoading == true)
     #expect(value == 42)
     _ = { testScheduler.advance() }()
