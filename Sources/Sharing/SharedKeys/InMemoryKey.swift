@@ -90,7 +90,7 @@ public struct InMemoryStorage: Hashable, Sendable {
 
     subscript<Value: Sendable>(key: String, default defaultValue: Value) -> Value {
       storage.withLock { storage in
-        switch (storage[key]) {
+        switch storage[key] {
         case let .some(value as Value):
           return value
         default:
