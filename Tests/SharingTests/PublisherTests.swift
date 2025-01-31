@@ -195,7 +195,7 @@
       #expect(didComplete.withLock { $0 })
     }
 
-    @Test func derivedShared() {
+    @Test func retainPublisherInDerivedShared() {
       struct Wrapper {
         var value = 0
       }
