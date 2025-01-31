@@ -2,7 +2,7 @@
   import Combine
   import Dependencies
   import Foundation
-  import Sharing
+  @testable import Sharing
   import Testing
 
   @MainActor
@@ -193,6 +193,26 @@
           .store(in: &cancellables)
       }
       #expect(didComplete.withLock { $0 })
+    }
+
+    @Test func derivedShared() {
+      struct Wrapper {
+        var value = 0
+      }
+      @Shared(value: Wrapper()) var count
+
+      let counts = Mutex<[Int]>([])
+
+      let cancellable = $count.value.publisher.sink { @Sendable value in
+        counts.withLock { $0.append(value) }
+      }
+      defer { _ = cancellable }
+
+      $count.withLock { $0.value += 1 }
+      $count.withLock { $0.value += 1 }
+      $count.withLock { $0.value += 1 }
+
+      #expect(counts.withLock(\.self) == [0, 1, 2, 3])
     }
   }
 #endif
