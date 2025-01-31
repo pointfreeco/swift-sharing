@@ -2,7 +2,7 @@
   import Combine
   import Dependencies
   import Foundation
-  import Sharing
+  @testable import Sharing
   import Testing
 
   @MainActor
@@ -163,36 +163,26 @@
       #expect(values.withLock(\.self) == [0, 42, 1729])
     }
 
-    @Test func persistentReferenceCompletes() async {
-      var cancellables: Set<AnyCancellable> = []
-      let didComplete = Mutex(false)
-      do {
-        @Shared(.inMemory("count")) var value = 0
-        $value.publisher
-          .sink { @Sendable _ in
-            didComplete.withLock { $0 = true }
-          } receiveValue: { _ in
-
-          }
-          .store(in: &cancellables)
+    @Test func retainPublisherInDerivedShared() {
+      struct Wrapper {
+        var value = 0
       }
-      #expect(didComplete.withLock { $0 })
-    }
+      @Shared(value: Wrapper()) var count
 
-    @Test func boxCompletes() async {
-      var cancellables: Set<AnyCancellable> = []
-      let didComplete = Mutex(false)
-      do {
-        @Shared(value: 0) var value
-        $value.publisher
-          .sink { @Sendable _ in
-            didComplete.withLock { $0 = true }
-          } receiveValue: { _ in
+      let counts = Mutex<[Int]>([])
 
-          }
-          .store(in: &cancellables)
+      let cancellable = $count.value.publisher.sink { completion in
+        Issue.record()
+      } receiveValue: { @Sendable value in
+        counts.withLock { $0.append(value) }
       }
-      #expect(didComplete.withLock { $0 })
+      defer { _ = cancellable }
+
+      $count.withLock { $0.value += 1 }
+      $count.withLock { $0.value += 1 }
+      $count.withLock { $0.value += 1 }
+
+      #expect(counts.withLock(\.self) == [0, 1, 2, 3])
     }
   }
 #endif
