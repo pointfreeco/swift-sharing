@@ -163,38 +163,6 @@
       #expect(values.withLock(\.self) == [0, 42, 1729])
     }
 
-    @Test func persistentReferenceCompletes() async {
-      var cancellables: Set<AnyCancellable> = []
-      let didComplete = Mutex(false)
-      do {
-        @Shared(.inMemory("count")) var value = 0
-        $value.publisher
-          .sink { @Sendable _ in
-            didComplete.withLock { $0 = true }
-          } receiveValue: { _ in
-
-          }
-          .store(in: &cancellables)
-      }
-      #expect(didComplete.withLock { $0 })
-    }
-
-    @Test func boxCompletes() async {
-      var cancellables: Set<AnyCancellable> = []
-      let didComplete = Mutex(false)
-      do {
-        @Shared(value: 0) var value
-        $value.publisher
-          .sink { @Sendable _ in
-            didComplete.withLock { $0 = true }
-          } receiveValue: { _ in
-
-          }
-          .store(in: &cancellables)
-      }
-      #expect(didComplete.withLock { $0 })
-    }
-
     @Test func retainPublisherInDerivedShared() {
       struct Wrapper {
         var value = 0
@@ -203,7 +171,9 @@
 
       let counts = Mutex<[Int]>([])
 
-      let cancellable = $count.value.publisher.sink { @Sendable value in
+      let cancellable = $count.value.publisher.sink { completion in
+        Issue.record()
+      } receiveValue: { @Sendable value in
         counts.withLock { $0.append(value) }
       }
       defer { _ = cancellable }
