@@ -146,7 +146,7 @@ complex problems with `@Shared`. Check out [this][examples-dir] directory to see
 
 [sharing-gh]: https://github.com/pointfreeco/swift-sharing
 [examples-dir]: https://github.com/pointfreeco/swift-sharing/tree/main/Examples
-[case-studies-dir]: https://github.com/pointfreeco/swift-sharing/tree/main/Examples/Examples
+[case-studies-dir]: https://github.com/pointfreeco/swift-sharing/tree/main/Examples/CaseStudies
 [firebase-dir]: https://github.com/pointfreeco/swift-sharing/tree/main/Examples/FirebaseDemo
 [firebase]: https://firebase.google.com
 [grdb-dir]: https://github.com/pointfreeco/swift-sharing/tree/main/GRDBDemo
