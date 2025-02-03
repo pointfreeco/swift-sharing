@@ -31,6 +31,50 @@ public struct SharedReader<Value> {
     self.box = Box(reference)
   }
 
+  /// Wraps a value in a shared reference.
+  ///
+  /// This can be useful for initializing a `SharedReader` with a default value before it is
+  /// configured with a key:
+  ///
+  /// ```swift
+  /// struct ContentView: View {
+  ///   @SharedReader(value: Config()) var config
+  ///
+  ///   var body: some View {
+  ///     VStack {
+  ///       // ...
+  ///     }
+  ///     .task {
+  ///       try await $config.load(.remoteConfig)
+  ///     }
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// It can also be useful for providing `SharedReader` values to features in previews and tests:
+  ///
+  /// ```swift
+  /// struct CounterView: View {
+  ///   @SharedReader var count: Int
+  ///   // ...
+  /// }
+  ///
+  /// #Preview {
+  ///   CounterView(count: SharedReader(value: 42))
+  /// }
+  /// ```
+  ///
+  /// - Parameter value: A value to wrap.
+  #if compiler(>=6)
+    public init(value: sending Value) {
+      self.init(reference: _BoxReference(wrappedValue: value))
+    }
+  #else
+    public init(value: Value) {
+      self.init(reference: _BoxReference(wrappedValue: value))
+    }
+  #endif
+
   /// Creates a read-only shared reference from a shared reference.
   ///
   /// - Parameter base: A shared reference.
@@ -81,30 +125,6 @@ public struct SharedReader<Value> {
   public init(projectedValue: Self) {
     self = projectedValue
   }
-
-  /// Constructs a read-only shared value that remains constant.
-  ///
-  /// This can be useful for providing ``SharedReader`` values to features in previews and tests:
-  ///
-  /// ```swift
-  /// struct CounterView: View {
-  ///   @SharedReader var count: Int
-  ///   // ...
-  /// }
-  ///
-  /// #Preview {
-  ///   CounterView(count: .constant(42))
-  /// )
-  /// ```
-  #if compiler(>=6)
-    public static func constant(_ value: sending Value) -> Self {
-      Self(Shared(value: value))
-    }
-  #else
-    public static func constant(_ value: Value) -> Self {
-      Self(Shared(value: value))
-    }
-  #endif
 
   /// The underlying value referenced by the shared variable.
   ///

@@ -34,8 +34,7 @@ public struct Shared<Value> {
 
   /// Wraps a value in a shared reference.
   ///
-  /// - Parameters:
-  ///   - value: A value to wrap.
+  /// - Parameter value: A value to wrap.
   #if compiler(>=6)
     public init(value: sending Value) {
       self.init(reference: _BoxReference(wrappedValue: value))
