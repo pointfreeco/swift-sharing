@@ -10,7 +10,7 @@ extension RangeReplaceableCollection {
   /// ```swift
   /// @Shared var users: [User]
   ///
-  /// ForEach($users) { $user in
+  /// ForEach(Array($users)) { $user in
   ///   UserView(user: $user)
   /// }
   /// ```
@@ -35,7 +35,7 @@ extension RangeReplaceableCollection {
   /// ```swift
   /// @SharedReader var users: [User]
   ///
-  /// ForEach($users) { $user in
+  /// ForEach(Array($users)) { $user in
   ///   UserView(user: $user)
   /// }
   /// ```
