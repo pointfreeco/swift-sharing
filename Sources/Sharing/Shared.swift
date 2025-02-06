@@ -135,6 +135,7 @@ public struct Shared<Value> {
   ///   - line: The source `#line` associated with the lock.
   ///   - column: The source `#column` associated with the lock.
   /// - Returns: The value returned from `operation`.
+  @discardableResult
   public func withLock<R>(
     _ operation: (inout Value) throws -> R,
     fileID: StaticString = #fileID,
