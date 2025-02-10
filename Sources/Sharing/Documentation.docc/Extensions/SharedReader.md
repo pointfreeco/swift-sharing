@@ -61,7 +61,7 @@ if remoteConfig.isToggleEnabled {
 
 ### Creating a shared reader
 
-- ``constant(_:)``
+- ``init(value:)``
 - ``init(projectedValue:)``
 
 ### Transforming a shared value

@@ -22,7 +22,7 @@ This library was motivated and designed over the course of many episodes on
 Swift language, hosted by [Brandon Williams](https://twitter.com/mbrandonw) and [Stephen
 Celis](https://twitter.com/stephencelis).
 
-<a href="https://www.pointfree.co/episodes/ep305-tour-of-sharing-app-storage-part-1">
+<a href="https://www.pointfree.co/collections/tours/tour-of-swift-sharing">
   <img alt="video poster image" src="https://d3rccdn33rt8ze.cloudfront.net/episodes/0305.jpeg" width="600">
 </a>
 
