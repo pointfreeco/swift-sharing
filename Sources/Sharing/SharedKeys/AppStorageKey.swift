@@ -60,7 +60,19 @@
     where Self == AppStorageKey<String> {
       AppStorageKey(key, store: store)
     }
-
+    
+    /// Creates a shared key that can read and write to a string array user default.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
+    where Self == AppStorageKey<[String]> {
+      AppStorageKey(key, store: store)
+    }
+    
     /// Creates a shared key that can read and write to a URL user default.
     ///
     /// - Parameters:
@@ -174,7 +186,19 @@
     where Self == AppStorageKey<String?> {
       AppStorageKey(key, store: store)
     }
-
+    
+    /// Creates a shared key that can read and write to an optional string array user default.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage(_ key: String, store: UserDefaults? = nil) -> Self
+    where Self == AppStorageKey<[String]?> {
+      AppStorageKey(key, store: store)
+    }
+    
     /// Creates a shared key that can read and write to an optional URL user default.
     ///
     /// - Parameters:
@@ -305,7 +329,11 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == String {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
-
+    
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == [String] {
+      self.init(lookup: CastableLookup(), key: key, store: store)
+    }
+    
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL {
       self.init(lookup: URLLookup(), key: key, store: store)
     }
@@ -341,7 +369,11 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == String? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
     }
-
+    
+    fileprivate init(_ key: String, store: UserDefaults?) where Value == [String]? {
+      self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
+    }
+    
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
     }
