@@ -37,7 +37,7 @@
     ///  }
     /// ```
     @propertyWrapper
-    public struct Shared: DynamicProperty, Sendable {
+    public struct Shared: DynamicProperty {
       @SwiftUI.State private var shared: Sharing.Shared<Value>
 
       @_documentation(visibility: private)
@@ -137,7 +137,7 @@
     ///  }
     /// ```
     @propertyWrapper
-    public struct SharedReader: DynamicProperty, Sendable {
+    public struct SharedReader: DynamicProperty {
       @SwiftUI.State private var shared: Sharing.SharedReader<Value>
 
       @_documentation(visibility: private)
@@ -266,4 +266,10 @@
       shared.id
     }
   }
+
+  #if compiler(>=6)
+    extension State.Shared: Sendable where Value: Sendable {}
+
+    extension State.SharedReader: Sendable where Value: Sendable {}
+  #endif
 #endif
