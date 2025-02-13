@@ -2,7 +2,7 @@
   import SwiftUI
 
   extension State {
-    /// A dynamic property that holds a shared reader in view state.
+    /// A dynamic property that holds a shared property in view state.
     ///
     /// This property is a more ergonomic shorthand for holding a ``Shared`` in SwiftUI's `@State`
     /// property wrapper, and can be initialized in all the same ways `@Shared` can be initialized.
