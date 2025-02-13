@@ -7,8 +7,8 @@
     /// This property is a more ergonomic shorthand for holding a ``Shared`` in SwiftUI's `@State`
     /// property wrapper, and can be initialized in all the same ways `@Shared` can be initialized.
     ///
-    /// For example, if you simply use both property wrappers in a view, initializing and accessing
-    /// the projected shared value is more cumbersome:
+    /// Instead of explicitly going through extra layers of `$state.wrappedValue` to get to the
+    /// shared property wrapper, you can project directly to it:
     ///
     /// ```diff
     ///  struct BooksView: View {
@@ -107,8 +107,8 @@
     /// `@State` property wrapper, and can be initialized in all the same ways `@SharedReader` can
     /// be initialized.
     ///
-    /// For example, if you simply use both property wrappers in a view, initializing and accessing
-    /// the projected shared value is more cumbersome:
+    /// Instead of explicitly going through extra layers of `$state.wrappedValue` to get to the
+    /// shared property wrapper, you can project directly to it:
     ///
     /// ```diff
     ///  struct BooksView: View {
