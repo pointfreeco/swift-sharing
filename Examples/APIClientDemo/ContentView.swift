@@ -11,7 +11,7 @@ private let readMe = """
 
 struct ContentView: View {
   @Shared(.appStorage("count")) var count = 0
-  @SharedReader(.fact(nil)) var fact
+  @State.SharedReader(.fact(nil)) var fact
   @State var isAboutPresented = false
 
   var body: some View {

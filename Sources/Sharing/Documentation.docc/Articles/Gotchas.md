@@ -65,3 +65,28 @@ extension TodosFeature: Codable {
   }
 }
 ```
+
+#### SwiftUI Views
+
+There is one nuance to be aware of when using [`@Shared`](<doc:Shared>) and 
+[`@SharedReader`](<doc:SharedReader>) directly in a SwiftUI view. When the view is recreated 
+(which can happen many times and is an intentional design of SwiftUI), the corresponding 
+`@Shared` and `@SharedReader` wrappers can also be created.
+
+If you dynamically change the key of the property wrapper in the view, for example like this:
+
+```swift
+$value.load(.newKey)
+// or…
+$value = Shared(.newKey)
+```
+
+…then this key may be reset when the view is recreated. In order to prevent this you can use the
+version of `Shared` and `SharedReader` that works like `@State` in views:
+
+```swift
+@State.Shared(.key) var value
+```
+
+See ``SwiftUICore/State/Shared`` and ``SwiftUICore/State/SharedReader`` for more info, as well
+as the article <doc:DynamicKeys>.

@@ -165,6 +165,7 @@ complex problems with `@Shared`. Check out [this][examples-dir] directory to see
 - <doc:PersistenceStrategies>
 - <doc:MutatingSharedState>
 - <doc:ObservingChanges>
+- <doc:DynamicKeys>
 - <doc:DerivingSharedState>
 - <doc:TypeSafeKeys>
 - <doc:InitializationRules>
