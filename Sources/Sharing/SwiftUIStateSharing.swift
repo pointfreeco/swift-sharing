@@ -51,10 +51,17 @@
         nonmutating set { shared.projectedValue = newValue }
       }
 
-      @_documentation(visibility: private)
-      public init(value: sending Value) {
-        shared = Sharing.Shared(value: value)
-      }
+      #if compiler(>=6)
+        @_documentation(visibility: private)
+        public init(value: sending Value) {
+          shared = Sharing.Shared(value: value)
+        }
+      #else
+        @_documentation(visibility: private)
+        public init(value: Value) {
+          shared = Sharing.Shared(value: value)
+        }
+      #endif
 
       @_documentation(visibility: private)
       public init(projectedValue: Sharing.Shared<Value>) {
@@ -151,10 +158,17 @@
         nonmutating set { shared.projectedValue = newValue }
       }
 
-      @_documentation(visibility: private)
-      public init(value: sending Value) {
-        shared = Sharing.SharedReader(value: value)
-      }
+      #if compiler(>=6)
+        @_documentation(visibility: private)
+        public init(value: sending Value) {
+          shared = Sharing.SharedReader(value: value)
+        }
+      #else
+        @_documentation(visibility: private)
+        public init(value: Value) {
+          shared = Sharing.SharedReader(value: value)
+        }
+      #endif
 
       @_documentation(visibility: private)
       public init(projectedValue: Sharing.SharedReader<Value>) {
