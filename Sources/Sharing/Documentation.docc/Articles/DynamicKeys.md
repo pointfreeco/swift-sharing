@@ -47,7 +47,7 @@ If you dynamically change the key of the property wrapper in the view, for examp
 
 ```swift
 $value.load(.newKey)
-// or…
+// or...
 $value = Shared(.newKey)
 ```
 
