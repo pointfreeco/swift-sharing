@@ -33,6 +33,18 @@ struct ContentView: View {
   }
 }
 
-#Preview {
+#Preview("Promo: true") {
+  let _ = prepareDependencies {
+    $0.remoteConfig = MockRemoteConfig(config: ["showPromo": true])
+  }
+
+  ContentView()
+}
+
+#Preview("Promo: false") {
+  let _ = prepareDependencies {
+    $0.remoteConfig = MockRemoteConfig(config: ["showPromo": false])
+  }
+
   ContentView()
 }

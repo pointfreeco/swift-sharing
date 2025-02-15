@@ -1,3 +1,4 @@
+import Dependencies
 import FirebaseCore
 import SwiftUI
 
