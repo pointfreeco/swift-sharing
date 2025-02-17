@@ -343,7 +343,7 @@
     }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL? {
-      self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
+      self.init(lookup: OptionalLookup(base: URLLookup()), key: key, store: store)
     }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Data? {
