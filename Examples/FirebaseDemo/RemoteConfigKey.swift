@@ -27,7 +27,7 @@ struct RemoteConfigKey<Value: Decodable & Sendable>: SharedReaderKey {
   func subscribe(
     context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription {
-    nonisolated(unsafe) let cancellable = remoteConfig.addUpdateLisener(
+    nonisolated(unsafe) let cancellable = remoteConfig.addUpdateListener(
       key: key,
       subscriber: subscriber.yield(with:)
     )
@@ -42,7 +42,7 @@ protocol RemoteConfigClient: Sendable {
     key: String,
     completion: @escaping (Result<T, any Error>) -> Void
   )
-  func addUpdateLisener<T: Decodable>(
+  func addUpdateListener<T: Decodable>(
     key: String,
     subscriber: @escaping (Result<T, any Error>) -> Void
   ) -> AnyCancellable
@@ -77,7 +77,7 @@ struct FirebaseRemoteConfig: RemoteConfigClient {
       )
     }
   }
-  func addUpdateLisener<T: Decodable>(
+  func addUpdateListener<T: Decodable>(
     key: String,
     subscriber: @escaping (Result<T, any Error>) -> Void
   ) -> AnyCancellable {
@@ -108,7 +108,7 @@ final class MockRemoteConfig: RemoteConfigClient {
     }
     completion(.success(value))
   }
-  func addUpdateLisener<T>(
+  func addUpdateListener<T>(
     key: String,
     subscriber: @escaping (Result<T, any Error>) -> Void
   ) -> AnyCancellable where T : Decodable {
