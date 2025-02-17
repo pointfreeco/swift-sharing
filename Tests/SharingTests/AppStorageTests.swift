@@ -42,6 +42,15 @@
       #expect(url == URL(fileURLWithPath: "/tmp"))
     }
 
+    @Test func optionalURL() {
+      @Shared(.appStorage("url")) var url: URL? = URL(fileURLWithPath: "/dev")
+      #expect(store.url(forKey: "url") == URL(fileURLWithPath: "/dev"))
+      store.set(URL(fileURLWithPath: "/tmp"), forKey: "url")
+      #expect(url == URL(fileURLWithPath: "/tmp"))
+      $url.withLock { $0 = nil }
+      #expect(url == nil)
+    }
+
     @Test func data() {
       @Shared(.appStorage("data")) var data = Data([4, 2])
       #expect(store.data(forKey: "data") == Data([4, 2]))
