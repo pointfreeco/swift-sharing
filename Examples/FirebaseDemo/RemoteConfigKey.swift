@@ -1,4 +1,4 @@
-import Combine
+@preconcurrency import Combine
 import Dependencies
 @preconcurrency import FirebaseRemoteConfig
 import Sharing
@@ -27,7 +27,7 @@ struct RemoteConfigKey<Value: Decodable & Sendable>: SharedReaderKey {
   func subscribe(
     context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription {
-    nonisolated(unsafe) let cancellable = remoteConfig.addUpdateListener(
+    let cancellable = remoteConfig.addUpdateListener(
       key: key,
       subscriber: subscriber.yield(with:)
     )
