@@ -192,9 +192,10 @@ Sharing. Check out [this](./Examples) directory to see them all, including:
   * [FirebaseDemo](./Examples/FirebaseDemo):
     A demo showing how shared state can be powered by a remote [Firebase][firebase] config.
 
-  * [GRDBDemo](./Examples/GRDBDemo):
-    A demo showing how shared state can be powered by SQLite in much the same way a view can be
-    powered by SwiftData's `@Query` property wrapper using [GRDB][grdb].
+  * [GRDB Demos][sharing-grdb-demos]:
+    [SharingGRDB][sharing-grdb-gh] is a lightweight replacement for SwiftData and the `@Query`
+    macro, powered by Sharing and [GRDB][grdb]. The library contains a number of
+    [demos][sharing-grdb-demos].
 
   * [WasmDemo](./Examples/WasmDemo):
     A [SwiftWasm][swiftwasm] application that uses this library to share state with your web
@@ -208,6 +209,8 @@ Sharing. Check out [this](./Examples) directory to see them all, including:
 [grdb]: https://github.com/groue/GRDB.swift
 [swiftwasm]: https://swiftwasm.org
 [scrumdinger]: https://developer.apple.com/tutorials/app-dev-training/getting-started-with-scrumdinger
+[sharing-grdb-gh]: https://github.com/pointfreeco/sharing-grdb
+[sharing-grdb-demos]: https://github.com/pointfreeco/sharing-grdb?tab=readme-ov-file#demos
 [syncups]: https://github.com/pointfreeco/syncups
 
 ## Installation
@@ -242,6 +245,18 @@ problem, there are a number of places you can discuss with fellow
 
   * For casual chat, we recommend the
     [Point-Free Community Slack](http://www.pointfree.co/slack-invite).
+    
+## Companion libraries
+
+Sharing is built with extensibility in mind, and there are a number of community-supported libraries
+available to enhance your applications:
+
+  * [SharingGRDB](https://github.com/pointfreeco/sharing-grdb): A lightweight replacement for
+    SwiftData and the `@Query` macro.
+
+If you'd like to contribute a library, please [open a PR][library-pr] with a link to it!
+
+[library-pr]: https://github.com/pointfreeco/swift-sharing/edit/main/README.md
 
 ## License
 
