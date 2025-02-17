@@ -68,7 +68,7 @@ struct FirebaseRemoteConfig: RemoteConfigClient {
     settings.minimumFetchInterval = 0
     remoteConfig.configSettings = settings
   }
-  func fetch<T>(key: String, completion: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+  func fetch<T: Decodable>(key: String, completion: @escaping (Result<T, any Error>) -> Void) {
     remoteConfig.fetchAndActivate { _, error in
       completion(
         Result {
@@ -94,13 +94,13 @@ struct FirebaseRemoteConfig: RemoteConfigClient {
 
 final class MockRemoteConfig: RemoteConfigClient {
   let config: [String: any Sendable]
-  init(config: [String : any Sendable]) {
+  init(config: [String: any Sendable]) {
     self.config = config
   }
-  func fetch<T>(
+  func fetch<T: Decodable>(
     key: String,
     completion: @escaping (Result<T, any Error>) -> Void
-  ) where T : Decodable {
+  ) {
     guard let value = config[key] as? T
     else {
       completion(.failure(NotFound()))
@@ -108,10 +108,10 @@ final class MockRemoteConfig: RemoteConfigClient {
     }
     completion(.success(value))
   }
-  func addUpdateListener<T>(
+  func addUpdateListener<T: Decodable>(
     key: String,
     subscriber: @escaping (Result<T, any Error>) -> Void
-  ) -> AnyCancellable where T : Decodable {
+  ) -> AnyCancellable {
     AnyCancellable {}
   }
   struct NotFound: Error {}
