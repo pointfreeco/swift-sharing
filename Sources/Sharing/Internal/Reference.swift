@@ -47,7 +47,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
   #if canImport(Combine)
     private var value: Value {
       willSet {
-        subject.send(newValue)
+        @Dependency(\.snapshots) var snapshots
+        if !snapshots.isAsserting {
+          subject.send(newValue)
+        }
       }
     }
     let subject = PassthroughRelay<Value>()
@@ -173,7 +176,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
   #if canImport(Combine)
     private var value: Key.Value {
       willSet {
-        subject.send(newValue)
+        @Dependency(\.snapshots) var snapshots
+        if !snapshots.isAsserting {
+          subject.send(newValue)
+        }
       }
     }
     private let subject = PassthroughRelay<Value>()
