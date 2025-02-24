@@ -117,7 +117,7 @@ extension SharedReader {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
   public init(_ key: (some SharedReaderKey<Value>).Default) {
-    self.init(wrappedValue: key.initialValue, key)
+    self.init(wrappedValue: key.initialValue, key.base)
   }
 
   @_disfavoredOverload
@@ -134,21 +134,19 @@ extension SharedReader {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading the
   ///     shared reference's value from some external source.
-  @_disfavoredOverload
   public init(
     wrappedValue: @autoclosure () -> Value,
     _ key: (some SharedReaderKey<Value>).Default
   ) {
-    self.init(wrappedValue: wrappedValue(), key)
+    self.init(wrappedValue: wrappedValue(), key.base)
   }
 
-  @_disfavoredOverload
   @_documentation(visibility: private)
   public init(
     wrappedValue: @autoclosure () -> Value,
     _ key: (some SharedKey<Value>).Default
   ) {
-    self.init(wrappedValue: wrappedValue(), key)
+    self.init(wrappedValue: wrappedValue(), key.base)
   }
 
   /// Replaces a shared reference's key and attempts to load its value.
