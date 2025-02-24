@@ -185,13 +185,13 @@ import Testing
 
         #expect(
           $count.description == """
-            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            Shared<Int>(.appStorage("count"))
             """
         )
 
         #expect(
           SharedReader($count).description == """
-            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            SharedReader<Int>(.appStorage("count"))
             """
         )
       }
@@ -200,13 +200,13 @@ import Testing
 
         #expect(
           $count.description == """
-            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            Shared<Int>(.appStorage("count"))
             """
         )
 
         #expect(
           SharedReader($count).description == """
-            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            SharedReader<Int>(.appStorage("count"))
             """
         )
       }
