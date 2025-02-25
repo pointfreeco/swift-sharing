@@ -257,30 +257,6 @@
     }
   }
 
-  extension State.Shared: Equatable where Value: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-      lhs.shared == rhs.shared
-    }
-  }
-
-  extension State.Shared: Identifiable where Value: Identifiable {
-    public var id: Value.ID {
-      shared.id
-    }
-  }
-
-  extension State.SharedReader: Equatable where Value: Equatable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-      lhs.shared == rhs.shared
-    }
-  }
-
-  extension State.SharedReader: Identifiable where Value: Identifiable {
-    public var id: Value.ID {
-      shared.id
-    }
-  }
-
   #if compiler(>=6)
     extension State.Shared: Sendable where Value: Sendable {}
 
