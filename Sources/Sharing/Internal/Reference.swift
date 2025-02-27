@@ -224,7 +224,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
       : .initialValue(initialValue)
     self.subscription = key.subscribe(
       context: context,
-      subscriber: SharedSubscriber(callback: callback)
+      subscriber: SharedSubscriber(
+        callback: callback,
+        onLoading: { [weak self] in self?.isLoading = $0 }
+      )
     )
   }
 
