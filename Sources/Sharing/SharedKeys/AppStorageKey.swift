@@ -509,6 +509,33 @@
   }
 
   extension DependencyValues {
+    /// Default file storage used by ``SharedReaderKey/appStorage(_:)``.
+    ///
+    /// Use this dependency to override the manner in which
+    /// ``SharedReaderKey/appStorage(_:)`` interacts with UserDefaults. For
+    /// example, while your app is running for UI tests you probably do not want your features writing
+    /// changes to your actual UserDefaults suite, which would cause that data to bleed over from test to test.
+    ///
+    /// So, for that situation you can use the ``inMemory`` value so that each
+    /// run of the app starts with a fresh suite that will never interfere with other tests:
+    ///
+    /// ```swift
+    /// import Dependencies
+    /// import Sharing
+    /// import SwiftUI
+    ///
+    /// @main
+    /// struct MyApp: App {
+    ///   init() {
+    ///     if ProcessInfo.processInfo.environment["UITesting"] == "true"
+    ///       prepareDependencies {
+    ///         $0.defaultAppStorage = .inMemory
+    ///       }
+    ///     }
+    ///   }
+    ///   // ...
+    /// }
+    /// ```
     public var defaultAppStorage: UserDefaults {
       get { self[DefaultAppStorageKey.self].value }
       set { self[DefaultAppStorageKey.self].value = newValue }
@@ -521,27 +548,31 @@
   }
 
   private enum DefaultAppStorageKey: DependencyKey {
-    static var testValue: UncheckedSendable<UserDefaults> {
-      let suiteName: String
-      // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
-      //     file-based suites. Go back to using temporary directory always when we drop iOS 16
-      //     support.
-      if #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10, visionOS 1) {
-        suiteName = "co.pointfree.Sharing.\(UUID().uuidString)"
-      } else {
-        suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
-      }
-      return UncheckedSendable(
-        UserDefaults(suiteName: suiteName)!
-      )
+    static var liveValue: UncheckedSendable<UserDefaults> {
+      UncheckedSendable(.standard)
     }
     static var previewValue: UncheckedSendable<UserDefaults> {
-      testValue
+      UncheckedSendable(.inMemory)
     }
-    static var liveValue: UncheckedSendable<UserDefaults> {
-      UncheckedSendable(UserDefaults.standard)
+    static var testValue: UncheckedSendable<UserDefaults> {
+      UncheckedSendable(.inMemory)
     }
   }
+
+extension UserDefaults {
+  public static var inMemory: UserDefaults {
+    let suiteName: String
+    // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
+    //     file-based suites. Go back to using temporary directory always when we drop iOS 16
+    //     support.
+    if #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10, visionOS 1) {
+      suiteName = "co.pointfree.Sharing.\(UUID().uuidString)"
+    } else {
+      suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
+    }
+    return UserDefaults(suiteName: suiteName)!
+  }
+}
 
   private enum AppStorageKeyFormatWarningEnabledKey: DependencyKey {
     static let liveValue = true
