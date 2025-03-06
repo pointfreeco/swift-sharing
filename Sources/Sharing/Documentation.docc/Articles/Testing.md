@@ -126,7 +126,7 @@ struct EntryPoint: App {
   init() {
     if ProcessInfo.processInfo.environment["UI_TESTING"] != nil {
       prepareDependencies {
-        $0.defaultAppStorage = .testValue.value
+        $0.defaultAppStorage = .inMemory
         $0.defaultFileStorage = .inMemory
       }
     }
