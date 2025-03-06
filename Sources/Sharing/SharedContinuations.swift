@@ -67,9 +67,14 @@ public struct LoadContinuation<Value>: Sendable {
 /// an external system can be shared.
 public struct SharedSubscriber<Value>: Sendable {
   let callback: @Sendable (Result<Value?, any Error>) -> Void
+  let onLoading: (@Sendable (Bool) -> Void)?
 
-  public init(callback: @escaping @Sendable (Result<Value?, any Error>) -> Void) {
+  public init(
+    callback: @escaping @Sendable (Result<Value?, any Error>) -> Void,
+    onLoading: (@Sendable (Bool) -> Void)? = nil
+  ) {
     self.callback = callback
+    self.onLoading = onLoading
   }
 
   /// Yield an updated value from an external source.
@@ -77,6 +82,13 @@ public struct SharedSubscriber<Value>: Sendable {
   /// - Parameter value: An updated value.
   public func yield(_ value: Value) {
     yield(with: .success(value))
+  }
+
+  /// Yield a loading state from an external source.
+  ///
+  /// - Parameter isLoading: Whether the external source is loading.
+  public func yieldLoading(_ isLoading: Bool = true) {
+    onLoading?(isLoading)
   }
 
   /// Yield the initial value provided to the property wrapper when none exists in the external

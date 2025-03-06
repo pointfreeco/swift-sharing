@@ -64,6 +64,49 @@ import Testing
     #expect($value.isLoading == false)
     #expect(value == 42)
   }
+
+  @Test func isLoadingSubcriberYieldValue() {
+    struct Key: SharedReaderKey {
+      let id = UUID()
+      let testScheduler: TestSchedulerOf<DispatchQueue>
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        continuation.resumeReturningInitialValue()
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        subscriber.yieldLoading()
+        testScheduler.schedule { subscriber.yield(42) }
+        return SharedSubscription {}
+      }
+    }
+    @SharedReader(Key(testScheduler: testScheduler)) var value = 0
+    #expect($value.isLoading == true)
+    testScheduler.advance()
+    #expect($value.isLoading == false)
+    #expect(value == 42)
+  }
+
+  @Test func isLoadingSubcriberYieldIsLoading() {
+    struct Key: SharedReaderKey {
+      let id = UUID()
+      let testScheduler: TestSchedulerOf<DispatchQueue>
+      func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+        continuation.resumeReturningInitialValue()
+      }
+      func subscribe(
+        context: LoadContext<Int>, subscriber: SharedSubscriber<Int>
+      ) -> SharedSubscription {
+        subscriber.yieldLoading()
+        testScheduler.schedule { subscriber.yieldLoading(false) }
+        return SharedSubscription {}
+      }
+    }
+    @SharedReader(Key(testScheduler: testScheduler)) var value = 0
+    #expect($value.isLoading == true)
+    testScheduler.advance()
+    #expect($value.isLoading == false)
+  }
 }
 
 private struct Key: SharedReaderKey {
