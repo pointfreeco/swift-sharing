@@ -386,6 +386,33 @@
 
         #expect(counts[0] == 10_000)
       }
+
+      @Test func emptyData() throws {
+        try? FileManager.default.removeItem(at: .fileURL)
+        try Data().write(to: .fileURL)
+        @Shared(.fileStorage(.fileURL)) var count = 0
+        #expect(count == 0)
+      }
+
+      @Test func corruptData() async throws {
+        try? FileManager.default.removeItem(at: .fileURL)
+        try Data("corrupted".utf8).write(to: .fileURL)
+        @Shared(value: 0) var count: Int
+        withKnownIssue {
+          $count = Shared(wrappedValue: 0, .fileStorage(.fileURL))
+        } matching: {
+          $0.description.hasPrefix("""
+            Caught error: dataCorrupted(Swift.DecodingError.Context(codingPath: [], \
+            debugDescription: "The given data was not valid JSON.", underlyingError: \
+            Optional(Error Domain=NSCocoaErrorDomain Code=3840 "Unexpected character
+            """)
+        }
+        #expect(count == 0)
+        $count.withLock { $0 = 1 }
+        try await Task.sleep(for: .seconds(0.01))
+        #expect(count == 1)
+        #expect(try String(decoding: Data(contentsOf: .fileURL), as: UTF8.self) == "1")
+      }
     }
   }
 

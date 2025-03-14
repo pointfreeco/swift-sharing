@@ -107,7 +107,8 @@
     public func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
       guard
         let data = try? storage.load(url),
-        data != stubBytes
+        data != stubBytes,
+        !data.isEmpty
       else {
         continuation.resumeReturningInitialValue()
         return
@@ -353,8 +354,8 @@
           close(source.handle)
         }
       },
-      load: { try Data(contentsOf: $0) },
-      save: { try $0.write(to: $1) }
+      load: { url in try Data(contentsOf: url) },
+      save: { data, url in try data.write(to: url) }
     )
 
     /// File storage that emulates a file system without actually writing anything to disk.
