@@ -327,39 +327,36 @@
     ///
     /// This is the version of the ``Dependencies/DependencyValues/defaultFileStorage`` dependency
     /// that is used by default when running your app in the simulator or on device.
-    public static var fileSystem: Self {
-      let lock = NSLock()
-      return Self(
-        id: AnyHashableSendable(DispatchQueue.main),
-        async: { DispatchQueue.main.async(execute: $0) },
-        asyncAfter: { DispatchQueue.main.asyncAfter(deadline: .now() + $0, execute: $1) },
-        attributesOfItemAtPath: { try FileManager.default.attributesOfItem(atPath: $0) },
-        createDirectory: {
-          try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: $1)
-        },
-        fileExists: { FileManager.default.fileExists(atPath: $0.path) },
-        fileSystemSource: {
-          let fileDescriptor = open($0.path, O_EVTONLY)
-          guard fileDescriptor != -1 else {
-            struct FileDescriptorError: Error {}
-            throw FileDescriptorError()
-          }
-          let source = DispatchSource.makeFileSystemObjectSource(
-            fileDescriptor: fileDescriptor,
-            eventMask: $1,
-            queue: DispatchQueue.main
-          )
-          source.setEventHandler(handler: $2)
-          source.resume()
-          return SharedSubscription {
-            source.cancel()
-            close(source.handle)
-          }
-        },
-        load: { url in try Data(contentsOf: url) },
-        save: { data, url in try data.write(to: url) }
-      )
-    }
+    public static let fileSystem = Self(
+      id: AnyHashableSendable(DispatchQueue.main),
+      async: { DispatchQueue.main.async(execute: $0) },
+      asyncAfter: { DispatchQueue.main.asyncAfter(deadline: .now() + $0, execute: $1) },
+      attributesOfItemAtPath: { try FileManager.default.attributesOfItem(atPath: $0) },
+      createDirectory: {
+        try FileManager.default.createDirectory(at: $0, withIntermediateDirectories: $1)
+      },
+      fileExists: { FileManager.default.fileExists(atPath: $0.path) },
+      fileSystemSource: {
+        let fileDescriptor = open($0.path, O_EVTONLY)
+        guard fileDescriptor != -1 else {
+          struct FileDescriptorError: Error {}
+          throw FileDescriptorError()
+        }
+        let source = DispatchSource.makeFileSystemObjectSource(
+          fileDescriptor: fileDescriptor,
+          eventMask: $1,
+          queue: DispatchQueue.main
+        )
+        source.setEventHandler(handler: $2)
+        source.resume()
+        return SharedSubscription {
+          source.cancel()
+          close(source.handle)
+        }
+      },
+      load: { url in try Data(contentsOf: url) },
+      save: { data, url in try data.write(to: url) }
+    )
 
     /// File storage that emulates a file system without actually writing anything to disk.
     ///
