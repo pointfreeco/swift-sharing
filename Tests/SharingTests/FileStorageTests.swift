@@ -269,6 +269,24 @@
         }
       }
 
+      @Test func moveFileThenWrite() async throws {
+        try await withMainSerialExecutor {
+          try JSONEncoder().encode([User.blob]).write(to: .fileURL)
+
+          @Shared(.fileStorage(.fileURL)) var users = [User]()
+          await Task.yield()
+          expectNoDifference(users, [.blob])
+
+          try FileManager.default.moveItem(at: .fileURL, to: .anotherFileURL)
+          try await Task.sleep(nanoseconds: 100_000_000)
+          expectNoDifference(users, [])
+
+          try JSONEncoder().encode([User.blobEsq]).write(to: .fileURL)
+          try await Task.sleep(nanoseconds: 1_000_000_000)
+          expectNoDifference(users, [.blobEsq])
+        }
+      }
+
       @Test func testDeleteFileThenWriteToFile() async throws {
         try await withMainSerialExecutor {
           try JSONEncoder().encode([User.blob]).write(to: .fileURL)
@@ -356,14 +374,16 @@
       @MainActor
       @Test func multipleMutations() async throws {
         @Shared(.counts) var counts
-        for m in 1...1000 {
-          for n in 1...10 {
+        let iterations = 1_000
+        let buckets = 10
+        for m in 1...iterations {
+          for n in 1...buckets {
             $counts.withLock {
               $0[n, default: 0] += 1
             }
           }
           expectNoDifference(
-            Dictionary((1...10).map { n in (n, m) }, uniquingKeysWith: { $1 }),
+            Dictionary((1...buckets).map { n in (n, m) }, uniquingKeysWith: { $1 }),
             counts
           )
           try await Task.sleep(nanoseconds: 1_000_000)
@@ -385,6 +405,33 @@
         }
 
         #expect(counts[0] == 10_000)
+      }
+
+      @Test func emptyData() throws {
+        try? FileManager.default.removeItem(at: .fileURL)
+        try Data().write(to: .fileURL)
+        @Shared(.fileStorage(.fileURL)) var count = 0
+        #expect(count == 0)
+      }
+
+      @Test func corruptData() async throws {
+        try? FileManager.default.removeItem(at: .fileURL)
+        try Data("corrupted".utf8).write(to: .fileURL)
+        @Shared(value: 0) var count: Int
+        withKnownIssue {
+          $count = Shared(wrappedValue: 0, .fileStorage(.fileURL))
+        } matching: {
+          $0.description.hasPrefix("""
+            Caught error: dataCorrupted(Swift.DecodingError.Context(codingPath: [], \
+            debugDescription: "The given data was not valid JSON.", underlyingError: \
+            Optional(Error Domain=NSCocoaErrorDomain Code=3840 "Unexpected character
+            """)
+        }
+        #expect(count == 0)
+        $count.withLock { $0 = 1 }
+        try await Task.sleep(for: .seconds(0.01))
+        #expect(count == 1)
+        #expect(try String(decoding: Data(contentsOf: .fileURL), as: UTF8.self) == "1")
       }
     }
   }
