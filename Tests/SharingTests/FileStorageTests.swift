@@ -374,7 +374,7 @@
       @MainActor
       @Test func multipleMutations() async throws {
         @Shared(.counts) var counts
-        let iterations = 10
+        let iterations = 1_000
         let buckets = 10
         for m in 1...iterations {
           for n in 1...buckets {
