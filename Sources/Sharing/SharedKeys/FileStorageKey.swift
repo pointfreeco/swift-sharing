@@ -130,16 +130,19 @@
               try storage.createDirectory(url.deletingLastPathComponent(), true)
               try storage.save(stubBytes, url)
             }
-            let externalCancellable = try storage.fileSystemSource(url, [.write, .rename]) { [weak self] in
+            let externalCancellable = try storage.fileSystemSource(url, [.write, .rename]) {
+              [weak self] in
               guard let self else { return }
-              state.withValue { state in
-                guard state.workItem == nil
-                else { return }
-
-                if self.storage.fileExists(self.url) {
+              let fileExists = self.storage.fileExists(self.url)
+              defer {
+                if !fileExists {
+                  setUpSources()
+                }
+              }
+              if state.withValue({ $0.workItem == nil }) {
+                if fileExists {
                   subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
                 } else {
-                  setUpSources()
                   subscriber.yieldReturningInitialValue()
                 }
               }
@@ -147,27 +150,37 @@
             let internalCancellable = try storage.fileSystemSource(url, [.delete]) {
               [weak self] in
               guard let self else { return }
-              state.withValue { state in
-                if self.storage.fileExists(self.url) {
-                  let modificationDate =
-                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
-                   as? Date)
-                  ?? Date.distantPast
-                  guard
-                    !state.modificationDates.contains(modificationDate)
-                  else {
-                    state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                    return
-                  }
-
-                  guard state.workItem == nil
-                  else { return }
-
+              let fileExists = self.storage.fileExists(self.url)
+              defer {
+                if !fileExists {
+                  setUpSources()
+                }
+              }
+              let modificationDate =
+                fileExists
+                ? (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
+                  as? Date)
+                : nil
+              let shouldYield = state.withValue { state in
+                guard fileExists
+                else {
+                  state.cancelWorkItem()
+                  return true
+                }
+                let modificationDate = modificationDate ?? .distantPast
+                guard
+                  !state.modificationDates.contains(modificationDate)
+                else {
+                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                  return false
+                }
+                return state.workItem == nil
+              }
+              if shouldYield {
+                if fileExists {
                   subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
                 } else {
-                  state.cancelWorkItem()
                   subscriber.yieldReturningInitialValue()
-                  setUpSources()
                 }
               }
             }
