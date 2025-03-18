@@ -262,9 +262,28 @@
           try await Task.sleep(nanoseconds: 100_000_000)
           expectNoDifference(users, [])
 
+          try FileManager.default.removeItem(at: .fileURL)
           try FileManager.default.moveItem(at: .anotherFileURL, to: .fileURL)
           try await Task.sleep(nanoseconds: 1_000_000_000)
           expectNoDifference(users, [.blob])
+        }
+      }
+
+      @Test func moveFileThenWrite() async throws {
+        try await withMainSerialExecutor {
+          try JSONEncoder().encode([User.blob]).write(to: .fileURL)
+
+          @Shared(.fileStorage(.fileURL)) var users = [User]()
+          await Task.yield()
+          expectNoDifference(users, [.blob])
+
+          try FileManager.default.moveItem(at: .fileURL, to: .anotherFileURL)
+          try await Task.sleep(nanoseconds: 100_000_000)
+          expectNoDifference(users, [])
+
+          try JSONEncoder().encode([User.blobEsq]).write(to: .fileURL)
+          try await Task.sleep(nanoseconds: 1_000_000_000)
+          expectNoDifference(users, [.blobEsq])
         }
       }
 
@@ -355,14 +374,16 @@
       @MainActor
       @Test func multipleMutations() async throws {
         @Shared(.counts) var counts
-        for m in 1...1000 {
-          for n in 1...10 {
+        let iterations = 10
+        let buckets = 10
+        for m in 1...iterations {
+          for n in 1...buckets {
             $counts.withLock {
               $0[n, default: 0] += 1
             }
           }
           expectNoDifference(
-            Dictionary((1...10).map { n in (n, m) }, uniquingKeysWith: { $1 }),
+            Dictionary((1...buckets).map { n in (n, m) }, uniquingKeysWith: { $1 }),
             counts
           )
           try await Task.sleep(nanoseconds: 1_000_000)

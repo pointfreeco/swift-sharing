@@ -130,42 +130,50 @@
               try storage.createDirectory(url.deletingLastPathComponent(), true)
               try storage.save(stubBytes, url)
             }
-            let writeCancellable = try storage.fileSystemSource(url, [.write, .rename]) { [weak self] in
+            let externalCancellable = try storage.fileSystemSource(url, [.write, .rename]) { [weak self] in
               guard let self else { return }
               state.withValue { state in
-                let modificationDate =
-                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
-                    as? Date)
-                  ?? Date.distantPast
-                guard
-                  !state.modificationDates.contains(modificationDate)
-                else {
-                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                  return
-                }
-
                 guard state.workItem == nil
                 else { return }
 
                 if self.storage.fileExists(self.url) {
                   subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
                 } else {
+                  setUpSources()
                   subscriber.yieldReturningInitialValue()
                 }
               }
             }
-            let deleteCancellable = try storage.fileSystemSource(url, [.delete]) {
+            let internalCancellable = try storage.fileSystemSource(url, [.delete]) {
               [weak self] in
               guard let self else { return }
               state.withValue { state in
-                state.cancelWorkItem()
+                if self.storage.fileExists(self.url) {
+                  let modificationDate =
+                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
+                   as? Date)
+                  ?? Date.distantPast
+                  guard
+                    !state.modificationDates.contains(modificationDate)
+                  else {
+                    state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                    return
+                  }
+
+                  guard state.workItem == nil
+                  else { return }
+
+                  subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                } else {
+                  state.cancelWorkItem()
+                  subscriber.yieldReturningInitialValue()
+                  setUpSources()
+                }
               }
-              subscriber.yield(with: .success(try? decode(storage.load(url))))
-              setUpSources()
             }
             $0 = SharedSubscription {
-              writeCancellable.cancel()
-              deleteCancellable.cancel()
+              externalCancellable.cancel()
+              internalCancellable.cancel()
             }
           } catch {
             subscriber.yield(throwing: error)
