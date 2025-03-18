@@ -130,7 +130,7 @@
               try storage.createDirectory(url.deletingLastPathComponent(), true)
               try storage.save(stubBytes, url)
             }
-            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
+            let writeCancellable = try storage.fileSystemSource(url, [.write, .rename]) { [weak self] in
               guard let self else { return }
               state.withValue { state in
                 let modificationDate =
@@ -147,10 +147,14 @@
                 guard state.workItem == nil
                 else { return }
 
-                subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                if storage.fileExists(url) {
+                  subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                } else {
+                  subscriber.yieldReturningInitialValue()
+                }
               }
             }
-            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
+            let deleteCancellable = try storage.fileSystemSource(url, [.delete]) {
               [weak self] in
               guard let self else { return }
               state.withValue { state in

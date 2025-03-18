@@ -262,7 +262,6 @@
           try await Task.sleep(nanoseconds: 100_000_000)
           expectNoDifference(users, [])
 
-          try FileManager.default.removeItem(at: .fileURL)
           try FileManager.default.moveItem(at: .anotherFileURL, to: .fileURL)
           try await Task.sleep(nanoseconds: 1_000_000_000)
           expectNoDifference(users, [.blob])
