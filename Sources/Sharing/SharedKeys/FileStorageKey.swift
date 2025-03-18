@@ -359,7 +359,7 @@
         }
       },
       load: { url in try Data(contentsOf: url) },
-      save: { data, url in try data.write(to: url) }
+      save: { data, url in try data.write(to: url, options: .atomic) }
     )
 
     /// File storage that emulates a file system without actually writing anything to disk.
