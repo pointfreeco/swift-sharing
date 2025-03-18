@@ -147,7 +147,7 @@
                 guard state.workItem == nil
                 else { return }
 
-                if storage.fileExists(url) {
+                if self.storage.fileExists(url) {
                   subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
                 } else {
                   subscriber.yieldReturningInitialValue()
