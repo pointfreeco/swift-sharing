@@ -253,7 +253,8 @@ available to enhance your applications:
 
   * [SharingGRDB](https://github.com/pointfreeco/sharing-grdb): A lightweight replacement for
     SwiftData and the `@Query` macro.    
-  * [SharingCloud](https://github.com/KeithBird/sharing-cloud): Sync shared data across devices via iCloud.
+  * [SharingCloud](https://github.com/KeithBird/sharing-cloud): Sync shared data across devices via
+    iCloud.
 
 If you'd like to contribute a library, please [open a PR][library-pr] with a link to it!
 
