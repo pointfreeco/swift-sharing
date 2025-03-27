@@ -107,7 +107,6 @@
     public func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
       guard
         let data = try? storage.load(url),
-        data != stubBytes,
         !data.isEmpty
       else {
         continuation.resumeReturningInitialValue()
@@ -128,7 +127,7 @@
             // NB: Make sure there is a file to create a source for.
             if !storage.fileExists(url) {
               try storage.createDirectory(url.deletingLastPathComponent(), true)
-              try storage.save(stubBytes, url)
+              try storage.save(Data(), url)
             }
             let externalCancellable = try storage.fileSystemSource(url, [.write, .rename]) {
               [weak self] in
@@ -443,6 +442,4 @@
     #endif
     return encoder
   }()
-
-  private let stubBytes = Data("co.pointfree.Sharing.FileStorage.stub".utf8)
 #endif
