@@ -107,7 +107,7 @@
     public func load(context _: LoadContext<Value>, continuation: LoadContinuation<Value>) {
       guard
         let data = try? storage.load(url),
-        data != stubBytes
+        !data.isEmpty
       else {
         continuation.resumeReturningInitialValue()
         return
@@ -127,40 +127,65 @@
             // NB: Make sure there is a file to create a source for.
             if !storage.fileExists(url) {
               try storage.createDirectory(url.deletingLastPathComponent(), true)
-              try storage.save(stubBytes, url)
+              try storage.save(Data(), url)
             }
-            let writeCancellable = try storage.fileSystemSource(url, [.write]) { [weak self] in
+            let externalCancellable = try storage.fileSystemSource(url, [.write, .rename]) {
+              [weak self] in
               guard let self else { return }
-              state.withValue { state in
-                let modificationDate =
-                  (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
-                    as? Date)
-                  ?? Date.distantPast
+              let fileExists = self.storage.fileExists(self.url)
+              defer {
+                if !fileExists {
+                  setUpSources()
+                }
+              }
+              if state.withValue({ $0.workItem == nil }) {
+                if fileExists {
+                  subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                } else {
+                  subscriber.yieldReturningInitialValue()
+                }
+              }
+            }
+            let internalCancellable = try storage.fileSystemSource(url, [.delete]) {
+              [weak self] in
+              guard let self else { return }
+              let fileExists = self.storage.fileExists(self.url)
+              defer {
+                if !fileExists {
+                  setUpSources()
+                }
+              }
+              let modificationDate =
+                fileExists
+                ? (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
+                  as? Date)
+                : nil
+              let shouldYield = state.withValue { state in
+                guard fileExists
+                else {
+                  state.cancelWorkItem()
+                  return true
+                }
+                let modificationDate = modificationDate ?? .distantPast
                 guard
                   !state.modificationDates.contains(modificationDate)
                 else {
                   state.modificationDates.removeAll(where: { $0 <= modificationDate })
-                  return
+                  return false
                 }
-
-                guard state.workItem == nil
-                else { return }
-
-                subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                return state.workItem == nil
               }
-            }
-            let deleteCancellable = try storage.fileSystemSource(url, [.delete, .rename]) {
-              [weak self] in
-              guard let self else { return }
-              state.withValue { state in
-                state.cancelWorkItem()
+              if shouldYield {
+                if fileExists {
+                  subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
+                } else {
+                  subscriber.yieldReturningInitialValue()
+                }
               }
-              subscriber.yield(with: .success(try? decode(storage.load(url))))
-              setUpSources()
             }
             $0 = SharedSubscription {
-              writeCancellable.cancel()
-              deleteCancellable.cancel()
+              externalCancellable.cancel()
+              internalCancellable.cancel()
             }
           } catch {
             subscriber.yield(throwing: error)
@@ -353,8 +378,12 @@
           close(source.handle)
         }
       },
-      load: { try Data(contentsOf: $0) },
-      save: { try $0.write(to: $1) }
+      load: { url in
+        try Data(contentsOf: url)
+      },
+      save: { data, url in
+        try data.write(to: url, options: .atomic)
+      }
     )
 
     /// File storage that emulates a file system without actually writing anything to disk.
@@ -413,6 +442,4 @@
     #endif
     return encoder
   }()
-
-  private let stubBytes = Data("co.pointfree.Sharing.FileStorage.stub".utf8)
 #endif
