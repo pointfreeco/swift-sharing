@@ -255,6 +255,7 @@ available to enhance your applications:
     SwiftData and the `@Query` macro.    
   * [SharingCloud](https://github.com/KeithBird/sharing-cloud): Sync shared data across devices via
     iCloud.
+  * [SharingFirestore](https://github.com/bitkey-oss/sharing-firestore): Real-time synchronization and real-time queries powered by Firebase's Firestore.
 
 If you'd like to contribute a library, please [open a PR][library-pr] with a link to it!
 
