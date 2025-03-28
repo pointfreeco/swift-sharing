@@ -155,6 +155,20 @@ public struct SharedReader<Value> {
       reference = newValue.reference
     }
   }
+  
+  /// Returns a read-only shared reference to the resulting value of a given closure.
+  ///
+  /// - Returns: A new shared reader.
+  public func map<Member>(
+    _ body: @escaping @Sendable (Value) -> Member
+  ) -> SharedReader<Member> {
+    func open(_ reference: some Reference<Value>) -> SharedReader<Member> {
+      SharedReader<Member>(
+        reference: _MapReference(base: reference, mapper: _MapReferenceBlockMapper(body: body))
+      )
+    }
+    return open(reference)
+  }
 
   /// Returns a read-only shared reference to the resulting value of a given key path.
   ///
@@ -168,7 +182,7 @@ public struct SharedReader<Value> {
   ) -> SharedReader<Member> {
     func open(_ reference: some Reference<Value>) -> SharedReader<Member> {
       SharedReader<Member>(
-        reference: _AppendKeyPathReference(base: reference, keyPath: keyPath.unsafeSendable())
+        reference: _MapReference(base: reference, mapper: _MapReferenceKeyPathMapper(keyPath: keyPath.unsafeSendable()))
       )
     }
     return open(reference)

@@ -529,15 +529,15 @@ extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
   }
 }
 
-final class _AppendKeyPathReference<
-  Base: Reference, Value, Path: KeyPath<Base.Value, Value> & Sendable
+final class _MapReference<
+  Base: Reference, Value, Mapper: _MapReferenceMapper<Base.Value, Value>
 >: Reference, Observable {
   private let base: Base
-  private let keyPath: Path
+  private let mapper: Mapper
 
-  init(base: Base, keyPath: Path) {
+  init(base: Base, mapper: Mapper) {
     self.base = base
-    self.keyPath = keyPath
+    self.mapper = mapper
   }
 
   var id: ObjectIdentifier {
@@ -553,7 +553,7 @@ final class _AppendKeyPathReference<
   }
 
   var wrappedValue: Value {
-    base.wrappedValue[keyPath: keyPath]
+    mapper.transform(base.wrappedValue)
   }
 
   func load() async throws {
@@ -567,25 +567,25 @@ final class _AppendKeyPathReference<
   #if canImport(Combine)
     var publisher: any Publisher<Value, Never> {
       func open(_ publisher: some Publisher<Base.Value, Never>) -> any Publisher<Value, Never> {
-        publisher.map(keyPath)
+        publisher.map(mapper.transform)
       }
       return open(base.publisher)
     }
   #endif
 
   var description: String {
-    "\(base.description)[dynamicMember: \(keyPath)]"
+    mapper.description(baseDescription: base.description)
   }
 }
 
-extension _AppendKeyPathReference: MutableReference, Equatable
-where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
+extension _MapReference: MutableReference, Equatable
+where Base: MutableReference, Mapper: _MapReferenceWritableMapper<Base.Value, Value> {
   var saveError: (any Error)? {
     base.saveError
   }
 
   var snapshot: Value? {
-    base.snapshot?[keyPath: keyPath]
+    base.snapshot.flatMap(mapper.transform)
   }
 
   func takeSnapshot(
@@ -596,20 +596,73 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
     column: UInt
   ) {
     var snapshot = base.snapshot ?? base.wrappedValue
-    snapshot[keyPath: keyPath as WritableKeyPath] = value
+    mapper.mutate(&snapshot) { $0 = value }
     base.takeSnapshot(snapshot, fileID: fileID, filePath: filePath, line: line, column: column)
   }
 
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R {
-    try base.withLock { try body(&$0[keyPath: keyPath as WritableKeyPath]) }
+    try base.withLock { try mapper.mutate(&$0, body: body) }
   }
 
   func save() async throws {
     try await base.save()
   }
 
-  static func == (lhs: _AppendKeyPathReference, rhs: _AppendKeyPathReference) -> Bool {
-    lhs.base == rhs.base && lhs.keyPath == rhs.keyPath
+  static func == (lhs: _MapReference, rhs: _MapReference) -> Bool {
+    lhs.base == rhs.base && lhs.mapper == rhs.mapper
+  }
+}
+
+protocol _MapReferenceMapper<Base, Value>: Sendable {
+  associatedtype Base
+  associatedtype Value
+      
+  func transform(_ base: Base) -> Value
+  
+  func description(baseDescription: String) -> String
+}
+
+protocol _MapReferenceWritableMapper<Base, Value>: _MapReferenceMapper, Equatable {
+  func mutate<R>(_ base: inout Base, body: (inout Value) throws -> R) rethrows -> R
+}
+
+struct _MapReferenceKeyPathMapper<Base, Value, Path>: _MapReferenceMapper where Path: KeyPath<Base, Value> & Sendable {
+  let keyPath: Path
+    
+  func transform(_ base: Base) -> Value {
+    base[keyPath: keyPath]
+  }
+  
+  func description(baseDescription: String) -> String {
+    "\(baseDescription)[dynamicMember: \(keyPath)]"
+  }
+}
+
+struct _MapReferenceWritableKeyPathMapper<Base, Value, Path>: _MapReferenceWritableMapper where Path: WritableKeyPath<Base, Value> & Sendable {
+  let keyPath: Path
+    
+  func transform(_ base: Base) -> Value {
+    base[keyPath: keyPath]
+  }
+  
+  func mutate<R>(_ base: inout Base, body: (inout Value) throws -> R) rethrows -> R {
+    try body(&base[keyPath: keyPath])
+  }
+  
+  func description(baseDescription: String) -> String {
+    "\(baseDescription)[dynamicMember: \(keyPath)]"
+  }
+}
+
+struct _MapReferenceBlockMapper<Base, Value>: _MapReferenceMapper {
+  let body: @Sendable (Base) -> Value
+    
+  func transform(_ base: Base) -> Value {
+    body(base)
+  }
+  
+  func description(baseDescription: String) -> String {
+    ".map(\(baseDescription), as: \(Value.self).self)"
   }
 }
 

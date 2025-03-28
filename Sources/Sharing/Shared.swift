@@ -223,6 +223,15 @@ public struct Shared<Value> {
       reference = newValue.reference
     }
   }
+  
+  /// Returns a read-only shared reference to the resulting value of a given closure.
+  ///
+  /// - Returns: A new read-only shared reference.
+  public func map<Member>(
+    _ body: @escaping @Sendable(Value) -> Member
+  ) -> SharedReader<Member> {
+    SharedReader(self).map(body)
+  }
 
   /// Returns a shared reference to the resulting value of a given key path.
   ///
@@ -243,7 +252,7 @@ public struct Shared<Value> {
   ) -> Shared<Member> {
     func open(_ reference: some MutableReference<Value>) -> Shared<Member> {
       Shared<Member>(
-        reference: _AppendKeyPathReference(base: reference, keyPath: keyPath.unsafeSendable())
+        reference: _MapReference(base: reference, mapper: _MapReferenceWritableKeyPathMapper(keyPath: keyPath.unsafeSendable()))
       )
     }
     return open(reference)
