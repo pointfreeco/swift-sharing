@@ -254,9 +254,11 @@ final class _PersistentReference<Key: SharedReaderKey>:
       withMutation(keyPath: \._loadError) {
         lock.withLock { _loadError = newValue }
       }
-      if let newValue {
-        reportIssue(newValue)
-      }
+      #if DEBUG
+        if !isTesting, let newValue {
+          reportIssue(newValue)
+        }
+      #endif
     }
   }
 
@@ -371,9 +373,11 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
       withMutation(keyPath: \._saveError) {
         lock.withLock { _saveError = newValue }
       }
-      if let newValue {
-        reportIssue(newValue)
-      }
+      #if DEBUG
+        if !isTesting, let newValue {
+          reportIssue(newValue)
+        }
+      #endif
     }
   }
 
