@@ -136,15 +136,11 @@
       try withDependencies {
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
       } operation: {
-        try withKnownIssue {
-          @Shared(.fileStorage(.fileURL)) var users = [User]()
-          let loadError = try #require($users.loadError)
-          #expect(loadError is DecodingError)
-          $users.withLock { $0.append(User(id: 1, name: "Blob")) }
-          #expect($users.loadError == nil)
-        } matching: {
-          $0.error is DecodingError
-        }
+        @Shared(.fileStorage(.fileURL)) var users = [User]()
+        let loadError = try #require($users.loadError)
+        #expect(loadError is DecodingError)
+        $users.withLock { $0.append(User(id: 1, name: "Blob")) }
+        #expect($users.loadError == nil)
       }
     }
 
@@ -418,15 +414,7 @@
         try? FileManager.default.removeItem(at: .fileURL)
         try Data("corrupted".utf8).write(to: .fileURL)
         @Shared(value: 0) var count: Int
-        withKnownIssue {
-          $count = Shared(wrappedValue: 0, .fileStorage(.fileURL))
-        } matching: {
-          $0.description.hasPrefix("""
-            Caught error: dataCorrupted(Swift.DecodingError.Context(codingPath: [], \
-            debugDescription: "The given data was not valid JSON.", underlyingError: \
-            Optional(Error Domain=NSCocoaErrorDomain Code=3840 "Unexpected character
-            """)
-        }
+        $count = Shared(wrappedValue: 0, .fileStorage(.fileURL))
         #expect(count == 0)
         $count.withLock { $0 = 1 }
         try await Task.sleep(for: .seconds(0.01))
