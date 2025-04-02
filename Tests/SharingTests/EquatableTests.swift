@@ -32,4 +32,18 @@ struct EquatableTests {
     #expect(lhs == rhs)
     #expect($lhs == $rhs)
   }
+  
+  @Test func map() {
+    @Shared(value: 0) var base: Int
+    @SharedReader var lhs: Int
+    @SharedReader var rhs: Int
+    _lhs = $base.map { $0 * 2 }
+    _rhs = $base.map { $0 * 3 }
+    #expect(lhs == rhs)
+    #expect($lhs == $rhs)
+    
+    $base.withLock { $0 += 1 }
+    #expect(lhs != rhs)
+    #expect($lhs != $rhs)
+  }
 }
