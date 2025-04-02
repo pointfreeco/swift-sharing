@@ -88,10 +88,10 @@ import Testing
       #expect(id == 42)
     }
     
-    @Test func map() {
+    @Test func mapReader() {
       @Shared(value: 0) var count
       @SharedReader var isZero: Bool
-      _isZero = $count.map { $0 == 0 }
+      _isZero = $count.reader { $0 == 0 }
 
       #expect(isZero)
 
