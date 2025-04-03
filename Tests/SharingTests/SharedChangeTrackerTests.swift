@@ -98,7 +98,7 @@ import Testing
       $count.withLock { $0 = 1 }
 
       #expect($count == $count)
-      #expect(counts.withLock(\.self) == [0 ,1])
+      #expect(counts.withLock(\.self) == [0, 1])
     }
   }
 

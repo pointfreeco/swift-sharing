@@ -559,20 +559,20 @@
     }
   }
 
-extension UserDefaults {
-  public static var inMemory: UserDefaults {
-    let suiteName: String
-    // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
-    //     file-based suites. Go back to using temporary directory always when we drop iOS 16
-    //     support.
-    if #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10, visionOS 1) {
-      suiteName = "co.pointfree.Sharing.\(UUID().uuidString)"
-    } else {
-      suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
+  extension UserDefaults {
+    public static var inMemory: UserDefaults {
+      let suiteName: String
+      // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
+      //     file-based suites. Go back to using temporary directory always when we drop iOS 16
+      //     support.
+      if #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10, visionOS 1) {
+        suiteName = "co.pointfree.Sharing.\(UUID().uuidString)"
+      } else {
+        suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
+      }
+      return UserDefaults(suiteName: suiteName)!
     }
-    return UserDefaults(suiteName: suiteName)!
   }
-}
 
   private enum AppStorageKeyFormatWarningEnabledKey: DependencyKey {
     static let liveValue = true

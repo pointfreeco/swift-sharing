@@ -223,14 +223,23 @@ public struct Shared<Value> {
       reference = newValue.reference
     }
   }
-  
+
   /// Returns a read-only shared reference to the resulting value of a given closure.
   ///
   /// - Returns: A new read-only shared reference.
   public func read<Member>(
-    _ body: @escaping @Sendable(Value) -> Member
+    _ body: @escaping @Sendable (Value) -> Member
   ) -> SharedReader<Member> {
     SharedReader(self).read(body)
+  }
+
+  @available(
+    *,
+    deprecated,
+    message: "Use dynamic member lookup instead ('$shared.member', not '$shared.read(\\.member)')"
+  )
+  public func read<Member>(_ keyPath: KeyPath<Value, Member>) -> SharedReader<Member> {
+    self[dynamicMember: keyPath]
   }
 
   /// Returns a shared reference to the resulting value of a given key path.
