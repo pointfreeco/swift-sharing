@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode 16.2
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Upgrade swift-format
+        run: brew update && brew upgrade swift-format
       - name: Format
         run: make format
       - uses: stefanzweifel/git-auto-commit-action@v5
