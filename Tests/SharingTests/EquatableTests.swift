@@ -37,8 +37,8 @@ struct EquatableTests {
     @Shared(value: 0) var base: Int
     @SharedReader var lhs: Int
     @SharedReader var rhs: Int
-    _lhs = $base.reader { $0 * 2 }
-    _rhs = $base.reader { $0 * 3 }
+    _lhs = $base.read { $0 * 2 }
+    _rhs = $base.read { $0 * 3 }
     #expect(lhs == rhs)
     #expect($lhs == $rhs)
     

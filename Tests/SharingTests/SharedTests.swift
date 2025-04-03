@@ -91,7 +91,7 @@ import Testing
     @Test func mapReader() {
       @Shared(value: 0) var count
       @SharedReader var isZero: Bool
-      _isZero = $count.reader { $0 == 0 }
+      _isZero = $count.read { $0 == 0 }
 
       #expect(isZero)
 

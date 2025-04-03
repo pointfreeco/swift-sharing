@@ -227,10 +227,10 @@ public struct Shared<Value> {
   /// Returns a read-only shared reference to the resulting value of a given closure.
   ///
   /// - Returns: A new read-only shared reference.
-  public func reader<Member>(
+  public func read<Member>(
     _ body: @escaping @Sendable(Value) -> Member
   ) -> SharedReader<Member> {
-    SharedReader(self).map(body)
+    SharedReader(self).read(body)
   }
 
   /// Returns a shared reference to the resulting value of a given key path.

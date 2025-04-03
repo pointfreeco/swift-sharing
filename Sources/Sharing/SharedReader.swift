@@ -159,7 +159,7 @@ public struct SharedReader<Value> {
   /// Returns a read-only shared reference to the resulting value of a given closure.
   ///
   /// - Returns: A new shared reader.
-  public func map<Member>(
+  public func read<Member>(
     _ body: @escaping @Sendable (Value) -> Member
   ) -> SharedReader<Member> {
     func open(_ reference: some Reference<Value>) -> SharedReader<Member> {
