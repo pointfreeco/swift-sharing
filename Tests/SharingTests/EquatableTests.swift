@@ -32,7 +32,7 @@ struct EquatableTests {
     #expect(lhs == rhs)
     #expect($lhs == $rhs)
   }
-  
+
   @Test func mapReader() {
     @Shared(value: 0) var base: Int
     @SharedReader var lhs: Int
@@ -41,7 +41,7 @@ struct EquatableTests {
     _rhs = $base.read { $0 * 3 }
     #expect(lhs == rhs)
     #expect($lhs == $rhs)
-    
+
     $base.withLock { $0 += 1 }
     #expect(lhs != rhs)
     #expect($lhs != $rhs)

@@ -43,7 +43,7 @@ import Testing
     @SharedReader(Key()) var count = 0
     #expect($count.loadError != nil)
   }
-  
+
   @Test func userInitiatedLoadError() async {
     struct LoadError: Error {}
     struct Key: Hashable, Sendable, SharedReaderKey {
@@ -62,9 +62,9 @@ import Testing
         SharedSubscription {}
       }
     }
-    
+
     @SharedReader(Key()) var value = 0
-    
+
     await #expect(throws: LoadError.self) {
       try await $value.load()
     }

@@ -87,7 +87,7 @@ import Testing
 
       #expect(id == 42)
     }
-    
+
     @Test func mapReader() {
       @Shared(value: 0) var count
       @SharedReader var isZero: Bool
