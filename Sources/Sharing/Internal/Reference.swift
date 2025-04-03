@@ -617,6 +617,56 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
   }
 }
 
+final class _ReadClosureReference<Base: Reference, Value>:
+  Reference,
+  Observable
+{
+  private let base: Base
+  private let body: @Sendable (Base.Value) -> Value
+
+  init(base: Base, body: @escaping @Sendable (Base.Value) -> Value) {
+    self.base = base
+    self.body = body
+  }
+
+  var id: ObjectIdentifier {
+    base.id
+  }
+
+  var isLoading: Bool {
+    base.isLoading
+  }
+
+  var loadError: (any Error)? {
+    base.loadError
+  }
+
+  var wrappedValue: Value {
+    body(base.wrappedValue)
+  }
+
+  func load() async throws {
+    try await base.load()
+  }
+
+  func touch() {
+    base.touch()
+  }
+
+  #if canImport(Combine)
+    var publisher: any Publisher<Value, Never> {
+      func open(_ publisher: some Publisher<Base.Value, Never>) -> any Publisher<Value, Never> {
+        publisher.map(body)
+      }
+      return open(base.publisher)
+    }
+  #endif
+
+  var description: String {
+    ".map(\(base.description), as: \(Value.self).self)"
+  }
+}
+
 final class _OptionalReference<Base: Reference<Value?>, Value>:
   Reference,
   Observable,

@@ -87,6 +87,22 @@ import Testing
 
       #expect(id == 42)
     }
+    
+    @Test func mapReader() {
+      @Shared(value: 0) var count
+      @SharedReader var isZero: Bool
+      _isZero = $count.read { $0 == 0 }
+
+      #expect(isZero)
+
+      $count.withLock { $0 += 1 }
+
+      #expect(!isZero)
+
+      $count = Shared(value: 0)
+
+      #expect(!isZero)
+    }
 
     @Test func optional() throws {
       @Shared(value: nil) var wrappedCount: Int?
