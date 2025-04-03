@@ -14,13 +14,13 @@ import Foundation
     /// Initializes a value of this mutex with the given initial state.
     ///
     /// - Parameter initialValue: The initial value to give to the mutex.
-    package init(_ initialValue: consuming sending Value) {
+    package init(_ initialValue: consuming sendingValue) {
       _box = Box(initialValue)
     }
 
     private final class Box {
       var value: Value
-      init(_ initialValue: consuming sending Value) {
+      init(_ initialValue: consuming sendingValue) {
         value = initialValue
       }
     }
@@ -31,7 +31,7 @@ import Foundation
   extension Mutex where Value: ~Copyable {
     /// Calls the given closure after acquiring the lock and then releases ownership.
     borrowing package func withLock<Result: ~Copyable, E: Error>(
-      _ body: (inout sending Value) throws(E) -> sending Result
+      _ body: (inout sendingValue) throws(E) -> sending Result
     ) throws(E) -> sending Result {
       _lock.lock()
       defer { _lock.unlock() }
@@ -40,7 +40,7 @@ import Foundation
 
     /// Attempts to acquire the lock and then calls the given closure if successful.
     borrowing package func withLockIfAvailable<Result: ~Copyable, E: Error>(
-      _ body: (inout sending Value) throws(E) -> sending Result
+      _ body: (inout sendingValue) throws(E) -> sending Result
     ) throws(E) -> sending Result? {
       guard _lock.try() else { return nil }
       defer { _lock.unlock() }
