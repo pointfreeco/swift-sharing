@@ -448,6 +448,23 @@
         try await Task.sleep(for: .seconds(1.5))
         #expect(count2 == 999)
       }
+
+      @Test func externalAtomicWrite() async throws {
+        @Shared(.fileStorage(.fileURL)) var count = 0
+
+        try Data("42".utf8).write(to: .fileURL, options: .atomic)
+        try await Task.sleep(for: .seconds(1.5))
+        #expect(count == 42)
+
+        try Data("1728".utf8).write(to: .fileURL, options: .atomic)
+        try await Task.sleep(for: .seconds(1.5))
+        #expect(count == 1728)
+
+        $count.withLock { $0 = 999 }
+        try await Task.sleep(for: .seconds(1.5))
+        #expect(count == 999)
+        #expect(try String(decoding: Data(contentsOf: .fileURL), as: UTF8.self) == "999")
+      }
     }
   }
 
