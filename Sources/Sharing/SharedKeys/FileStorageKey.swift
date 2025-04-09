@@ -150,11 +150,7 @@
               [weak self] in
               guard let self else { return }
               let fileExists = self.storage.fileExists(self.url)
-              defer {
-                if !fileExists {
-                  setUpSources()
-                }
-              }
+              defer { setUpSources() }
               let modificationDate =
                 fileExists
                 ? (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
