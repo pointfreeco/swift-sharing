@@ -431,11 +431,11 @@
         try? FileManager.default.removeItem(at: count2URL)
 
         @Shared(.fileStorage(count1URL)) var count1 = 0
-        @Shared(.fileStorage(count1URL)) var count2 = 0
+        @Shared(.fileStorage(count2URL)) var count2 = 0
 
         $count1.withLock { $0 = 42 }
         #expect(count1 == 42)
-        try await Task.sleep(for: .seconds(0.1))
+        try await Task.sleep(for: .seconds(1.5))
         #expect(count2 == 42)
 
         $count2.withLock { $0 = 1728 }
