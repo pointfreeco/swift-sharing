@@ -6,9 +6,8 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
   static var liveValue: PersistentReferences { PersistentReferences() }
   static var testValue: PersistentReferences { PersistentReferences() }
 
-  struct Pair<Key: SharedReaderKey> {
-    var cachedValue: Key.Value
-    var reference: _PersistentReference<Key>?
+  struct Weak<Key: SharedReaderKey> {
+    weak var reference: _PersistentReference<Key>?
   }
 
   private var storage: [AnyHashable: Any] = [:]
@@ -18,37 +17,35 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
     forKey key: Key,
     default value: @autoclosure () throws -> Key.Value,
     skipInitialLoad: Bool
-  ) rethrows -> _ManagedReference<Key> {
-    try lock.withLock {
-      guard var pair = storage[key.id] as? Pair<Key> else {
-        let value = try value()
-        let persistentReference = _PersistentReference(
+  ) rethrows -> _PersistentReference<Key> {
+    guard let reference = lock.withLock({ (storage[key.id] as? Weak<Key>)?.reference }) else {
+      let value = try value()
+      return withExtendedLifetime(
+        _PersistentReference(
           key: key,
           value: value,
           skipInitialLoad: skipInitialLoad
         )
-        storage[key.id] = Pair(cachedValue: value, reference: persistentReference)
-        return _ManagedReference(persistentReference)
+      ) { reference in
+        lock.withLock {
+          if let reference = (storage[key.id] as? Weak<Key>)?.reference {
+            return reference
+          } else {
+            storage[key.id] = Weak(reference: reference)
+            reference.onDeinit = { [self] in
+              removeReference(forKey: key)
+            }
+            return reference
+          }
+        }
       }
-      guard let persistentReference = pair.reference else {
-        let persistentReference = _PersistentReference(
-          key: key,
-          value: skipInitialLoad ? (try? value()) ?? pair.cachedValue : pair.cachedValue,
-          skipInitialLoad: skipInitialLoad
-        )
-        pair.reference = persistentReference
-        storage[key.id] = pair
-        return _ManagedReference(persistentReference)
-      }
-      return _ManagedReference(persistentReference)
     }
+    return reference
   }
 
   func removeReference<Key: SharedReaderKey>(forKey key: Key) {
     lock.withLock {
-      guard var pair = storage[key.id] as? Pair<Key> else { return }
-      pair.reference = nil
-      storage[key.id] = pair
+      _ = storage.removeValue(forKey: key.id)
     }
   }
 }

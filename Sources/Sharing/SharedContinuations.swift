@@ -229,7 +229,7 @@ private final class ContinuationBox<Value>: Sendable {
         invoked. This will cause tasks waiting on it to resume immediately.
         """
       )
-      callback.withLock { $0?(.success(nil)) }
+      callback.withLock(\.self)?(.success(nil))
     }
   }
 
@@ -246,9 +246,10 @@ private final class ContinuationBox<Value>: Sendable {
       )
       return
     }
-    callback.withLock { callback in
+    let callback = callback.withLock { callback in
       defer { callback = nil }
-      callback?(result)
+      return callback
     }
+    callback?(result)
   }
 }
