@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import IdentifiedCollections
 import PerceptionCore
@@ -34,6 +35,45 @@ import Testing
 
       let a = A()
       #expect(a.b.c == C())
+    }
+
+    @Test func lockingOrderWithDependencies() async {
+      struct D: TestDependencyKey {
+        @Shared(.inMemory("count")) var count = 0
+        init() {
+          Thread.sleep(forTimeInterval: 0.2)
+          $count.withLock { $0 += 1 }
+        }
+        static var testValue: D { D() }
+      }
+      let a = Task {
+        do {
+          try await Task.sleep(nanoseconds: 100_000_000)
+          @Dependency(D.self) var d
+          #expect(d.count == 1)
+        } catch {}
+      }
+      let b = Task {
+        @Shared(.inMemory("count")) var count: Int = {
+          Thread.sleep(forTimeInterval: 0.2)
+          return 2
+        }()
+        #expect(count == 1)
+      }
+      let c = Task {
+        do {
+          try await Task.sleep(nanoseconds: 500_000_000)
+          Issue.record("Deadlock detected")
+          exit(1)
+        } catch {}
+      }
+      await withTaskGroup(of: Void.self) { taskGroup in
+        taskGroup.addTask {
+          _ = await (a.value, b.value)
+          c.cancel()
+        }
+        taskGroup.addTask { await c.value }
+      }
     }
   }
 
