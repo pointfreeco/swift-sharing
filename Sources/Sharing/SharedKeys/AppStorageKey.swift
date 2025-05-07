@@ -451,24 +451,7 @@
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
       }
-      let willEnterForeground: (any NSObjectProtocol)?
-      if let willEnterForegroundNotificationName {
-        willEnterForeground = NotificationCenter.default.addObserver(
-          forName: willEnterForegroundNotificationName,
-          object: nil,
-          queue: .main
-        ) { _ in
-          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
-        }
-      } else {
-        willEnterForeground = nil
-      }
-      return SharedSubscription {
-        removeObserver()
-        if let willEnterForeground {
-          NotificationCenter.default.removeObserver(willEnterForeground)
-        }
-      }
+      return SharedSubscription(removeObserver)
     }
 
     public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
@@ -675,22 +658,6 @@
       }
     }
   }
-
-  private let willEnterForegroundNotificationName: Notification.Name? = {
-    #if os(macOS)
-      return NSApplication.willBecomeActiveNotification
-    #elseif os(iOS) || os(tvOS) || os(visionOS)
-      return UIApplication.willEnterForegroundNotification
-    #elseif os(watchOS)
-      if #available(watchOS 7, *) {
-        return WKExtension.applicationWillEnterForegroundNotification
-      } else {
-        return nil
-      }
-    #else
-      return nil
-    #endif
-  }()
 
   #if DEBUG
     private let suites = Mutex<[String: ObjectIdentifier]>([:])
