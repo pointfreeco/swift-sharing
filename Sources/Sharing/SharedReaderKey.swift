@@ -154,17 +154,15 @@ extension SharedReader {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
   public func load(_ key: some SharedReaderKey<Value>) async throws {
-    await MainActor.run {
-      @Dependency(PersistentReferences.self) var persistentReferences
-      SharedPublisherLocals.$isLoading.withValue(true) {
-        projectedValue = SharedReader(
-          reference: persistentReferences.value(
-            forKey: key,
-            default: wrappedValue,
-            skipInitialLoad: true
-          )
+    @Dependency(PersistentReferences.self) var persistentReferences
+    SharedPublisherLocals.$isLoading.withValue(true) {
+      projectedValue = SharedReader(
+        reference: persistentReferences.value(
+          forKey: key,
+          default: wrappedValue,
+          skipInitialLoad: true
         )
-      }
+      )
     }
     try await load()
   }

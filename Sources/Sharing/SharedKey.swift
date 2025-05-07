@@ -88,17 +88,15 @@ extension Shared {
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
   public func load(_ key: some SharedKey<Value>) async throws {
-    await MainActor.run {
-      @Dependency(PersistentReferences.self) var persistentReferences
-      SharedPublisherLocals.$isLoading.withValue(true) {
-        projectedValue = Shared(
-          reference: persistentReferences.value(
-            forKey: key,
-            default: wrappedValue,
-            skipInitialLoad: true
-          )
+    @Dependency(PersistentReferences.self) var persistentReferences
+    SharedPublisherLocals.$isLoading.withValue(true) {
+      projectedValue = Shared(
+        reference: persistentReferences.value(
+          forKey: key,
+          default: wrappedValue,
+          skipInitialLoad: true
         )
-      }
+      )
     }
     try await load()
   }
