@@ -194,7 +194,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private var _isLoading = false
   private var _loadError: (any Error)?
   private var _saveError: (any Error)?
-  private var _referenceCount = 0
   private var subscription: SharedSubscription?
   internal var onDeinit: (() -> Void)?
 
@@ -312,10 +311,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
     withMutation(keyPath: \._isLoading) {}
     withMutation(keyPath: \._loadError) {}
     withMutation(keyPath: \._saveError) {}
-  }
-
-  func retain() {
-    lock.withLock { _referenceCount += 1 }
   }
 
   func access<Member>(
