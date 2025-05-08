@@ -194,8 +194,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
   private var _isLoading = false
   private var _loadError: (any Error)?
   private var _saveError: (any Error)?
-  private var _referenceCount = 0
   private var subscription: SharedSubscription?
+  internal var onDeinit: (() -> Void)?
 
   init(key: Key, value initialValue: Key.Value, skipInitialLoad: Bool) {
     self.key = key
@@ -229,6 +229,10 @@ final class _PersistentReference<Key: SharedReaderKey>:
         onLoading: { [weak self] in self?.isLoading = $0 }
       )
     )
+  }
+
+  deinit {
+    onDeinit?()
   }
 
   var id: ObjectIdentifier { ObjectIdentifier(self) }
@@ -307,20 +311,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
     withMutation(keyPath: \._isLoading) {}
     withMutation(keyPath: \._loadError) {}
     withMutation(keyPath: \._saveError) {}
-  }
-
-  func retain() {
-    lock.withLock { _referenceCount += 1 }
-  }
-
-  func release() {
-    let shouldRelease = lock.withLock {
-      _referenceCount -= 1
-      return _referenceCount <= 0
-    }
-    guard shouldRelease else { return }
-    @Dependency(PersistentReferences.self) var persistentReferences
-    persistentReferences.removeReference(forKey: key)
   }
 
   func access<Member>(
@@ -451,85 +441,6 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
     lhs === rhs
-  }
-}
-
-final class _ManagedReference<Key: SharedReaderKey>: Reference, Observable {
-  private let base: _PersistentReference<Key>
-
-  init(_ base: _PersistentReference<Key>) {
-    base.retain()
-    self.base = base
-  }
-
-  deinit {
-    base.release()
-  }
-
-  var id: ObjectIdentifier {
-    base.id
-  }
-
-  var isLoading: Bool {
-    base.isLoading
-  }
-
-  var loadError: (any Error)? {
-    base.loadError
-  }
-
-  var wrappedValue: Key.Value {
-    base.wrappedValue
-  }
-
-  func load() async throws {
-    try await base.load()
-  }
-
-  func touch() {
-    base.touch()
-  }
-
-  #if canImport(Combine)
-    var publisher: any Publisher<Key.Value, Never> {
-      base.publisher
-    }
-  #endif
-
-  var description: String {
-    base.description
-  }
-}
-
-extension _ManagedReference: MutableReference, Equatable where Key: SharedKey {
-  var saveError: (any Error)? {
-    base.saveError
-  }
-
-  var snapshot: Key.Value? {
-    base.snapshot
-  }
-
-  func takeSnapshot(
-    _ value: Key.Value,
-    fileID: StaticString,
-    filePath: StaticString,
-    line: UInt,
-    column: UInt
-  ) {
-    base.takeSnapshot(value, fileID: fileID, filePath: filePath, line: line, column: column)
-  }
-
-  func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
-    try base.withLock(body)
-  }
-
-  func save() async throws {
-    try await base.save()
-  }
-
-  static func == (lhs: _ManagedReference, rhs: _ManagedReference) -> Bool {
-    lhs.base == rhs.base
   }
 }
 

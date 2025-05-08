@@ -210,7 +210,6 @@ public struct SaveContinuation: Sendable {
 private final class ContinuationBox<Value>: Sendable {
   private let callback: Mutex<(@Sendable (Result<Value?, any Error>) -> Void)?>
   private let description: @Sendable () -> String
-  private let resumeCount = Mutex(0)
 
   init(
     callback: @escaping @Sendable (Result<Value?, any Error>) -> Void,
@@ -221,24 +220,23 @@ private final class ContinuationBox<Value>: Sendable {
   }
 
   deinit {
-    let isComplete = resumeCount.withLock { $0 } > 0
-    if !isComplete {
+    if let callback = callback.withLock({ $0 }) {
       reportIssue(
         """
         \(description()) leaked its continuation without one of its resume methods being \
         invoked. This will cause tasks waiting on it to resume immediately.
         """
       )
-      callback.withLock { $0?(.success(nil)) }
+      callback(.success(nil))
     }
   }
 
   func resume(with result: Result<Value?, any Error>) {
-    let resumeCount = resumeCount.withLock {
-      $0 += 1
-      return $0
+    let callback = callback.withLock { callback in
+      defer { callback = nil }
+      return callback
     }
-    guard resumeCount == 1 else {
+    guard let callback else {
       reportIssue(
         """
         \(description()) tried to resume its continuation more than once.
@@ -246,9 +244,6 @@ private final class ContinuationBox<Value>: Sendable {
       )
       return
     }
-    callback.withLock { callback in
-      defer { callback = nil }
-      callback?(result)
-    }
+    callback(result)
   }
 }
