@@ -18,29 +18,27 @@ final class PersistentReferences: @unchecked Sendable, DependencyKey {
     default value: @autoclosure () throws -> Key.Value,
     skipInitialLoad: Bool
   ) rethrows -> _PersistentReference<Key> {
-    guard let reference = lock.withLock({ (storage[key.id] as? Weak<Key>)?.reference }) else {
+    if let reference = lock.withLock({ (storage[key.id] as? Weak<Key>)?.reference }) {
+      return reference
+    } else {
       let value = try value()
-      return withExtendedLifetime(
-        _PersistentReference(
-          key: key,
-          value: value,
-          skipInitialLoad: skipInitialLoad
-        )
-      ) { reference in
-        lock.withLock {
-          if let reference = (storage[key.id] as? Weak<Key>)?.reference {
-            return reference
-          } else {
-            storage[key.id] = Weak(reference: reference)
-            reference.onDeinit = { [self] in
-              removeReference(forKey: key)
-            }
-            return reference
+      let reference = _PersistentReference(
+        key: key,
+        value: value,
+        skipInitialLoad: skipInitialLoad
+      )
+      return lock.withLock {
+        if let reference = (storage[key.id] as? Weak<Key>)?.reference {
+          return reference
+        } else {
+          storage[key.id] = Weak(reference: reference)
+          reference.onDeinit = { [self] in
+            removeReference(forKey: key)
           }
+          return reference
         }
       }
     }
-    return reference
   }
 
   func removeReference<Key: SharedReaderKey>(forKey key: Key) {
