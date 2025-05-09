@@ -184,5 +184,34 @@
 
       #expect(counts.withLock(\.self) == [0, 1, 2, 3])
     }
+    
+    @Test func newSubscribersReceiveLatestValue() async throws {
+      @Shared(value: "initial") var value
+      let publisher = $value.publisher
+      
+      let firstSubscriberValues = Mutex<[String]>([])
+      
+      let firstCancellable = publisher.sink { completion in
+        Issue.record()
+      } receiveValue: { @Sendable value in
+        firstSubscriberValues.withLock { $0.append(value) }
+      }
+      defer { _ = firstCancellable }
+      
+      $value.withLock { $0 = "latest" }
+      #expect(firstSubscriberValues.withLock(\.self) == ["initial", "latest"])
+      
+      let secondSubscriberValues = Mutex<[String]>([])
+      
+      let secondCancellable = publisher.sink { completion in
+        Issue.record()
+      } receiveValue: { @Sendable value in
+        secondSubscriberValues.withLock { $0.append(value) }
+      }
+      defer { _ = secondCancellable }
+      
+      $value.withLock { $0 = "next" }
+      #expect(secondSubscriberValues.withLock(\.self) == ["latest", "next"])
+    }
   }
 #endif
