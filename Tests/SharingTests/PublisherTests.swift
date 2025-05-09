@@ -2,7 +2,7 @@
   import Combine
   import Dependencies
   import Foundation
-  @testable import Sharing
+  import Sharing
   import Testing
 
   @MainActor
