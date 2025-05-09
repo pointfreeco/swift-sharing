@@ -15,9 +15,9 @@
     /// }
     /// ```
     public var publisher: some Publisher<Value, Never> {
-      box.subject
-        .handleEvents(receiveSubscription: { [box] _ in _ = box })
-        .prepend(wrappedValue)
+      Just<Void>(()).flatMap { _ in
+        box.subject.prepend(wrappedValue)
+      }
     }
   }
 
@@ -35,9 +35,9 @@
     /// }
     /// ```
     public var publisher: some Publisher<Value, Never> {
-      box.subject
-        .handleEvents(receiveSubscription: { [box] _ in _ = box })
-        .prepend(wrappedValue)
+      Just<Void>(()).flatMap { _ in
+        box.subject.prepend(wrappedValue)
+      }
     }
   }
 #endif
