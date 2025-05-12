@@ -80,6 +80,9 @@ public struct InMemoryStorage: Hashable, Sendable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
   }
+  public func purgeStorage() {
+    values.purgeStorage()
+  }
   fileprivate final class Values: Sendable {
     let storage = Mutex<[String: any Sendable]>([:])
 
@@ -97,6 +100,12 @@ public struct InMemoryStorage: Hashable, Sendable {
           storage[key] = defaultValue
           return defaultValue
         }
+      }
+    }
+
+    fileprivate func purgeStorage() {
+      storage.withLock { storage in
+        storage = [:]
       }
     }
   }
