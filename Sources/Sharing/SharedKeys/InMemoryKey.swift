@@ -30,8 +30,8 @@ extension SharedReaderKey {
 ///
 /// See ``SharedReaderKey/inMemory(_:)`` to create values of this type.
 public struct InMemoryKey<Value: Sendable>: SharedKey {
-  private let key: String
   private let store: InMemoryStorage
+  fileprivate let key: String
   fileprivate init(_ key: String) {
     @Dependency(\.defaultInMemoryStorage) var defaultInMemoryStorage
     self.key = key
@@ -80,8 +80,14 @@ public struct InMemoryStorage: Hashable, Sendable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(id)
   }
-  public func purgeStorage() {
-    values.purgeStorage()
+//  public func removeValue(for key: String) {
+//    removeValue(for: )
+//  }
+  public func removeValue<Value>(for key: InMemoryKey<Value>, default defaultValue: Value) {
+    values.removeValue(for: key, default: defaultValue)
+  }
+  public func removeValue<Value>(for key: InMemoryKey<Value>.Default) {
+    removeValue(for: key.base, default: key.initialValue)
   }
   fileprivate final class Values: Sendable {
     let storage = Mutex<[String: any Sendable]>([:])
@@ -103,9 +109,15 @@ public struct InMemoryStorage: Hashable, Sendable {
       }
     }
 
-    fileprivate func purgeStorage() {
-      storage.withLock { storage in
-        storage = [:]
+    func removeValue<Value>(for key: InMemoryKey<Value>, default defaultValue: Value) {
+      @Dependency(PersistentReferences.self) var persistentReferences
+      let reference = persistentReferences.value(
+        forKey: .inMemory(key.key),
+        default: defaultValue,
+        skipInitialLoad: false
+      )
+      reference.withLock { value in
+        value = defaultValue
       }
     }
   }
