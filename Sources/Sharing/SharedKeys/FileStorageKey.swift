@@ -375,7 +375,12 @@
         }
       },
       load: { url in
-        try Data(contentsOf: url)
+        var data = try Data(contentsOf: url)
+        if data == .stub {
+          data = Data()
+          try data.write(to: url, options: .atomic)
+        }
+        return data
       },
       save: { data, url in
         try data.write(to: url, options: .atomic)

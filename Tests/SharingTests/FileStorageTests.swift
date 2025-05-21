@@ -408,6 +408,16 @@
         try Data().write(to: .fileURL)
         @Shared(.fileStorage(.fileURL)) var count = 0
         #expect(count == 0)
+        #expect($count.loadError == nil)
+      }
+
+      @Test func stubData() throws {
+        try? FileManager.default.removeItem(at: .fileURL)
+        try Data.stub.write(to: .fileURL)
+        @Shared(.fileStorage(.fileURL)) var count = 0
+        #expect(count == 0)
+        #expect($count.loadError == nil)
+        #expect(try Data(contentsOf: .fileURL).isEmpty)
       }
 
       @Test func corruptData() async throws {
