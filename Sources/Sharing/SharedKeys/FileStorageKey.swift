@@ -253,22 +253,6 @@
         continuation.resume(throwing: error)
       }
     }
-
-    private func performImmediately() {
-      state.withValue { state in
-        guard let workItem = state.workItem
-        else { return }
-        storage.async(workItem)
-        storage.async(
-          DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.withValue { state in
-              state.cancelWorkItem()
-            }
-          }
-        )
-      }
-    }
   }
 
   extension FileStorageKey: CustomStringConvertible {
