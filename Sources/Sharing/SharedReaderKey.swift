@@ -84,7 +84,6 @@ extension SharedReader {
     wrappedValue: @autoclosure () -> Value,
     _ key: some SharedReaderKey<Value>
   ) {
-    @Dependency(PersistentReferences.self) var persistentReferences
     self.init(rethrowing: wrappedValue(), key, skipInitialLoad: false)
   }
 

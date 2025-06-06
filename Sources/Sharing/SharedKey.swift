@@ -48,7 +48,6 @@ extension Shared {
     wrappedValue: @autoclosure () -> Value,
     _ key: some SharedKey<Value>
   ) {
-    @Dependency(PersistentReferences.self) var persistentReferences
     self.init(rethrowing: wrappedValue(), key, skipInitialLoad: false)
   }
 
