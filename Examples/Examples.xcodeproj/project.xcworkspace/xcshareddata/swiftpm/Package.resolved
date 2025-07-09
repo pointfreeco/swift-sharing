@@ -1,5 +1,5 @@
 {
-  "originHash" : "f6c228798eaec3678dc2f13373dc2173e70bafef60b3a8ada9dd6bed58d47174",
+  "originHash" : "0457435beb7093f1f55bafbafae9b81d3fe105d1ff4a77016fe15dc702bcf5ce",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -71,15 +71,6 @@
       "state" : {
         "revision" : "53156c7ec267db846e6b64c9f4c4e31ba4cf75eb",
         "version" : "8.0.2"
-      }
-    },
-    {
-      "identity" : "grdb.swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/groue/GRDB.swift",
-      "state" : {
-        "branch" : "GRDB7",
-        "revision" : "3ecb5c54553559217592d21a6d9841becb891b38"
       }
     },
     {
@@ -195,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
       "state" : {
-        "revision" : "6054df64b55186f08b6d0fd87152081b8ad8d613",
-        "version" : "1.2.0"
+        "revision" : "82a4ae7170d98d8538ec77238b7eb8e7199ef2e8",
+        "version" : "1.3.1"
       }
     },
     {
@@ -213,8 +204,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-dependencies",
       "state" : {
-        "revision" : "7d2eb4ad20efb2838269645410d26b64ca48d8aa",
-        "version" : "1.6.1"
+        "revision" : "4c90d6b2b9bf0911af87b103bb40f41771891596",
+        "version" : "1.9.2"
       }
     },
     {

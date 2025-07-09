@@ -49,6 +49,34 @@ The same holds true for the [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:d
 and [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>) strategies. Even though those strategies do
 interact with a global store of data, they do so in a way that is quarantined from other tests.
 
+### Repeated test runs and parameterized tests
+
+Parallel testing of shared state typically works immediately without any changes to your application
+code or test code, but there are a few edge cases to be aware of. Running a test repeatedly or
+using parameterized tests require an additional step to make sure the shared state is quarantined
+from the multiple runes.
+
+First you must import the DependenciesTestSupport library into your tests:
+
+```swift
+import DependenciesTestSupport
+```
+
+> Note: Our [Dependencies] library is used behind the scenes to control dependencies that power
+the various sharing strategies.
+
+[Dependencies]: http://github.com/pointfreeco/swift-dependencies
+
+Next you must apply the `.dependencies` trait to either your entire suite or the test you are 
+running repeatedly:
+
+```swift
+@Test(.dependencies)
+func increment() {
+  // ...
+}
+```
+
 ### Testing when using custom persistence strategies
 
 When creating your own custom persistence strategies you must be careful to do so in a style that
