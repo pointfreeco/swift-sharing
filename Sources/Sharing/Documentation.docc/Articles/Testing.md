@@ -49,6 +49,49 @@ The same holds true for the [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:d
 and [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>) strategies. Even though those strategies do
 interact with a global store of data, they do so in a way that is quarantined from other tests.
 
+### Testing parameterized tests
+
+Parameterized tests require special consideration when using `@Shared` values. Because parameterized 
+tests execute concurrently by default, multiple test instances that use the same shared key will 
+access the same underlying storage, which can lead to unexpected test failures.
+
+Consider this parameterized test:
+
+```swift
+@Test(arguments: 0...10)
+func testCounter(initialValue: Int) async throws {
+  @Shared(.inMemory("count")) var counter = initialValue
+  #expect(counter == initialValue)
+}
+```
+
+This test will fail non-deterministically because all concurrent test instances share the same 
+`.inMemory("count")` storage. The first test instance to execute will set the value, and all 
+subsequent instances will receive that value rather than their own `initialValue`.
+
+To properly isolate shared state in parameterized tests, use the `.dependencies` trait from the
+DependenciesTestSupport module. This trait quarantines a test's dependencies from other tests,
+ensuring that dependencies used within a suite or test are kept separate from any other suites
+and tests running in parallel:
+
+```swift
+import DependenciesTestSupport
+
+@Suite(.dependencies)
+struct CounterTests {
+  @Test(arguments: 0...10)
+  func testCounter(initialValue: Int) async throws {
+    @Shared(.inMemory("count")) var counter = initialValue
+    #expect(counter == initialValue)
+  }
+}
+```
+
+Since `@Shared` values are managed through the dependencies system, the `.dependencies` trait ensures
+that each test case receives its own isolated storage. This allows parameterized tests to execute 
+concurrently without interference, maintaining the same deterministic behavior you would expect from
+non-parameterized tests.
+
 ### Testing when using custom persistence strategies
 
 When creating your own custom persistence strategies you must be careful to do so in a style that
