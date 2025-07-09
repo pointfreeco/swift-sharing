@@ -1,12 +1,6 @@
-//
-//  Test.swift
-//  swift-sharing
-//
-//  Created by Hugo Saynac on 09/07/2025.
-//
-import Testing
-import Sharing
 import DependenciesTestSupport
+import Sharing
+import Testing
 
 @Suite(.dependencies)
 struct MyTests {
