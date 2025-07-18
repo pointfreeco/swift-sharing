@@ -352,10 +352,12 @@
           queue: DispatchQueue.main
         )
         source.setEventHandler(handler: $2)
+        source.setCancelHandler {
+          close(source.handle)
+        }
         source.resume()
         return SharedSubscription {
           source.cancel()
-          close(source.handle)
         }
       },
       load: { url in
