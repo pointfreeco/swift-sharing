@@ -1,5 +1,5 @@
 {
-  "originHash" : "500737ab81f988e0ede3595eaafbe666038f9df1bba0e54c76826363e792e9c2",
+  "originHash" : "eb51fb0de6dec07bc7eafdf6eb0f8a526d6dae86b8492161416e2f15a3758fc8",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-perception",
       "state" : {
-        "revision" : "8d52279b9809ef27eabe7d5420f03734528f19da",
-        "version" : "1.4.1"
+        "branch" : "swift-6-2",
+        "revision" : "df96973ef061ff7c000ae0296946e4b99d799ce6"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
       "state" : {
-        "revision" : "a3f634d1a409c7979cabc0a71b3f26ffa9fc8af1",
-        "version" : "1.4.3"
+        "revision" : "23e3442166b5122f73f9e3e622cd1e4bafeab3b7",
+        "version" : "1.6.0"
       }
     }
   ],
