@@ -136,10 +136,8 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
     _$perceptionRegistrar.access(
       self,
       keyPath: keyPath,
-      fileID: fileID,
       filePath: filePath,
-      line: line,
-      column: column
+      line: line
     )
   }
 
@@ -323,10 +321,8 @@ final class _PersistentReference<Key: SharedReaderKey>:
     _$perceptionRegistrar.access(
       self,
       keyPath: keyPath,
-      fileID: fileID,
       filePath: filePath,
-      line: line,
-      column: column
+      line: line
     )
   }
 
