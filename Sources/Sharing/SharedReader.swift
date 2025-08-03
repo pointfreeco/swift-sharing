@@ -301,13 +301,23 @@ extension SharedReader: CustomStringConvertible {
 
 extension SharedReader: Equatable where Value: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
-    lhs.wrappedValue == rhs.wrappedValue
+    #if DEBUG
+      _PerceptionLocals.$skipPerceptionChecking.withValue(true) {
+        lhs.wrappedValue == rhs.wrappedValue
+      }
+    #else
+      lhs.wrappedValue == rhs.wrappedValue
+    #endif
   }
 }
 
 extension SharedReader: Identifiable where Value: Identifiable {
   public var id: Value.ID {
-    wrappedValue.id
+    #if DEBUG
+      _PerceptionLocals.$skipPerceptionChecking.withValue(true) { wrappedValue.id }
+    #else
+      wrappedValue.id
+    #endif
   }
 }
 

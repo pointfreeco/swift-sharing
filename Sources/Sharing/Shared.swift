@@ -412,27 +412,38 @@ extension Shared: CustomStringConvertible {
 
 extension Shared: Equatable where Value: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
-    func openLhs<T: MutableReference<Value>>(_ lhsReference: T) -> Bool {
-      // NB: iOS <16 does not support casting this existential, so we must open it explicitly
-      func openRhs<S: MutableReference<Value>>(_ rhsReference: S) -> Bool {
-        lhsReference == rhsReference as? T
-      }
-      return openRhs(rhs.reference)
-    }
-    @Dependency(\.snapshots) var snapshots
-    if snapshots.isAsserting, openLhs(lhs.reference) {
-      snapshots.untrack(lhs.reference)
-      return lhs.wrappedValue == rhs.reference.wrappedValue
-    } else {
-      return lhs.wrappedValue == rhs.wrappedValue
-    }
     // TODO: Explore 'isTesting ? (check snapshot against value) : lhs.reference == rhs.reference
+    func isEqual() -> Bool {
+      func openLhs<T: MutableReference<Value>>(_ lhsReference: T) -> Bool {
+        // NB: iOS <16 does not support casting this existential, so we must open it explicitly
+        func openRhs<S: MutableReference<Value>>(_ rhsReference: S) -> Bool {
+          lhsReference == rhsReference as? T
+        }
+        return openRhs(rhs.reference)
+      }
+      @Dependency(\.snapshots) var snapshots
+      if snapshots.isAsserting, openLhs(lhs.reference) {
+        snapshots.untrack(lhs.reference)
+        return lhs.wrappedValue == rhs.reference.wrappedValue
+      } else {
+        return lhs.wrappedValue == rhs.wrappedValue
+      }
+    }
+    #if DEBUG
+      return _PerceptionLocals.$skipPerceptionChecking.withValue(true, operation: isEqual)
+    #else
+      return isEqual()
+    #endif
   }
 }
 
 extension Shared: Identifiable where Value: Identifiable {
   public var id: Value.ID {
-    wrappedValue.id
+    #if DEBUG
+      _PerceptionLocals.$skipPerceptionChecking.withValue(true) { wrappedValue.id }
+    #else
+      wrappedValue.id
+    #endif
   }
 }
 
