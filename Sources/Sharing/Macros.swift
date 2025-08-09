@@ -2,7 +2,7 @@ import Observation
 
 /// Defines and implements conformance of the Observable protocol.
 @attached(extension, conformances: Observable, ObservableValue)
-@attached(member, names: named(_$id), named(_$observationRegistrar), named(_$willModify))
+@attached(member, names: named(_$id), named(_$observationRegistrar), named(_$willModify), named(shouldNotifyObservers))
 @attached(memberAttribute)
 public macro ObservableValue() =
   #externalMacro(module: "SharingMacros", type: "ObservableValueMacro")
