@@ -105,7 +105,7 @@ public struct ObservableValueID: Equatable, Hashable, Sendable {
 }
 
 @inlinable
-public func _$isIdentityEqual<T: ObservableValue>(
+public func _$sharing_isIdentityEqual<T: ObservableValue>(
   _ lhs: T,
   _ rhs: T
 ) -> Bool {
@@ -113,7 +113,7 @@ public func _$isIdentityEqual<T: ObservableValue>(
 }
 
 @inlinable
-public func _$isIdentityEqual<ID: Hashable, T: ObservableValue>(
+public func _$sharing_isIdentityEqual<ID: Hashable, T: ObservableValue>(
   _ lhs: IdentifiedArray<ID, T>,
   _ rhs: IdentifiedArray<ID, T>
 ) -> Bool {
@@ -121,7 +121,7 @@ public func _$isIdentityEqual<ID: Hashable, T: ObservableValue>(
 }
 //
 //@inlinable
-//public func _$isIdentityEqual<T: ObservableValue>(
+//public func _$sharing_isIdentityEqual<T: ObservableValue>(
 //  _ lhs: PresentationState<T>,
 //  _ rhs: PresentationState<T>
 //) -> Bool {
@@ -129,7 +129,7 @@ public func _$isIdentityEqual<ID: Hashable, T: ObservableValue>(
 //}
 //
 //@inlinable
-//public func _$isIdentityEqual<T: ObservableValue>(
+//public func _$sharing_isIdentityEqual<T: ObservableValue>(
 //  _ lhs: StackState<T>,
 //  _ rhs: StackState<T>
 //) -> Bool {
@@ -137,7 +137,7 @@ public func _$isIdentityEqual<ID: Hashable, T: ObservableValue>(
 //}
 //
 @inlinable
-public func _$isIdentityEqual<C: Collection>(
+public func _$sharing_isIdentityEqualSharing<C: Collection>(
   _ lhs: C,
   _ rhs: C
 ) -> Bool
@@ -147,12 +147,12 @@ where C.Element: ObservableValue {
 //
 //// NB: This is a fast path so that String is not checked as a collection.
 @inlinable
-public func _$isIdentityEqual(_ lhs: String, _ rhs: String) -> Bool {
+public func _$sharing_isIdentityEqualSharing(_ lhs: String, _ rhs: String) -> Bool {
   false
 }
 
 @inlinable
-public func _$isIdentityEqual<T>(_ lhs: T, _ rhs: T) -> Bool {
+public func _$sharing_isIdentityEqual<T>(_ lhs: T, _ rhs: T) -> Bool {
   guard !_isPOD(T.self) else { return false }
 
   func openCollection<C: Collection>(_ lhs: C, _ rhs: Any) -> Bool {
@@ -175,7 +175,7 @@ public func _$isIdentityEqual<T>(_ lhs: T, _ rhs: T) -> Bool {
     {
       return result
     } else if let rhs = rhs as? C {
-      return lhs.count == rhs.count && zip(lhs, rhs).allSatisfy(_$isIdentityEqual)
+      return lhs.count == rhs.count && zip(lhs, rhs).allSatisfy(_$sharing_isIdentityEqual)
     } else {
       return false
     }
