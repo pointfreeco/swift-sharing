@@ -2,7 +2,7 @@
 
 A ``SharedKey`` conformance that persists simple pieces of data to user defaults, such as numbers,
 strings, booleans and URLs. It can be used with ``Shared`` by providing the 
-``SharedReaderKey/appStorage(_:store:)-45ltk`` value and specifying a default value:
+``SharedReaderKey/appStorage(_:store:)`` value and specifying a default value:
 
 ```swift
 @Shared(.appStorage("isOn")) var isOn = true
@@ -24,7 +24,7 @@ func externalWrite() {
 }
 ```
 
-### Default app storage
+## Default app storage
 
 When running your app in a simulator or device, `appStorage` will use the `standard` user defaults 
 for persisting your state. If you want to use a different user defaults, you can invoke the 
@@ -68,7 +68,7 @@ func basics() {
 }
 ```
 
-### Special characters in keys
+## Special characters in keys
 
 The `appStorage` persistence strategy can change its behavior depending on the characters its key
 contains. If the key does not contain periods (".") or at-symbols ("@"), then `appStorage` can use
@@ -93,33 +93,22 @@ prepareDependencies {
 ```
 
 > Important: We highly recommend that you avoid using periods and at-symbols in your `appStorage`
-keys. Instead you can use other delimiting symbols, such as ":", "|", "/", etc.
+> keys. Instead you can use other delimiting symbols, such as ":", "|", "/", etc.
+
+## Codable support
+
+The `appStorage` persistence strategy provides support for `Codable` types even though `@AppStorage`
+omits it for unstated reasons. If you choose to use `appStorage` with a `Codable` type, proceed with
+caution and care. Avoid large, unbounded data types, like arrays and dictionaries, which may grow
+larger than user defaults allows. If you want to share and persist an array or dictionary across
+your application, prefer [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>),
+instead.
 
 ## Topics
 
-### Storing a value
+### Storing values
 
-- ``SharedReaderKey/appStorage(_:store:)-45ltk``  <!-- Bool -->
-- ``SharedReaderKey/appStorage(_:store:)-vqgl``   <!-- Data -->
-- ``SharedReaderKey/appStorage(_:store:)-3dtm``   <!-- Date -->
-- ``SharedReaderKey/appStorage(_:store:)-7dai0``  <!-- Double -->
-- ``SharedReaderKey/appStorage(_:store:)-c6ap``   <!-- Int -->
-- ``SharedReaderKey/appStorage(_:store:)-5663z``  <!-- String -->
-- ``SharedReaderKey/appStorage(_:store:)-6msr0``  <!-- URL -->
-- ``SharedReaderKey/appStorage(_:store:)-2tp0t``  <!-- RawRepresentable<Int> -->
-- ``SharedReaderKey/appStorage(_:store:)-95ztf``  <!-- RawRepresentable<String> -->
-
-### Storing an optional value
-
-- ``SharedReaderKey/appStorage(_:store:)-8ys3t``  <!-- Bool? -->
-- ``SharedReaderKey/appStorage(_:store:)-1vfr4``  <!-- Data? -->
-- ``SharedReaderKey/appStorage(_:store:)-8cy6a``  <!-- Date? -->
-- ``SharedReaderKey/appStorage(_:store:)-8f3hz``  <!-- Double? -->
-- ``SharedReaderKey/appStorage(_:store:)-8bf8y``  <!-- Int? -->
-- ``SharedReaderKey/appStorage(_:store:)-4la2p``  <!-- String? -->
-- ``SharedReaderKey/appStorage(_:store:)-7fd26``  <!-- URL? -->
-- ``SharedReaderKey/appStorage(_:store:)-2vfgj``  <!-- RawRepresentable<Int?> -->
-- ``SharedReaderKey/appStorage(_:store:)-2i17q``  <!-- RawRepresentable<String?> -->
+- ``SharedReaderKey/appStorage(_:store:)``
 
 ### Overriding app storage
 

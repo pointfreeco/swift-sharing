@@ -37,7 +37,7 @@ appropriate thing.
 For example, if the data type is sharing state with a persistence strategy, you can _decode_ by 
 delegating to the memberwise initializer that implicitly loads the shared value from the property 
 wrapper's persistence strategy, or you can explicitly initialize a shared value via
-``Shared/init(wrappedValue:_:)-5xce4``. And you can _encode_ by skipping the shared value:
+``Shared/init(wrappedValue:_:)``. And you can _encode_ by skipping the shared value:
 
 ```swift
 struct TodosFeature {

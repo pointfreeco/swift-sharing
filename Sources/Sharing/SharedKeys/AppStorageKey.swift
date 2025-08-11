@@ -471,19 +471,18 @@
             override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
             your application. For example:
 
-                + import Dependencies
+                import Dependencies
 
-                  @main
-                  struct MyApp: App {
-                    init() {
-                +     prepareDependencies {
-                +       $0.appStorageKeyFormatWarningEnabled = false
-                +     }
-                      // ...
-                    }
-
-                    var body: some Scene { /* ... */ }
-                  }
+                @main
+                struct MyApp: App {
+                  init() {
+                    prepareDependencies {
+                      $0.appStorageKeyFormatWarningEnabled = false
+                    }
+                    // ...
+                  }
+                  // ...
+                }
             """
           )
         }

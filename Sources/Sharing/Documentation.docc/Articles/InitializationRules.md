@@ -22,10 +22,11 @@ following:
 ### Persisted @Shared state
 
 If you are using a persistence strategy with shared state (_e.g._ 
-[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>), [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>),
-_etc._), then the initializer should take a plain, non-`Shared` value and you will construct
-the `Shared` value in the initializer using ``Shared/init(wrappedValue:_:)-5xce4`` which takes a
-``SharedKey`` as the second argument:
+[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>),
+[`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), _etc._), then the
+initializer should take a plain, non-`Shared` value and you will construct the `Shared` value in the
+initializer using ``Shared/init(wrappedValue:_:)`` which takes a ``SharedKey`` as the second
+argument:
 
 ```swift
 class FeatureModel {
@@ -45,9 +46,9 @@ argument because the persistence strategy is specified in the initializer.
 
 > Important: The value passed to this initializer is only used if the external storage does not
 > already have a value. If a value exists in the storage then it is not used. In fact, the
-> `wrappedValue` argument of ``Shared/init(wrappedValue:_:)-5xce4`` is an `@autoclosure` so that it
-> is not even evaluated if not used. For that reason you may prefer to make the argument to the
-> initializer an `@autoclosure`, as well, so that it too is evaluated only if actually used:
+> `wrappedValue` argument of ``Shared/init(wrappedValue:_:)`` is an `@autoclosure` so that it is not
+> even evaluated if not used. For that reason you may prefer to make the argument to the initializer
+> an `@autoclosure`, as well, so that it too is evaluated only if actually used:
 > 
 > ```swift
 > public struct State {

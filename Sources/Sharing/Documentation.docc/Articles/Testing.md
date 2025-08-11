@@ -13,7 +13,7 @@ trample over each other.
 Luckily the tools in this library were built with testing in mind, and you can usually test your
 features as if you were holding onto regular, non-shared state. For example, if you have a model
 that holds onto an integer that is stored in
- [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>) like so:
+ [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>) like so:
 
 ```swift
 @Observable
@@ -80,7 +80,7 @@ func increment() {
 ### Testing when using custom persistence strategies
 
 When creating your own custom persistence strategies you must be careful to do so in a style that
-is amenable to testing. For example, the ``SharedReaderKey/appStorage(_:store:)-45ltk`` persistence
+is amenable to testing. For example, the ``SharedReaderKey/appStorage(_:store:)`` persistence
 strategy that comes with the library uses a ``Dependencies/DependencyValues/defaultAppStorage``
 dependency so that one can inject a custom `UserDefaults` in order to execute in a controlled
 environment. When your app runs in the simulator or on device, 

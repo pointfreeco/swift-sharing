@@ -49,7 +49,7 @@ extension SharedReaderKey where ID == Self {
 /// The context in which a value is loaded by a ``SharedReaderKey``.
 public enum LoadContext<Value> {
   /// The value is being loaded implicitly at the initialization of a `@Shared` or `@SharedReader`
-  /// property (via ``SharedReader/init(wrappedValue:_:)-56tir``).
+  /// property (via ``SharedReader/init(wrappedValue:_:)``).
   ///
   /// The associated value is the same value passed to the `wrappedValue` argument of the
   /// initializer.
@@ -176,7 +176,7 @@ extension SharedReader {
   /// external source.
   ///
   /// If the given shared key cannot load a value, an error is thrown. For a non-throwing,
-  /// synchronous version of this initializer, see ``init(wrappedValue:_:)-56tir``.
+  /// synchronous version of this initializer, see ``init(wrappedValue:_:)``.
   ///
   /// This initializer should only be used to create a brand new shared reference from a key. To
   /// replace the key of an existing shared reference, use ``load(_:)``, instead.

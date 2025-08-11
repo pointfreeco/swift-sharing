@@ -113,9 +113,11 @@ import Testing
         }
       }
     } matching: {
-      $0.description == """
-        Issue recorded: Tracked unasserted changes to 'Shared<Int>(value: 1)': 0 → 1
+      $0.description.hasSuffix(
         """
+        Tracked unasserted changes to 'Shared<Int>(value: 1)': 0 → 1
+        """
+      )
     }
   }
 
@@ -140,9 +142,11 @@ import Testing
         }
       }
     } matching: {
-      $0.description == """
-        Issue recorded: Tracked unasserted changes to 'Shared<Int?>(value: Optional(2))': Optional(1) → Optional(2)
+      $0.description.hasSuffix(
         """
+        Tracked unasserted changes to 'Shared<Int?>(value: Optional(2))': Optional(1) → Optional(2)
+        """
+      )
     }
   }
 }

@@ -1,5 +1,7 @@
 version: 1
 builder:
   configs:
-  - scheme: Sharing
-    documentation_targets: [Sharing]
+    - scheme: Sharing
+      documentation_targets: [Sharing]
+      custom_documentation_parameters:
+        - '--enable-experimental-overloaded-symbol-presentation'
