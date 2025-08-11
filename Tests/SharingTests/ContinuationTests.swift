@@ -9,10 +9,12 @@ import Testing
       try await $value.load()
       #expect($value.isLoading == false)
     } matching: { issue in
-      issue.description == """
-        Issue recorded: 'DontResumeLoadContinuationKey()' leaked its continuation without one of \
-        its resume methods being invoked. This will cause tasks waiting on it to resume immediately.
+      issue.description.hasSuffix(
         """
+        'DontResumeLoadContinuationKey()' leaked its continuation without one of its resume \
+        methods being invoked. This will cause tasks waiting on it to resume immediately.
+        """
+      )
     }
   }
 
@@ -21,10 +23,12 @@ import Testing
     try await withKnownIssue {
       try await $value.save()
     } matching: { issue in
-      issue.description == """
-        Issue recorded: \'DontResumeSaveContinuationKey()\' leaked its continuation without one of \
-        its resume methods being invoked. This will cause tasks waiting on it to resume immediately.
+      issue.description.hasSuffix(
         """
+        'DontResumeSaveContinuationKey()' leaked its continuation without one of its resume \
+        methods being invoked. This will cause tasks waiting on it to resume immediately.
+        """
+      )
     }
   }
 }

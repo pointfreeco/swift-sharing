@@ -137,32 +137,33 @@
           #expect(isEnabled)
         }
       } matching: {
-        $0.description == """
-          Issue recorded: A Shared app storage key ("co.pointfree.isEnabled") contains an invalid \
-          character (".") for key-value observation. External updates will be observed less \
-          efficiently and accurately via notification center, instead.
+        $0.description.hasSuffix(
+          """
+          A Shared app storage key ("co.pointfree.isEnabled") contains an invalid character \
+          (".") for key-value observation. External updates will be \
+          observed less efficiently and accurately via notification center, instead.
 
           Please reformat this key by removing invalid characters in order to ensure efficient, \
           cross-process observation.
 
           If you cannot control the format of this key and would like to silence this warning, \
-          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of your \
-          application. For example:
+          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
+          your application. For example:
 
-              + import Dependencies
+              import Dependencies
 
-              \u{2007} @main
-              \u{2007} struct MyApp: App {
-              \u{2007}   init() {
-              +     prepareDependencies {
-              +       $0.appStorageKeyFormatWarningEnabled = false
-              +     }
-              \u{2007}     // ...
-              \u{2007}   }
-
-              \u{2007}   var body: some Scene { /* ... */ }
-              \u{2007} }
+              @main
+              struct MyApp: App {
+                init() {
+                  prepareDependencies {
+                    $0.appStorageKeyFormatWarningEnabled = false
+                  }
+                  // ...
+                }
+                // ...
+              }
           """
+        )
       }
 
       await withKnownIssue {
@@ -172,32 +173,33 @@
           #expect(count == 42)
         }
       } matching: {
-        $0.description == """
-          Issue recorded: A Shared app storage key ("@count") contains an invalid character ("@") \
-          for key-value observation. External updates will be observed less efficiently and \
-          accurately via notification center, instead.
+        $0.description.hasSuffix(
+          """
+          A Shared app storage key ("@count") contains an invalid character \
+          ("@") for key-value observation. External updates will be \
+          observed less efficiently and accurately via notification center, instead.
 
           Please reformat this key by removing invalid characters in order to ensure efficient, \
           cross-process observation.
 
           If you cannot control the format of this key and would like to silence this warning, \
-          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of your \
-          application. For example:
+          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
+          your application. For example:
 
-              + import Dependencies
+              import Dependencies
 
-              \u{2007} @main
-              \u{2007} struct MyApp: App {
-              \u{2007}   init() {
-              +     prepareDependencies {
-              +       $0.appStorageKeyFormatWarningEnabled = false
-              +     }
-              \u{2007}     // ...
-              \u{2007}   }
-
-              \u{2007}   var body: some Scene { /* ... */ }
-              \u{2007} }
+              @main
+              struct MyApp: App {
+                init() {
+                  prepareDependencies {
+                    $0.appStorageKeyFormatWarningEnabled = false
+                  }
+                  // ...
+                }
+                // ...
+              }
           """
+        )
       }
     }
 
