@@ -96,6 +96,20 @@
     where Self == AppStorageKey<Date> {
       AppStorageKey(key, store: store)
     }
+    
+    /// Creates a shared key that can read and write a Codable value to user defaults.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: Codable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value> {
+      AppStorageKey(key, store: store)
+    }
 
     /// Creates a shared key that can read and write to an integer user default, transforming
     /// that to a `RawRepresentable` data type.
@@ -210,6 +224,20 @@
     where Self == AppStorageKey<Date?> {
       AppStorageKey(key, store: store)
     }
+    
+    /// Creates a shared key that can read and write a Codable value to user defaults.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: Codable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value?> {
+      AppStorageKey(key, store: store)
+    }
 
     /// Creates a shared key that can read and write to an optional integer user default,
     /// transforming that to a `RawRepresentable` data type.
@@ -317,6 +345,10 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
+    
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: Codable {
+      self.init(lookup: CodableLookup(), key: key, store: store)
+    }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<Int> {
       self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
@@ -352,6 +384,15 @@
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
+    }
+    
+    fileprivate init<C: Codable>(_ key: String, store: UserDefaults?)
+    where Value == C? {
+      self.init(
+        lookup: OptionalLookup(base: CodableLookup()),
+        key: key,
+        store: store
+      )
     }
 
     fileprivate init<R: RawRepresentable<Int>>(_ key: String, store: UserDefaults?)
@@ -598,6 +639,35 @@
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       SharedAppStorageLocals.$isSetting.withValue(true) {
         store.set(newValue, forKey: key)
+      }
+    }
+  }
+
+  private struct CodableLookup<Value: Codable & Sendable>: Lookup {
+    func loadValue(
+      from store: UserDefaults,
+      at key: String,
+      default defaultValue: Value?
+    ) -> Value? {
+      guard let data = store.data(forKey: key)
+      else {
+        guard !SharedAppStorageLocals.isSetting
+        else { return nil }
+        SharedAppStorageLocals.$isSetting.withValue(true) {
+          if let value = defaultValue, let encoded = try? JSONEncoder().encode(value) {
+            store.set(encoded, forKey: key)
+          }
+        }
+        return defaultValue
+      }
+      return (try? JSONDecoder().decode(Value.self, from: data)) ?? defaultValue
+    }
+
+    func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
+      SharedAppStorageLocals.$isSetting.withValue(true) {
+        if let encoded = try? JSONEncoder().encode(newValue) {
+          store.set(encoded, forKey: key)
+        }
       }
     }
   }

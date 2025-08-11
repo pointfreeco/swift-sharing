@@ -64,6 +64,18 @@
       store.set(Date(timeIntervalSince1970: 0), forKey: "date")
       #expect(date == Date(timeIntervalSince1970: 0))
     }
+    
+    @Test func codable() {
+      struct Item: Codable, Equatable {
+        var id: Int
+      }
+      @Shared(.appStorage("codable")) var item = Item(id: 42)
+      let data = store.data(forKey: "codable") ?? Data()
+      #expect((try? JSONDecoder().decode(Item.self, from: data)) == Item(id: 42))
+      let encoded = try? JSONEncoder().encode(Item(id: 1729))
+      store.set(encoded, forKey: "codable")
+      #expect(item == Item(id: 1729))
+    }
 
     @Test func rawRepresentableInt() {
       struct ID: RawRepresentable {
