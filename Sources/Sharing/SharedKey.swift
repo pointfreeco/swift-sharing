@@ -104,7 +104,7 @@ extension Shared {
   /// source.
   ///
   /// If the given shared key cannot load a value, an error is thrown. For a non-throwing,
-  /// synchronous version of this initializer, see ``init(wrappedValue:_:)-5xce4``.
+  /// synchronous version of this initializer, see ``init(wrappedValue:_:)``.
   ///
   /// This initializer should only be used to create a brand new shared reference from a key. To
   /// replace the key of an existing shared reference, use ``load(_:)``, instead.

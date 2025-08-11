@@ -57,7 +57,7 @@ if remoteConfig.isToggleEnabled {
 
 ### Creating a persisted reader
 
-- ``init(wrappedValue:_:)-56tir``
+- ``init(wrappedValue:_:)``
 
 ### Creating a shared reader
 
@@ -66,10 +66,8 @@ if remoteConfig.isToggleEnabled {
 
 ### Transforming a shared value
 
-- ``subscript(dynamicMember:)-3jfdr``
-- ``init(_:)-9wqv4``
-- ``init(_:)-9ka0y``
-- ``init(_:)-498ca``
+- ``subscript(dynamicMember:)``
+- ``init(_:)``
 
 ### Reading the value
 

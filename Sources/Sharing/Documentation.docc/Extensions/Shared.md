@@ -3,7 +3,7 @@
 ## Overview
 
 Use shared state to allow for multiple parts of your application to hold onto the same piece of 
-mutable data. For example, you can have two different obsevable models hold onto a collection of 
+mutable data. For example, you can have two different observable models hold onto a collection of 
 data that is also synchronized to the file system:
 
 ```swift
@@ -34,11 +34,11 @@ also update to hold the freshest data.
 
 The `@Shared` property wrapper gives you a succinct and consistent way to persist any kind of data
 in your application. The library comes with 3 strategies:
-[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>),
+[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>),
 [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), and
 [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>). 
 
-The [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>) strategy is useful for store small
+The [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>) strategy is useful for store small
 pieces of simple data in user defaults, such as settings:
 
 ```swift
@@ -109,7 +109,7 @@ See <doc:Testing> for more information on how to test your features when using `
 
 ### Creating a persisted value
 
-- ``init(wrappedValue:_:)-5xce4``
+- ``init(wrappedValue:_:)``
 
 ### Creating a shared value
 
@@ -118,9 +118,8 @@ See <doc:Testing> for more information on how to test your features when using `
 
 ### Transforming a shared value
 
-- ``subscript(dynamicMember:)-68021``
-- ``subscript(dynamicMember:)-318vw``
-- ``init(_:)-2z7om``
+- ``subscript(dynamicMember:)``
+- ``init(_:)``
 
 ### Accessing the value
 

@@ -7,7 +7,7 @@ your own custom strategies.
 
 When using `@Shared` you can supply an optional persistence strategy to represent that the state
 you are holding onto is being shared with an external system. The library ships with 3 kinds of
-strategies: [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>),
+strategies: [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>),
 [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), and
 [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>). These strategies are defined as conformances to
 the ``SharedKey`` protocol, and it is possible for you to provide your own conformances for sharing
@@ -41,7 +41,7 @@ out of sync.
 ### User defaults
 
 If you would like to persist your shared value across application launches, then you can use the
-``SharedReaderKey/appStorage(_:store:)-45ltk`` strategy with `@Shared` in order to automatically
+``SharedReaderKey/appStorage(_:store:)`` strategy with `@Shared` in order to automatically
 persist any changes to the value to user defaults. It works similarly to in-memory sharing discussed
 above. It requires a key to store the value in user defaults, as well as a default value that will
 be used when there is no value in the user defaults:

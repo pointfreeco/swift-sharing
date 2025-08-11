@@ -82,7 +82,7 @@ responsible for persisting and deriving shared state to pass to the child.
 ### Optional shared state
 
 If your shared state is optional, it is possible to unwrap it as a non-optional shared value via
-``Shared/init(_:)-2z7om``.
+``Shared/init(_:)``.
 
 ```swift
 @Shared var currentUser: User?
@@ -96,8 +96,8 @@ if let loggedInUser = Shared($currentUser) {
 
 If your shared state is a collection, in particular an `IdentifiedArray`, then we have another tool
 for deriving shared state to a particular element of the array. You can pass the shared collection
-to a ``Swift/RangeReplaceableCollection``'s ``Swift/RangeReplaceableCollection/init(_:)-53j6s`` to
-create a collection of shared elements:
+to a ``Swift/RangeReplaceableCollection``'s ``Swift/RangeReplaceableCollection/init(_:)`` to create
+a collection of shared elements:
 
 ```swift
 @Shared(.fileStorage(.todos)) var todos: IdentifiedArrayOf<Todo> = []
@@ -108,8 +108,8 @@ ForEach(Array($todos)) { $todo in  // '$todo' is a 'Shared<Todo>'
 ```
 
 You can also subscript into a ``Shared`` collection with the `IdentifiedArray[id:]` subscript. This
-will give a piece of shared optional state, which you can then unwrap with the
-``Shared/init(_:)-2z7om`` initializer:
+will give a piece of shared optional state, which you can then unwrap with the ``Shared/init(_:)``
+initializer:
 
 ```swift
 @Shared(.fileStorage(.todos)) var todos: IdentifiedArrayOf<Todo> = []
@@ -121,7 +121,7 @@ todo  // Shared<Todo>
 
 ### Read-only shared state
 
-Any `@Shared` value can be made read-only via ``SharedReader/init(_:)-9wqv4``:
+Any `@Shared` value can be made read-only via ``SharedReader/init(_:)``:
 
 ```swift
 // Parent feature needs read-write access to the option

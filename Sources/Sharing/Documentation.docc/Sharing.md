@@ -1,6 +1,6 @@
 # ``Sharing``
 
-Instantly share state among your app's features and external persistence layers, including user 
+Instantly share state among your app's features and external persistence layers, including user
 defaults, the file system, and more.
 
 ## Additional Resources
@@ -13,12 +13,12 @@ defaults, the file system, and more.
 
 ## Overview
 
-This library comes with a few tools that allow one to share state with multiple parts of your 
+This library comes with a few tools that allow one to share state with multiple parts of your
 application, as well as external store systems such as user defaults, the file system, and more.
 The tool works in a variety of contexts, such as SwiftUI views, `@Observable` models, and UIKit
 view controllers, and it is completely unit testable.
 
-As a simple example, you can have two different obsevable models hold onto a collection of 
+As a simple example, you can have two different obsevable models hold onto a collection of
 data that is also synchronized to the file system:
 
 ```swift
@@ -37,8 +37,8 @@ class ArchivedMeetingsModel {
 }
 ```
 
-> Note: Due to the fact that Swift macros do not play nicely with property wrappers, you must 
-annotate each `@Shared` with `@ObservationIgnored`. Views will still update when shared state 
+> Note: Due to the fact that Swift macros do not play nicely with property wrappers, you must
+annotate each `@Shared` with `@ObservationIgnored`. Views will still update when shared state
 changes since `@Shared` handles its own observation.
 
 If either model makes a change to `meetings`, the other model will instantly see those changes.
@@ -49,11 +49,11 @@ also update to hold the freshest data.
 
 The [`@Shared`](<doc:Shared>) property wrapper gives you a succinct and consistent way to persist 
 any kind of data in your application. The library comes with 3 strategies:
-[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>),
+[`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>),
 [`fileStorage`](<doc:SharedReaderKey/fileStorage(_:decoder:encoder:)>), and
 [`inMemory`](<doc:SharedReaderKey/inMemory(_:)>). 
 
-The [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)-45ltk>) strategy is useful for store small
+The [`appStorage`](<doc:SharedReaderKey/appStorage(_:store:)>) strategy is useful for store small
 pieces of simple data in user defaults, such as settings:
 
 ```swift
@@ -107,8 +107,8 @@ final class DebugMeetingsViewController: UIViewController {
 }
 ```
 
-And to observe changes to `meetings` so that you can update the UI you can either use the 
-``Shared/publisher`` property or the `observe` tool from our Swift Navigation library. See 
+And to observe changes to `meetings` so that you can update the UI you can either use the
+``Shared/publisher`` property or the `observe` tool from our Swift Navigation library. See
 <doc:ObservingChanges> for more information.
 
 ## Testing shared state
@@ -140,8 +140,8 @@ complex problems with `@Shared`. Check out [this][examples-dir] directory to see
     A [SwiftWasm][swiftwasm] application that uses this library to share state with your web
     browser's local storage.
 
-  * [SyncUps][syncups]: We also rebuilt Apple's [Scrumdinger][scrumdinger] demo application using 
-    modern, best practices for SwiftUI development, including using this library to share state and 
+  * [SyncUps][syncups]: We also rebuilt Apple's [Scrumdinger][scrumdinger] demo application using
+    modern, best practices for SwiftUI development, including using this library to share state and
     persist it to the file system.
 
 [sharing-gh]: https://github.com/pointfreeco/swift-sharing
