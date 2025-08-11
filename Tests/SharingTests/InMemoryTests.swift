@@ -86,7 +86,8 @@ import Testing
       @Shared(.inMemory("nestedOptionalCount")) var nestedOptionalCount: Int?? = .some(.none)
       #expect(nestedOptionalCount == .some(.none))
 
-      @SharedReader(.inMemory("nestedOptionalCountReader")) var nestedOptionalCountReader: Int?? = .some(.none)
+      @SharedReader(.inMemory("nestedOptionalCountReader")) var nestedOptionalCountReader: Int?? =
+        .some(.none)
       #expect(nestedOptionalCountReader == .some(.none))
     }
 

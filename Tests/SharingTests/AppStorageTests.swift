@@ -49,6 +49,15 @@
       #expect(url == URL(fileURLWithPath: "/tmp"))
     }
 
+    @Test func optionalURL() {
+      @Shared(.appStorage("url")) var url: URL? = URL(fileURLWithPath: "/dev")
+      #expect(store.url(forKey: "url") == URL(fileURLWithPath: "/dev"))
+      store.set(URL(fileURLWithPath: "/tmp"), forKey: "url")
+      #expect(url == URL(fileURLWithPath: "/tmp"))
+      $url.withLock { $0 = nil }
+      #expect(url == nil)
+    }
+
     @Test func data() {
       @Shared(.appStorage("data")) var data = Data([4, 2])
       #expect(store.data(forKey: "data") == Data([4, 2]))
@@ -61,6 +70,18 @@
       #expect(store.value(forKey: "date") as? Date == Date(timeIntervalSinceReferenceDate: 0))
       store.set(Date(timeIntervalSince1970: 0), forKey: "date")
       #expect(date == Date(timeIntervalSince1970: 0))
+    }
+    
+    @Test func codable() {
+      struct Item: Codable, Equatable {
+        var id: Int
+      }
+      @Shared(.appStorage("codable")) var item = Item(id: 42)
+      let data = store.data(forKey: "codable") ?? Data()
+      #expect((try? JSONDecoder().decode(Item.self, from: data)) == Item(id: 42))
+      let encoded = try? JSONEncoder().encode(Item(id: 1729))
+      store.set(encoded, forKey: "codable")
+      #expect(item == Item(id: 1729))
     }
 
     @Test func rawRepresentableInt() {

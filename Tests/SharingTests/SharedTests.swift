@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import IdentifiedCollections
 import PerceptionCore
@@ -34,6 +35,45 @@ import Testing
 
       let a = A()
       #expect(a.b.c == C())
+    }
+
+    @Test func lockingOrderWithDependencies() async {
+      struct D: TestDependencyKey {
+        @Shared(.inMemory("count")) var count = 0
+        init() {
+          Thread.sleep(forTimeInterval: 0.5)
+          $count.withLock { $0 += 1 }
+        }
+        static var testValue: D { D() }
+      }
+      let a = Task {
+        do {
+          try await Task.sleep(nanoseconds: 250_000_000)
+          @Dependency(D.self) var d
+          #expect(d.count == 1)
+        } catch {}
+      }
+      let b = Task {
+        @Shared(.inMemory("count")) var count: Int = {
+          Thread.sleep(forTimeInterval: 0.5)
+          return 2
+        }()
+        #expect(count == 1)
+      }
+      let c = Task {
+        do {
+          try await Task.sleep(nanoseconds: 5_000_000_000)
+          Issue.record("Deadlock detected")
+          exit(1)
+        } catch {}
+      }
+      await withTaskGroup(of: Void.self) { taskGroup in
+        taskGroup.addTask {
+          _ = await (a.value, b.value)
+          c.cancel()
+        }
+        taskGroup.addTask { await c.value }
+      }
     }
   }
 
@@ -86,6 +126,22 @@ import Testing
       $user = Shared(value: User(id: 1729))
 
       #expect(id == 42)
+    }
+
+    @Test func mapReader() {
+      @Shared(value: 0) var count
+      @SharedReader var isZero: Bool
+      _isZero = $count.read { $0 == 0 }
+
+      #expect(isZero)
+
+      $count.withLock { $0 += 1 }
+
+      #expect(!isZero)
+
+      $count = Shared(value: 0)
+
+      #expect(!isZero)
     }
 
     @Test func optional() throws {
@@ -185,13 +241,13 @@ import Testing
 
         #expect(
           $count.description == """
-            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            Shared<Int>(.appStorage("count"))
             """
         )
 
         #expect(
           SharedReader($count).description == """
-            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            SharedReader<Int>(.appStorage("count"))
             """
         )
       }
@@ -200,13 +256,13 @@ import Testing
 
         #expect(
           $count.description == """
-            Shared<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            Shared<Int>(.appStorage("count"))
             """
         )
 
         #expect(
           SharedReader($count).description == """
-            SharedReader<Int>(AppStorageKey<Int>.Default[.appStorage("count"), default: 0])
+            SharedReader<Int>(.appStorage("count"))
             """
         )
       }

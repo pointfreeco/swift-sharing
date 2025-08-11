@@ -78,6 +78,30 @@ import Testing
     }
   }
 
+  @Test func assertedChanges() {
+    @Shared(value: 0) var count
+
+    let counts = Mutex<[Int]>([])
+    let cancellable = $count.publisher.sink { @Sendable value in
+      counts.withLock { $0.append(value) }
+    }
+    defer { _ = cancellable }
+
+    let tracker = SharedChangeTracker()
+    tracker.track {
+      $count.withLock { $0 += 1 }
+    }
+
+    tracker.assert {
+      #expect($count != $count)
+
+      $count.withLock { $0 = 1 }
+
+      #expect($count == $count)
+      #expect(counts.withLock(\.self) == [0, 1])
+    }
+  }
+
   @Test func unassertedChanges() {
     @Shared(value: 0) var count
 

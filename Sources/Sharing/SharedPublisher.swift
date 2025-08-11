@@ -15,7 +15,9 @@
     /// }
     /// ```
     public var publisher: some Publisher<Value, Never> {
-      box.subject.prepend(wrappedValue)
+      Just<Void>(()).flatMap { _ in
+        box.subject.prepend(wrappedValue)
+      }
     }
   }
 
@@ -33,7 +35,9 @@
     /// }
     /// ```
     public var publisher: some Publisher<Value, Never> {
-      box.subject.prepend(wrappedValue)
+      Just<Void>(()).flatMap { _ in
+        box.subject.prepend(wrappedValue)
+      }
     }
   }
 #endif

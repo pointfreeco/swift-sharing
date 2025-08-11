@@ -1,0 +1,28 @@
+# NB: Compatible swift-format requires Xcode 16.3, not yet available on GitHub
+# name: Format
+#
+# on:
+#   push:
+#     branches:
+#       - main
+#
+# concurrency:
+#   group: format-${{ github.ref }}
+#   cancel-in-progress: true
+#
+# jobs:
+#   swift_format:
+#     name: swift-format
+#     runs-on: macos-15
+#     permissions:
+#       contents: write
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Select Xcode 16.3
+#         run: sudo xcode-select -s /Applications/Xcode_16.3.app
+#       - name: Format
+#         run: make format
+#       - uses: stefanzweifel/git-auto-commit-action@v5
+#         with:
+#           commit_message: Run swift-format
+#           branch: 'main'

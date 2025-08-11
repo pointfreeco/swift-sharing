@@ -156,6 +156,29 @@ public struct SharedReader<Value> {
     }
   }
 
+  /// Returns a read-only shared reference to the resulting value of a given closure.
+  ///
+  /// - Returns: A new shared reader.
+  public func read<Member>(
+    _ body: @escaping @Sendable (Value) -> Member
+  ) -> SharedReader<Member> {
+    func open(_ reference: some Reference<Value>) -> SharedReader<Member> {
+      SharedReader<Member>(
+        reference: _ReadClosureReference(base: reference, body: body)
+      )
+    }
+    return open(reference)
+  }
+
+  @available(
+    *,
+    deprecated,
+    message: "Use dynamic member lookup instead ('$shared.member', not '$shared.read(\\.member)')"
+  )
+  public func read<Member>(_ keyPath: KeyPath<Value, Member>) -> SharedReader<Member> {
+    self[dynamicMember: keyPath]
+  }
+
   /// Returns a read-only shared reference to the resulting value of a given key path.
   ///
   /// You don't call this subscript directly. Instead, Swift calls it for you when you access a
@@ -259,11 +282,6 @@ public struct SharedReader<Value> {
         subjectCancellable = _reference.publisher.subscribe(subject)
       #endif
     }
-    deinit {
-      #if canImport(Combine)
-        subject.send(completion: .finished)
-      #endif
-    }
     #if canImport(SwiftUI)
       func subscribe(state: State<Int>) {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
@@ -283,13 +301,23 @@ extension SharedReader: CustomStringConvertible {
 
 extension SharedReader: Equatable where Value: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
-    lhs.wrappedValue == rhs.wrappedValue
+    #if DEBUG
+      _PerceptionLocals.$skipPerceptionChecking.withValue(true) {
+        lhs.wrappedValue == rhs.wrappedValue
+      }
+    #else
+      lhs.wrappedValue == rhs.wrappedValue
+    #endif
   }
 }
 
 extension SharedReader: Identifiable where Value: Identifiable {
   public var id: Value.ID {
-    wrappedValue.id
+    #if DEBUG
+      _PerceptionLocals.$skipPerceptionChecking.withValue(true) { wrappedValue.id }
+    #else
+      wrappedValue.id
+    #endif
   }
 }
 

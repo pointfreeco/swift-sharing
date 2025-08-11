@@ -108,6 +108,20 @@
     where Self == AppStorageKey<Date> {
       AppStorageKey(key, store: store)
     }
+    
+    /// Creates a shared key that can read and write a Codable value to user defaults.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: Codable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value> {
+      AppStorageKey(key, store: store)
+    }
 
     /// Creates a shared key that can read and write to an integer user default, transforming
     /// that to a `RawRepresentable` data type.
@@ -234,6 +248,20 @@
     where Self == AppStorageKey<Date?> {
       AppStorageKey(key, store: store)
     }
+    
+    /// Creates a shared key that can read and write a Codable value to user defaults.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: Codable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value?> {
+      AppStorageKey(key, store: store)
+    }
 
     /// Creates a shared key that can read and write to an optional integer user default,
     /// transforming that to a `RawRepresentable` data type.
@@ -345,6 +373,10 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
+    
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: Codable {
+      self.init(lookup: CodableLookup(), key: key, store: store)
+    }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<Int> {
       self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
@@ -375,7 +407,7 @@
     }
     
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL? {
-      self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
+      self.init(lookup: OptionalLookup(base: URLLookup()), key: key, store: store)
     }
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Data? {
@@ -384,6 +416,15 @@
 
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
+    }
+    
+    fileprivate init<C: Codable>(_ key: String, store: UserDefaults?)
+    where Value == C? {
+      self.init(
+        lookup: OptionalLookup(base: CodableLookup()),
+        key: key,
+        store: store
+      )
     }
 
     fileprivate init<R: RawRepresentable<Int>>(_ key: String, store: UserDefaults?)
@@ -483,24 +524,7 @@
         store.wrappedValue.addObserver(observer, forKeyPath: key, context: nil)
         removeObserver = { store.wrappedValue.removeObserver(observer, forKeyPath: key) }
       }
-      let willEnterForeground: (any NSObjectProtocol)?
-      if let willEnterForegroundNotificationName {
-        willEnterForeground = NotificationCenter.default.addObserver(
-          forName: willEnterForegroundNotificationName,
-          object: nil,
-          queue: .main
-        ) { _ in
-          subscriber.yield(with: .success(lookupValue(default: context.initialValue)))
-        }
-      } else {
-        willEnterForeground = nil
-      }
-      return SharedSubscription {
-        removeObserver()
-        if let willEnterForeground {
-          NotificationCenter.default.removeObserver(willEnterForeground)
-        }
-      }
+      return SharedSubscription(removeObserver)
     }
 
     public func save(_ value: Value, context _: SaveContext, continuation: SaveContinuation) {
@@ -541,6 +565,33 @@
   }
 
   extension DependencyValues {
+    /// Default file storage used by ``SharedReaderKey/appStorage(_:)``.
+    ///
+    /// Use this dependency to override the manner in which
+    /// ``SharedReaderKey/appStorage(_:)`` interacts with UserDefaults. For
+    /// example, while your app is running for UI tests you probably do not want your features writing
+    /// changes to your actual UserDefaults suite, which would cause that data to bleed over from test to test.
+    ///
+    /// So, for that situation you can use the ``inMemory`` value so that each
+    /// run of the app starts with a fresh suite that will never interfere with other tests:
+    ///
+    /// ```swift
+    /// import Dependencies
+    /// import Sharing
+    /// import SwiftUI
+    ///
+    /// @main
+    /// struct MyApp: App {
+    ///   init() {
+    ///     if ProcessInfo.processInfo.environment["UITesting"] == "true"
+    ///       prepareDependencies {
+    ///         $0.defaultAppStorage = .inMemory
+    ///       }
+    ///     }
+    ///   }
+    ///   // ...
+    /// }
+    /// ```
     public var defaultAppStorage: UserDefaults {
       get { self[DefaultAppStorageKey.self].value }
       set { self[DefaultAppStorageKey.self].value = newValue }
@@ -553,7 +604,19 @@
   }
 
   private enum DefaultAppStorageKey: DependencyKey {
+    static var liveValue: UncheckedSendable<UserDefaults> {
+      UncheckedSendable(.standard)
+    }
+    static var previewValue: UncheckedSendable<UserDefaults> {
+      UncheckedSendable(.inMemory)
+    }
     static var testValue: UncheckedSendable<UserDefaults> {
+      UncheckedSendable(.inMemory)
+    }
+  }
+
+  extension UserDefaults {
+    public static var inMemory: UserDefaults {
       let suiteName: String
       // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
       //     file-based suites. Go back to using temporary directory always when we drop iOS 16
@@ -563,15 +626,7 @@
       } else {
         suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
       }
-      return UncheckedSendable(
-        UserDefaults(suiteName: suiteName)!
-      )
-    }
-    static var previewValue: UncheckedSendable<UserDefaults> {
-      testValue
-    }
-    static var liveValue: UncheckedSendable<UserDefaults> {
-      UncheckedSendable(UserDefaults.standard)
+      return UserDefaults(suiteName: suiteName)!
     }
   }
 
@@ -616,6 +671,35 @@
     func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
       SharedAppStorageLocals.$isSetting.withValue(true) {
         store.set(newValue, forKey: key)
+      }
+    }
+  }
+
+  private struct CodableLookup<Value: Codable & Sendable>: Lookup {
+    func loadValue(
+      from store: UserDefaults,
+      at key: String,
+      default defaultValue: Value?
+    ) -> Value? {
+      guard let data = store.data(forKey: key)
+      else {
+        guard !SharedAppStorageLocals.isSetting
+        else { return nil }
+        SharedAppStorageLocals.$isSetting.withValue(true) {
+          if let value = defaultValue, let encoded = try? JSONEncoder().encode(value) {
+            store.set(encoded, forKey: key)
+          }
+        }
+        return defaultValue
+      }
+      return (try? JSONDecoder().decode(Value.self, from: data)) ?? defaultValue
+    }
+
+    func saveValue(_ newValue: Value, to store: UserDefaults, at key: String) {
+      SharedAppStorageLocals.$isSetting.withValue(true) {
+        if let encoded = try? JSONEncoder().encode(newValue) {
+          store.set(encoded, forKey: key)
+        }
       }
     }
   }
@@ -676,22 +760,6 @@
       }
     }
   }
-
-  private let willEnterForegroundNotificationName: Notification.Name? = {
-    #if os(macOS)
-      return NSApplication.willBecomeActiveNotification
-    #elseif os(iOS) || os(tvOS) || os(visionOS)
-      return UIApplication.willEnterForegroundNotification
-    #elseif os(watchOS)
-      if #available(watchOS 7, *) {
-        return WKExtension.applicationWillEnterForegroundNotification
-      } else {
-        return nil
-      }
-    #else
-      return nil
-    #endif
-  }()
 
   #if DEBUG
     private let suites = Mutex<[String: ObjectIdentifier]>([:])
