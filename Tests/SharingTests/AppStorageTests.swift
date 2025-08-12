@@ -104,6 +104,16 @@
       #expect(id == ID(rawValue: "Blob, Jr."))
     }
 
+    @Test func rawRepresentableCodableString() {
+      struct ID: Codable, RawRepresentable {
+        var rawValue: String
+      }
+      @Shared(.appStorage("raw-representable-string")) var id = ID(rawValue: "Blob")
+      #expect(store.string(forKey: "raw-representable-string") == "Blob")
+      store.set("Blob, Jr.", forKey: "raw-representable-string")
+      #expect(id == ID(rawValue: "Blob, Jr."))
+    }
+
     @Test func optional() {
       @Shared(.appStorage("bool")) var bool: Bool?
       #expect(store.value(forKey: "bool") == nil)
