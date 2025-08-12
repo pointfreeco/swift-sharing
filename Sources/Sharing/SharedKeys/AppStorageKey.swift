@@ -109,13 +109,14 @@
       AppStorageKey(key, store: store)
     }
     
-    /// Creates a shared key that can read and write a Codable value to user defaults.
+    /// Creates a shared key that can read and write a codable value to user defaults.
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
     ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
+    @_disfavoredOverload
     public static func appStorage<Value: Codable>(
       _ key: String, store: UserDefaults? = nil
     ) -> Self
@@ -249,13 +250,14 @@
       AppStorageKey(key, store: store)
     }
     
-    /// Creates a shared key that can read and write a Codable value to user defaults.
+    /// Creates a shared key that can read and write a codable value to user defaults.
     ///
     /// - Parameters:
     ///   - key: The key to read and write the value to in the user defaults store.
     ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
+    @_disfavoredOverload
     public static func appStorage<Value: Codable>(
       _ key: String, store: UserDefaults? = nil
     ) -> Self
@@ -373,7 +375,7 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
-    
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value: Codable {
       self.init(lookup: CodableLookup(), key: key, store: store)
     }
