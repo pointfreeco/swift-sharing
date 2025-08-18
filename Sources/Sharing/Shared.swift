@@ -393,6 +393,14 @@ public struct Shared<Value> {
         subjectCancellable = _reference.publisher.subscribe(subject)
       #endif
     }
+    deinit {
+      #if canImport(Combine)
+        subjectCancellable.cancel()
+      #endif
+      #if canImport(SwiftUI)
+        swiftUICancellable?.cancel()
+      #endif
+    }
     #if canImport(SwiftUI)
       func subscribe(state: State<Int>) {
         guard #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10) else { return }
