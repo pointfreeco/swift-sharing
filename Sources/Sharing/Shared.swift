@@ -412,6 +412,12 @@ public struct Shared<Value> {
   }
 }
 
+extension Shared: CustomReflectable {
+  public var customMirror: Mirror {
+    Mirror(reflecting: wrappedValue)
+  }
+}
+
 extension Shared: CustomStringConvertible {
   public var description: String {
     "\(typeName(Self.self, genericsAbbreviated: false))(\(reference.description))"
