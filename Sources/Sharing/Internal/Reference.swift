@@ -220,8 +220,20 @@ final class _PersistentReference<Key: SharedReaderKey>:
   #endif
 
   private var _isLoading = false
-  private var _loadError: (any Error)?
-  private var _saveError: (any Error)?
+  private var _loadError: (any Error)? {
+    willSet {
+      guard let loadError = newValue
+      else { return }
+      _loadErrors.send(loadError)
+    }
+  }
+  private var _saveError: (any Error)? {
+    willSet {
+      guard let saveError = newValue
+      else { return }
+      _saveErrors.send(saveError)
+    }
+  }
   private var subscription: SharedSubscription?
   internal var onDeinit: (() -> Void)?
 

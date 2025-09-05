@@ -242,6 +242,9 @@ public struct SharedReader<Value> {
   public var loadError: (any Error)? {
     reference.loadError
   }
+  public var loadErrors: any Publisher<any Error, Never> {
+    reference.loadErrors
+  }
 
   final class Box: @unchecked Sendable {
     private let lock = NSRecursiveLock()

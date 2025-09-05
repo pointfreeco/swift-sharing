@@ -20,10 +20,17 @@ import Testing
       }
     }
     @Shared(Key()) var value = 0
+
+    var errors: [any Error] = []
+    let cancellable = $value.saveErrors.sink { errors.append($0) }
+    defer { _ = cancellable }
+
     await #expect(throws: SaveError.self) {
       try await $value.save()
     }
     #expect($value.saveError is SaveError)
+    #expect(errors.count == 1)
+    #expect(errors.allSatisfy { $0 is SaveError })
   }
 
   @Test func implicitLoadError() {

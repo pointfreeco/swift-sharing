@@ -354,6 +354,13 @@ public struct Shared<Value> {
     reference.saveError
   }
 
+  public var saveErrors: any Publisher<any Error, Never> {
+    reference.saveErrors
+  }
+  public var loadErrors: any Publisher<any Error, Never> {
+    reference.loadErrors
+  }
+
   final class Box: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     private var _reference: any MutableReference<Value>
