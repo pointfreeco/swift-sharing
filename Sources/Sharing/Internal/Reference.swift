@@ -23,6 +23,7 @@ protocol Reference<Value>:
   func touch()
   #if canImport(Combine)
     var publisher: any Publisher<Value, Never> { get }
+    var loadErrors: any Publisher<any Error, Never> { get }
   #endif
 }
 
@@ -38,6 +39,9 @@ protocol MutableReference<Value>: Reference, Equatable {
     column: UInt
   )
   func save() async throws
+  #if canImport(Combine)
+    var saveErrors: any Publisher<any Error, Never> { get }
+  #endif
 }
 
 final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @unchecked Sendable {
@@ -54,6 +58,13 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
       }
     }
     let subject = PassthroughRelay<Value>()
+
+  var loadErrors: any Publisher<any Error, Never> {
+    Empty(completeImmediately: false)
+  }
+  var saveErrors: any Publisher<any Error, Never> {
+    Empty(completeImmediately: false)
+  }
 
     var publisher: any Publisher<Value, Never> {
       subject.prepend(lock.withLock { value })
@@ -183,6 +194,23 @@ final class _PersistentReference<Key: SharedReaderKey>:
       }
     }
     private let subject = PassthroughRelay<Value>()
+    let _loadErrors = PassthroughRelay<any Error>()
+    let _saveErrors = PassthroughRelay<any Error>()
+
+  var loadErrors: any Publisher<any Error, Never> {
+    lock.lock()
+    defer { lock.unlock() }
+    guard !SharedPublisherLocals.isLoading, let _loadError
+    else { return _loadErrors }
+    return _loadErrors.prepend(_loadError)
+  }
+  var saveErrors: any Publisher<any Error, Never> {
+    lock.lock()
+    defer { lock.unlock() }
+    guard let _saveError
+    else { return _saveErrors }
+    return _loadErrors.prepend(_saveError)
+  }
 
     var publisher: any Publisher<Key.Value, Never> {
       SharedPublisherLocals.isLoading ? subject : subject.prepend(lock.withLock { value })
@@ -467,6 +495,10 @@ final class _AppendKeyPathReference<
     base.loadError
   }
 
+  var loadErrors: any Publisher<any Error, Never> {
+    base.loadErrors
+  }
+
   var wrappedValue: Value {
     base.wrappedValue[keyPath: keyPath]
   }
@@ -497,6 +529,9 @@ extension _AppendKeyPathReference: MutableReference, Equatable
 where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
   var saveError: (any Error)? {
     base.saveError
+  }
+  var saveErrors: any Publisher<any Error, Never> {
+    base.saveErrors
   }
 
   var snapshot: Value? {
@@ -551,6 +586,9 @@ final class _ReadClosureReference<Base: Reference, Value>:
   var loadError: (any Error)? {
     base.loadError
   }
+  var loadErrors: any Publisher<any Error, Never> {
+    base.loadErrors
+  }
 
   var wrappedValue: Value {
     body(base.wrappedValue)
@@ -603,6 +641,9 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
   var loadError: (any Error)? {
     base.loadError
   }
+  var loadErrors: any Publisher<any Error, Never> {
+    base.loadErrors
+  }
 
   var wrappedValue: Value {
     guard let wrappedValue = base.wrappedValue else { return lock.withLock { cachedValue } }
@@ -635,6 +676,9 @@ final class _OptionalReference<Base: Reference<Value?>, Value>:
 extension _OptionalReference: MutableReference, Equatable where Base: MutableReference {
   var saveError: (any Error)? {
     base.saveError
+  }
+  var saveErrors: any Publisher<any Error, Never> {
+    base.saveErrors
   }
 
   var snapshot: Value? {
