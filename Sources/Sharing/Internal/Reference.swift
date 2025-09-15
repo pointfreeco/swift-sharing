@@ -207,7 +207,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
       case let .failure(error):
         loadError = error
       case let .success(newValue):
-        loadError = nil
+        if _loadError != nil { loadError = nil }
         wrappedValue = newValue ?? initialValue
       }
     }
@@ -299,7 +299,7 @@ final class _PersistentReference<Key: SharedReaderKey>:
           }
         )
       }
-      loadError = nil
+      if _loadError != nil { loadError = nil }
     } catch {
       loadError = error
       throw error
@@ -308,9 +308,6 @@ final class _PersistentReference<Key: SharedReaderKey>:
 
   func touch() {
     withMutation(keyPath: \.value) {}
-    withMutation(keyPath: \._isLoading) {}
-    withMutation(keyPath: \._loadError) {}
-    withMutation(keyPath: \._saveError) {}
   }
 
   func access<Member>(
@@ -405,8 +402,8 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
             guard let self else { return }
             switch result {
             case .success:
-              loadError = nil
-              saveError = nil
+              if _loadError != nil { loadError = nil }
+              if _saveError != nil { saveError = nil }
             case let .failure(error):
               saveError = error
             }
@@ -420,7 +417,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
   }
 
   func save() async throws {
-    saveError = nil
+    if _saveError != nil { saveError = nil }
     do {
       _ = try await withUnsafeThrowingContinuation { continuation in
         let key = key
@@ -436,7 +433,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
       saveError = error
       throw error
     }
-    loadError = nil
+    if _loadError != nil { loadError = nil }
   }
 
   static func == (lhs: _PersistentReference, rhs: _PersistentReference) -> Bool {
