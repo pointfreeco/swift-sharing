@@ -129,8 +129,8 @@ value provided by the library:
 @main
 struct EntryPoint: App {
   var body: some Scene {
-    if !isTesting {
-      WindowGroup {
+    WindowGroup {
+      if !isTesting {
         // ...
       }
     }
