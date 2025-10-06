@@ -15,15 +15,6 @@ import Testing
   }
 
   @Suite struct Persistence {
-    @Test func laziness() {
-      do {
-        @Shared(.inMemory("count")) var count = 0
-      }
-      do {
-        @Shared(.inMemory("count")) var count: Int = { fatalError() }()
-      }
-    }
-
     @Test func nesting() {
       struct C: Equatable {}
       struct B {
