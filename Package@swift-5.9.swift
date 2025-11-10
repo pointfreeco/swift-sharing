@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.9
 
 import PackageDescription
 
@@ -44,14 +44,6 @@ let package = Package(
         .process("PrivacyInfo.xcprivacy")
       ]
     ),
-    .testTarget(
-      name: "SharingTests",
-      dependencies: [
-        "Sharing",
-        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
-      ],
-      exclude: ["Sharing.xctestplan"]
-    ),
     .target(
       name: "Sharing1",
       path: "Sources/VersionMarkerModules/Sharing1"
@@ -60,6 +52,5 @@ let package = Package(
       name: "Sharing2",
       path: "Sources/VersionMarkerModules/Sharing2"
     ),
-  ],
-  swiftLanguageModes: [.v6]
+  ]
 )
