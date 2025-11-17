@@ -1,3 +1,4 @@
+import Dependencies
 import PerceptionCore
 import Sharing
 import Testing
@@ -27,6 +28,32 @@ import Testing
       }
 
       $count.withLock { $0 += 1 }
+    }
+  }
+
+  @Test func removeValueShared() async {
+    @Dependency(\.defaultInMemoryStorage) var storage
+    @Shared(.inMemory("count")) var count = 0
+    await confirmation { confirm in
+      withPerceptionTracking {
+        _ = count
+      } onChange: {
+        confirm()
+      }
+      storage.removeValue(for: InMemoryKey<Int>.inMemory("count"), default: 0)
+    }
+  }
+
+  @Test func removeValueSharedReader() async {
+    @Dependency(\.defaultInMemoryStorage) var storage
+    @SharedReader(.inMemory("count")) var count = 0
+    await confirmation { confirm in
+      withPerceptionTracking {
+        _ = count
+      } onChange: {
+        confirm()
+      }
+      storage.removeValue(for: InMemoryKey<Int>.inMemory("count"), default: 0)
     }
   }
 }
