@@ -256,6 +256,7 @@ available to enhance your applications:
   * [SharingCloud](https://github.com/KeithBird/sharing-cloud): Sync shared data across devices via
     iCloud.
   * [SharingFirestore](https://github.com/bitkey-oss/sharing-firestore): Real-time synchronization and real-time queries powered by Firebase's Firestore.
+  * [SharingInstant](https://github.com/instantdb/sharing-instant): Real-time sync and presence powered by [InstantDB](https://instantdb.com), with schema codegen.
   * [SharingRemoteConfig](https://github.com/zunda-pixel/sharing-remoteconfig): Real-time Remote Config via Firebase.
 
 If you'd like to contribute a library, please [open a PR][library-pr] with a link to it!
