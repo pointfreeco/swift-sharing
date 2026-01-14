@@ -139,6 +139,36 @@
       AppStorageKey(key, store: store)
     }
 
+    /// Creates a shared key that can read and write to an double user default, transforming
+    /// that to a `RawRepresentable` data type.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: RawRepresentable<Double>>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value> {
+      AppStorageKey(key, store: store)
+    }
+
+    /// Creates a shared key that can read and write to a float user default, transforming
+    /// that to a `RawRepresentable` data type.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: RawRepresentable<Float>>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Self == AppStorageKey<Value> {
+      AppStorageKey(key, store: store)
+    }
+
     /// Creates a shared key that can read and write to a string user default, transforming
     /// that to a `RawRepresentable` data type.
     ///
@@ -280,6 +310,36 @@
       AppStorageKey(key, store: store)
     }
 
+    /// Creates a shared key that can read and write to an optional double user default,
+    /// transforming that to a `RawRepresentable` data type.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: RawRepresentable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Value.RawValue == Double, Self == AppStorageKey<Value?> {
+      AppStorageKey(key, store: store)
+    }
+
+    /// Creates a shared key that can read and write to an optional float user default,
+    /// transforming that to a `RawRepresentable` data type.
+    ///
+    /// - Parameters:
+    ///   - key: The key to read and write the value to in the user defaults store.
+    ///   - store: The user defaults store to read and write to. A value of `nil` will use the user
+    ///     default store from dependencies.
+    /// - Returns: A user defaults shared key.
+    public static func appStorage<Value: RawRepresentable>(
+      _ key: String, store: UserDefaults? = nil
+    ) -> Self
+    where Value.RawValue == Float, Self == AppStorageKey<Value?> {
+      AppStorageKey(key, store: store)
+    }
+
     /// Creates a shared key that can read and write to an optional string user default,
     /// transforming that to a `RawRepresentable` data type.
     ///
@@ -384,6 +444,14 @@
       self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
     }
 
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<Double> {
+      self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
+    }
+
+    fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<Float> {
+      self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
+    }
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value: RawRepresentable<String> {
       self.init(lookup: RawRepresentableLookup(base: CastableLookup()), key: key, store: store)
     }
@@ -430,6 +498,24 @@
     }
 
     fileprivate init<R: RawRepresentable<Int>>(_ key: String, store: UserDefaults?)
+    where Value == R? {
+      self.init(
+        lookup: OptionalLookup(base: RawRepresentableLookup(base: CastableLookup())),
+        key: key,
+        store: store
+      )
+    }
+
+    fileprivate init<R: RawRepresentable<Double>>(_ key: String, store: UserDefaults?)
+    where Value == R? {
+      self.init(
+        lookup: OptionalLookup(base: RawRepresentableLookup(base: CastableLookup())),
+        key: key,
+        store: store
+      )
+    }
+
+    fileprivate init<R: RawRepresentable<Float>>(_ key: String, store: UserDefaults?)
     where Value == R? {
       self.init(
         lookup: OptionalLookup(base: RawRepresentableLookup(base: CastableLookup())),
