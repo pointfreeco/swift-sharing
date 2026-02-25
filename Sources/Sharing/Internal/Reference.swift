@@ -7,7 +7,8 @@ import PerceptionCore
   import Combine
 #endif
 
-protocol Reference<Value>:
+@_spi(Internals)
+public protocol Reference<Value>:
   AnyObject,
   CustomStringConvertible,
   Sendable,
@@ -26,7 +27,8 @@ protocol Reference<Value>:
   #endif
 }
 
-protocol MutableReference<Value>: Reference, Equatable {
+@_spi(Internals)
+public protocol MutableReference<Value>: Reference, Equatable {
   var saveError: (any Error)? { get }
   var snapshot: Value? { get }
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R

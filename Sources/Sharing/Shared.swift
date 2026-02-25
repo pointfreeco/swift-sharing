@@ -21,7 +21,8 @@ public struct Shared<Value> {
     @State private var generation = 0
   #endif
 
-  var reference: any MutableReference<Value> {
+  @_spi(Internals)
+  public var reference: any MutableReference<Value> {
     @storageRestrictions(initializes: box)
     init(initialValue) { box = Box(initialValue) }
     get { box.reference }
