@@ -393,10 +393,11 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
 
   func withLock<R>(_ body: (inout Key.Value) throws -> R) rethrows -> R {
     try withMutation(keyPath: \.value) {
+      var savedValue = value
       defer {
         let key = key
         key.save(
-          value,
+          savedValue,
           context: .didSet,
           continuation: SaveContinuation("\(key)") { [weak self] result in
             guard let self else { return }
@@ -411,7 +412,8 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
         )
       }
       return try lock.withLock {
-        try body(&value)
+        defer { savedValue = value }
+        return try body(&value)
       }
     }
   }
