@@ -29,6 +29,7 @@ protocol Reference<Value>:
 protocol MutableReference<Value>: Reference, Equatable {
   var saveError: (any Error)? { get }
   var snapshot: Value? { get }
+  func _untrackedWrappedValue() -> Value
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R
   func takeSnapshot(
     _ value: Value,
@@ -118,6 +119,10 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
     try withMutation(keyPath: \.value) {
       try lock.withLock { try body(&value) }
     }
+  }
+
+  func _untrackedWrappedValue() -> Value {
+    lock.withLock { value }
   }
 
   func save() {}
@@ -416,6 +421,10 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
     }
   }
 
+  func _untrackedWrappedValue() -> Key.Value {
+    lock.withLock { value }
+  }
+
   func save() async throws {
     if _saveError != nil { saveError = nil }
     do {
@@ -514,6 +523,10 @@ where Base: MutableReference, Path: WritableKeyPath<Base.Value, Value> {
 
   func withLock<R>(_ body: (inout Value) throws -> R) rethrows -> R {
     try base.withLock { try body(&$0[keyPath: keyPath as WritableKeyPath]) }
+  }
+
+  func _untrackedWrappedValue() -> Value {
+    base._untrackedWrappedValue()[keyPath: keyPath as WritableKeyPath]
   }
 
   func save() async throws {
@@ -658,6 +671,14 @@ extension _OptionalReference: MutableReference, Equatable where Base: MutableRef
       }
       return try body(&unwrapped)
     }
+  }
+
+  func _untrackedWrappedValue() -> Value {
+    guard let wrappedValue = base._untrackedWrappedValue() else {
+      return lock.withLock { cachedValue }
+    }
+    lock.withLock { cachedValue = wrappedValue }
+    return wrappedValue
   }
 
   func save() async throws {

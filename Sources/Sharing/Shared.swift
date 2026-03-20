@@ -357,6 +357,7 @@ public struct Shared<Value> {
   final class Box: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     private var _reference: any MutableReference<Value>
+    private var _uiBindingRoot: _SharedUIBindingRoot<Value>?
     #if canImport(Combine)
       let subject = PassthroughRelay<Value>()
       private var subjectCancellable: AnyCancellable
@@ -377,6 +378,7 @@ public struct Shared<Value> {
         #if canImport(Combine)
           subjectCancellable = _reference.publisher.subscribe(subject)
         #endif
+        _uiBindingRoot?.setReference(_reference)
       }
       set {
         lock.withLock {
@@ -384,7 +386,18 @@ public struct Shared<Value> {
           #if canImport(Combine)
             subjectCancellable = _reference.publisher.subscribe(subject)
           #endif
+          _uiBindingRoot?.setReference(newValue)
         }
+      }
+    }
+    var uiBindingRoot: _SharedUIBindingRoot<Value> {
+      lock.withLock {
+        if let _uiBindingRoot {
+          return _uiBindingRoot
+        }
+        let root = _SharedUIBindingRoot(reference: _reference)
+        _uiBindingRoot = root
+        return root
       }
     }
     init(_ reference: any MutableReference<Value>) {
