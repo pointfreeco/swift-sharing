@@ -19,15 +19,18 @@ settings.isEnabled = false
 // with exclusive access
 ```
 
-Unfortunately, a soundness hole in Swift failed to availability of certain code paths, like dynamic
-member lookup. This meant that something as innocent as chaining a binding into shared state built
-just fine:
+Unfortunately, a soundness hole in Swift failed to check availability through certain code paths,
+like dynamic member lookup. This meant that something as innocent as chaining a binding into shared
+state built just fine:
 
 ```swift
 @Binding var settings: Settings
 
 Toggle("Enabled", isOn: $settings.isEnabled)
 ```
+
+…when in reality this writer should not be available, as it opens up the possibility of data races
+in your applications.
 
 In Swift 6.3 this bug has been fixed, and the above is now a compile-time failure in Sharing 2.7 and
 earlier. To mitigate this, Sharing 2.8 introduces a softer deprecation, instead:
