@@ -106,8 +106,10 @@ public struct Shared<Value> {
       }
       @available(
         *,
-        unavailable,
-        message: "Use '$shared.withLock' to modify a shared value with exclusive access."
+        deprecated,
+        message: """
+          Use '$shared.withLock' to modify a shared value with exclusive access; when constructing a SwiftUI binding, use 'Binding($shared)'
+          """
       )
       nonmutating set {
         withLock { $0 = newValue }
