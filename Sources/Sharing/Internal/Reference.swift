@@ -7,7 +7,7 @@ import PerceptionCore
   import Combine
 #endif
 
-@_spi(Internals)
+@_spi(References)
 public protocol Reference<Value>:
   AnyObject,
   CustomStringConvertible,
@@ -27,7 +27,7 @@ public protocol Reference<Value>:
   #endif
 }
 
-@_spi(Internals)
+@_spi(References)
 public protocol MutableReference<Value>: Reference, Equatable {
   var saveError: (any Error)? { get }
   var snapshot: Value? { get }
