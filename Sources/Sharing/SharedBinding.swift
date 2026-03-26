@@ -42,7 +42,7 @@
   }
 
   extension MutableReference {
-    @_spi(Internals)
+    @_spi(References)
     public var _wrappedValue: Value {
       get { wrappedValue }
       set { withLock { $0 = newValue } }
