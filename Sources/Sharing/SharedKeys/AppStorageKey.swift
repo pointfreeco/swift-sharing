@@ -1,6 +1,6 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
-  import Dependencies
-  @preconcurrency import Foundation
+  public import Dependencies
+  @preconcurrency public import Foundation
 
   #if canImport(AppKit)
     import AppKit

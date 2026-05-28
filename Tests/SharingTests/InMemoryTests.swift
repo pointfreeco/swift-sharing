@@ -92,7 +92,7 @@ import Testing
     }
 
     do {
-      await #expect(throws: Error.self) {
+      await #expect(throws: (any Error).self) {
         try await Shared<Int?>(require: .inMemory("countNotExist"))
       }
     }

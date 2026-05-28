@@ -1,5 +1,5 @@
 #if canImport(SwiftUI)
-  import SwiftUI
+  public import SwiftUI
 
   extension State {
     /// A dynamic property that holds a shared property in view state.

@@ -1,10 +1,10 @@
 import Dependencies
 import Foundation
 import IdentifiedCollections
-import PerceptionCore
+public import PerceptionCore
 
 #if canImport(Combine)
-  import Combine
+  public import Combine
 #endif
 
 @_spi(References)

@@ -1,4 +1,4 @@
-import Dependencies
+public import Dependencies
 import Foundation
 
 extension SharedReaderKey {

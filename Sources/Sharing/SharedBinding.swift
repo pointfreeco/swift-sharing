@@ -1,6 +1,6 @@
 #if canImport(SwiftUI)
   import PerceptionCore
-  import SwiftUI
+  public import SwiftUI
 
   extension Binding {
     /// Creates a binding from a shared reference.

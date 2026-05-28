@@ -1,5 +1,5 @@
 #if canImport(Combine)
-  import Combine
+  public import Combine
 
   extension Shared {
     /// Returns a publisher that emits events when the underlying value changes.
