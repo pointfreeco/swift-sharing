@@ -4,6 +4,7 @@ import Testing
 
 @MainActor
 @Suite struct ObservationTests {
+  @available(*, deprecated)
   @Test func nonPersistedShared() async {
     @Shared(value: 0) var count: Int
     await confirmation { confirm in
@@ -17,6 +18,7 @@ import Testing
     }
   }
 
+  @available(*, deprecated)
   @Test func persistedShared() async {
     @Shared(.inMemory("count")) var count = 0
     await confirmation { confirm in

@@ -1,14 +1,15 @@
-import CustomDump
+public import CustomDump
 import Dependencies
 import Foundation
 import IdentifiedCollections
-import PerceptionCore
+public import Observation
+public import PerceptionCore
 
 #if canImport(Combine)
   import Combine
 #endif
 #if canImport(SwiftUI)
-  import SwiftUI
+  public import SwiftUI
 #endif
 
 /// A property wrapper type that shares a value with other parts of the application and/or external

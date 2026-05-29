@@ -43,7 +43,7 @@ extension SharedKey where Self == InMemoryKey<Int> {
 }
 
 extension SharedReaderKey where Self == AppStorageKey<Int?>.Default {
-  public static var count: Self {
+  static var count: Self {
     Self[.appStorage("count"), default: nil]
   }
 }

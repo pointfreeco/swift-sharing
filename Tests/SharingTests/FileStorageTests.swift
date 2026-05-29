@@ -1,4 +1,5 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
+  import Combine
   import CustomDump
   import Dependencies
   import DependenciesTestSupport

@@ -1,5 +1,5 @@
 #if canImport(Foundation)
-  import Foundation
+  package import Foundation
 #endif
 
 // NB: Deprecated after 2.5.2

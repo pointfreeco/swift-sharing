@@ -1,8 +1,13 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
+  import Combine
   import CombineSchedulers
   import ConcurrencyExtras
-  import Dependencies
+  public import Dependencies
   @preconcurrency import Dispatch
+
+  #if canImport(Foundation)
+    public import Foundation
+  #endif
 
   #if canImport(AppKit)
     import AppKit
