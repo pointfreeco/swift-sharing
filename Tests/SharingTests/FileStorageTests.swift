@@ -99,6 +99,31 @@
       }
     }
 
+    @Test func immediateSchedulerPersistsConsecutiveWrites() throws {
+      // Regression: under the immediate scheduler used by the in-memory test
+      // storage, consecutive '.didSet' writes must each persist. The debounce
+      // work item used to be scheduled while the 'state' lock was held; the
+      // immediate scheduler ran it re-entrantly, and the lock's copy-on-write
+      // write-back clobbered the work item's 'state.workItem = nil', wedging the
+      // key so that every write after the first was buffered but never saved. A
+      // short-lived '@Shared' (recreated across 'await' points, as in a
+      // dependency-client live value) would then reload a stale value.
+      try withDependencies {
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: .immediate)
+      } operation: {
+        @Shared(.fileStorage(.fileURL)) var users = [User]()
+
+        $users.withLock { $0.append(.blob) }
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+
+        $users.withLock { $0.append(.blobJr) }
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob, .blobJr])
+
+        $users.withLock { $0.append(.blobSr) }
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob, .blobJr, .blobSr])
+      }
+    }
+
     @Test func multipleFiles() throws {
       try withDependencies {
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
