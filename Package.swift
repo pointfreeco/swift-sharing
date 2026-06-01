@@ -32,7 +32,6 @@ let package = Package(
       dependencies: [
         "Sharing1",
         "Sharing2",
-        .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Dependencies", package: "swift-dependencies"),
@@ -48,6 +47,7 @@ let package = Package(
       name: "SharingTests",
       dependencies: [
         "Sharing",
+        .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       exclude: ["Sharing.xctestplan"]
