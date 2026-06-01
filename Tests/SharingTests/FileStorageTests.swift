@@ -1,5 +1,6 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
+  import CombineSchedulers
   import CustomDump
   import Dependencies
   import DependenciesTestSupport
@@ -13,7 +14,7 @@
 
     @Test func basics() throws {
       try withDependencies {
-        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: .immediate)
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
@@ -27,7 +28,7 @@
 
     @Test func customEncodeDecode() {
       withDependencies {
-        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: .immediate)
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)
       } operation: {
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
@@ -44,10 +45,7 @@
 
     @Test func throttle() throws {
       try withDependencies {
-        $0.defaultFileStorage = .inMemory(
-          fileSystem: fileSystem,
-          scheduler: testScheduler.eraseToAnyScheduler()
-        )
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
@@ -82,10 +80,7 @@
 
     @Test func noThrottling() throws {
       try withDependencies {
-        $0.defaultFileStorage = .inMemory(
-          fileSystem: fileSystem,
-          scheduler: testScheduler.eraseToAnyScheduler()
-        )
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
@@ -476,6 +471,21 @@
         #expect(count == 999)
         #expect(try String(decoding: Data(contentsOf: .fileURL), as: UTF8.self) == "999")
       }
+    }
+  }
+
+  extension FileStorage {
+    fileprivate static func inMemory<S: Scheduler & Sendable>(
+      fileSystem: LockIsolated<[URL: Data]>,
+      scheduler: S
+    ) -> Self where S.SchedulerTimeType == DispatchQueue.SchedulerTimeType {
+      .inMemory(
+        fileSystem: fileSystem,
+        async: { scheduler.schedule($0.perform) },
+        asyncAfter: {
+          scheduler.schedule(after: scheduler.now.advanced(by: .init($0)), $1.perform)
+        }
+      )
     }
   }
 
