@@ -64,7 +64,7 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(_ key: (some SharedKey<Value>).Default) {
+  public init<K: SharedKey<Value>>(_ key: K.Default) {
     self.init(wrappedValue: key.initialValue, key.base)
   }
 
@@ -75,9 +75,9 @@ extension Shared {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading
   ///     and saving the shared reference's value from some external source.
-  public init(
+  public init<K: SharedKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedKey<Value>).Default
+    _ key: K.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
@@ -125,13 +125,16 @@ extension Shared {
     if let loadError { throw loadError }
   }
 
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedKey<Value>) {
-    fatalError()
-  }
+  #if compiler(<6.4)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedKey<Value>) {
+      fatalError()
+    }
+  #endif
 
   private init(
-    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedKey<Value>,
+    rethrowing value: @autoclosure () throws -> Value,
+    _ key: some SharedKey<Value>,
     skipInitialLoad: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences
