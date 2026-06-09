@@ -64,7 +64,7 @@ extension Shared {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading and saving the shared reference's value from some external source.
-  public init(_ key: (some SharedKey<Value>).Default) {
+  public init<Key: SharedKey<Value>>(_ key: Key.Default) {
     self.init(wrappedValue: key.initialValue, key.base)
   }
 
@@ -75,9 +75,9 @@ extension Shared {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading
   ///     and saving the shared reference's value from some external source.
-  public init(
+  public init<Key: SharedKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedKey<Value>).Default
+    _ key: Key.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
@@ -125,10 +125,15 @@ extension Shared {
     if let loadError { throw loadError }
   }
 
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedKey<Value>) {
-    fatalError()
-  }
+  // NB: Diagnostic-only init omitted on Swift 6.4+ to avoid a SILGen crash
+  //     (emitMemberInitializers) for non-delegating generic inits over a type storing `@State`.
+  //     See: https://github.com/swiftlang/swift/issues/89808
+  #if compiler(<6.4)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedKey<Value>) {
+      fatalError()
+    }
+  #endif
 
   private init(
     rethrowing value: @autoclosure () throws -> Value, _ key: some SharedKey<Value>,

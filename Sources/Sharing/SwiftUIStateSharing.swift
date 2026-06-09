@@ -83,15 +83,15 @@
       }
 
       @_documentation(visibility: private)
-      public init(_ key: (some SharedKey<Value>).Default) {
+      public init<Key: SharedKey<Value>>(_ key: Key.Default) {
         shared = Sharing.Shared(wrappedValue: key.initialValue, key)
       }
 
       @_disfavoredOverload
       @_documentation(visibility: private)
-      public init(
+      public init<Key: SharedKey<Value>>(
         wrappedValue: @autoclosure () -> Value,
-        _ key: (some SharedKey<Value>).Default
+        _ key: Key.Default
       ) {
         shared = Sharing.Shared(wrappedValue: wrappedValue(), key)
       }
@@ -204,29 +204,29 @@
       }
 
       @_documentation(visibility: private)
-      public init(_ key: (some SharedReaderKey<Value>).Default) {
+      public init<Key: SharedReaderKey<Value>>(_ key: Key.Default) {
         shared = Sharing.SharedReader(key)
       }
 
       @_disfavoredOverload
       @_documentation(visibility: private)
-      public init(_ key: (some SharedKey<Value>).Default) {
+      public init<Key: SharedKey<Value>>(_ key: Key.Default) {
         shared = Sharing.SharedReader(key)
       }
 
       @_disfavoredOverload
-      public init(
+      public init<Key: SharedReaderKey<Value>>(
         wrappedValue: @autoclosure () -> Value,
-        _ key: (some SharedReaderKey<Value>).Default
+        _ key: Key.Default
       ) {
         shared = Sharing.SharedReader(wrappedValue: wrappedValue(), key)
       }
 
       @_disfavoredOverload
       @_documentation(visibility: private)
-      public init(
+      public init<Key: SharedKey<Value>>(
         wrappedValue: @autoclosure () -> Value,
-        _ key: (some SharedKey<Value>).Default
+        _ key: Key.Default
       ) {
         shared = Sharing.SharedReader(wrappedValue: wrappedValue(), key)
       }

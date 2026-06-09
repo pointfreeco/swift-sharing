@@ -115,13 +115,13 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
-  public init(_ key: (some SharedReaderKey<Value>).Default) {
+  public init<Key: SharedReaderKey<Value>>(_ key: Key.Default) {
     self.init(wrappedValue: key.initialValue, key.base)
   }
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init(_ key: (some SharedKey<Value>).Default) {
+  public init<Key: SharedKey<Value>>(_ key: Key.Default) {
     self.init(key)
   }
 
@@ -133,17 +133,17 @@ extension SharedReader {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading the
   ///     shared reference's value from some external source.
-  public init(
+  public init<Key: SharedReaderKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedReaderKey<Value>).Default
+    _ key: Key.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
 
   @_documentation(visibility: private)
-  public init(
+  public init<Key: SharedKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedKey<Value>).Default
+    _ key: Key.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
@@ -203,17 +203,23 @@ extension SharedReader {
     try await self.init(require: key)
   }
 
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedReaderKey<Value>) {
-    fatalError()
-  }
+  // NB: These diagnostic-only initializers are non-delegating generic inits over a type that
+  //     stores an `@State` property, which crashes SILGen on Swift 6.4. They exist purely to
+  //     surface a friendlier "Assign a default value" error, so we omit them on 6.4+.
+  //     See: https://github.com/swiftlang/swift/issues/89808 (emitMemberInitializers crash)
+  #if compiler(<6.4)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedReaderKey<Value>) {
+      fatalError()
+    }
 
-  @_disfavoredOverload
-  @_documentation(visibility: private)
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedKey<Value>) {
-    fatalError()
-  }
+    @_disfavoredOverload
+    @_documentation(visibility: private)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedKey<Value>) {
+      fatalError()
+    }
+  #endif
 
   private init(
     rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>,
