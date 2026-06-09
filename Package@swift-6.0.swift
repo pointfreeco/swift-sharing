@@ -1,4 +1,4 @@
-// swift-tools-version: 6.3
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -19,8 +19,8 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.3.0"),
-    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.6.0", traits: []),
-    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.13.0", traits: []),
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.5.1"),
     .package(url: "https://github.com/pointfreeco/swift-identified-collections", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-perception", "1.4.1"..<"3.0.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.4.3"),
@@ -74,4 +74,9 @@ for target in package.targets {
     .enableUpcomingFeature("MemberImportVisibility"),
     .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
   ])
+  #if compiler(>=6.4)
+    target.swiftSettings?.append(contentsOf: [
+      .treatAllWarnings(as: .error)
+    ])
+  #endif
 }
