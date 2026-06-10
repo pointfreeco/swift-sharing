@@ -1,6 +1,6 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
-  import ConcurrencyExtras
+  public import ConcurrencyExtras
   public import Dependencies
   @preconcurrency import Dispatch
 
@@ -120,7 +120,8 @@
     }
 
     public func subscribe(
-      context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+      context _: LoadContext<Value>,
+      subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let cancellable = Mutex<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
@@ -389,7 +390,8 @@
       fileSystem: LockIsolated<[URL: Data]>,
       async: @escaping @Sendable (DispatchWorkItem) -> Void = { $0.perform() },
       asyncAfter: @escaping @Sendable (DispatchTimeInterval, DispatchWorkItem) -> Void = {
-        _, workItem in workItem.perform()
+        _,
+        workItem in workItem.perform()
       }
     ) -> Self {
       return Self(
