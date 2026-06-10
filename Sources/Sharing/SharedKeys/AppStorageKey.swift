@@ -1,6 +1,8 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
+  import ConcurrencyExtras
   public import Dependencies
   @preconcurrency public import Foundation
+  import IssueReporting
 
   #if canImport(AppKit)
     import AppKit
@@ -60,7 +62,7 @@
     where Self == AppStorageKey<String> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write to a string array user default.
     ///
     /// - Parameters:
@@ -72,7 +74,7 @@
     where Self == AppStorageKey<[String]> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write to a URL user default.
     ///
     /// - Parameters:
@@ -108,7 +110,7 @@
     where Self == AppStorageKey<Date> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write a codable value to user defaults.
     ///
     /// - Parameters:
@@ -118,7 +120,8 @@
     /// - Returns: A user defaults shared key.
     @_disfavoredOverload
     public static func appStorage<Value: Codable>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Self == AppStorageKey<Value> {
       AppStorageKey(key, store: store)
@@ -133,7 +136,8 @@
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable<Int>>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Self == AppStorageKey<Value> {
       AppStorageKey(key, store: store)
@@ -148,7 +152,8 @@
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable<String>>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Self == AppStorageKey<Value> {
       AppStorageKey(key, store: store)
@@ -201,7 +206,7 @@
     where Self == AppStorageKey<String?> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write to an optional string array user default.
     ///
     /// - Parameters:
@@ -213,7 +218,7 @@
     where Self == AppStorageKey<[String]?> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write to an optional URL user default.
     ///
     /// - Parameters:
@@ -249,7 +254,7 @@
     where Self == AppStorageKey<Date?> {
       AppStorageKey(key, store: store)
     }
-    
+
     /// Creates a shared key that can read and write a codable value to user defaults.
     ///
     /// - Parameters:
@@ -259,7 +264,8 @@
     /// - Returns: A user defaults shared key.
     @_disfavoredOverload
     public static func appStorage<Value: Codable>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Self == AppStorageKey<Value?> {
       AppStorageKey(key, store: store)
@@ -274,7 +280,8 @@
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Value.RawValue == Int, Self == AppStorageKey<Value?> {
       AppStorageKey(key, store: store)
@@ -289,7 +296,8 @@
     ///     default store from dependencies.
     /// - Returns: A user defaults shared key.
     public static func appStorage<Value: RawRepresentable>(
-      _ key: String, store: UserDefaults? = nil
+      _ key: String,
+      store: UserDefaults? = nil
     ) -> Self
     where Value.RawValue == String, Self == AppStorageKey<Value?> {
       AppStorageKey(key, store: store)
@@ -359,11 +367,11 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == String {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
-    
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value == [String] {
       self.init(lookup: CastableLookup(), key: key, store: store)
     }
-    
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL {
       self.init(lookup: URLLookup(), key: key, store: store)
     }
@@ -403,11 +411,11 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == String? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
     }
-    
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value == [String]? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
     }
-    
+
     fileprivate init(_ key: String, store: UserDefaults?) where Value == URL? {
       self.init(lookup: OptionalLookup(base: URLLookup()), key: key, store: store)
     }
@@ -419,7 +427,7 @@
     fileprivate init(_ key: String, store: UserDefaults?) where Value == Date? {
       self.init(lookup: OptionalLookup(base: CastableLookup()), key: key, store: store)
     }
-    
+
     fileprivate init<C: Codable>(_ key: String, store: UserDefaults?)
     where Value == C? {
       self.init(
@@ -452,7 +460,8 @@
     }
 
     public func subscribe(
-      context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+      context: LoadContext<Value>,
+      subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let removeObserver: @Sendable () -> Void
       let keyContainsPeriod = key.contains(".")
@@ -732,7 +741,9 @@
   where Value.RawValue == Base.Value {
     let base: Base
     func loadValue(
-      from store: UserDefaults, at key: String, default defaultValue: Value?
+      from store: UserDefaults,
+      at key: String,
+      default defaultValue: Value?
     ) -> Value? {
       base.loadValue(from: store, at: key, default: defaultValue?.rawValue)
         .flatMap(Value.init(rawValue:))
@@ -745,7 +756,9 @@
   private struct OptionalLookup<Base: Lookup>: Lookup {
     let base: Base
     func loadValue(
-      from store: UserDefaults, at key: String, default defaultValue: Base.Value??
+      from store: UserDefaults,
+      at key: String,
+      default defaultValue: Base.Value??
     ) -> Base.Value?? {
       base.loadValue(from: store, at: key, default: defaultValue ?? nil)
         .flatMap(Optional.some)
