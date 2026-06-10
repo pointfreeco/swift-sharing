@@ -1,6 +1,7 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
   import CombineSchedulers
+  import ConcurrencyExtras
   import CustomDump
   import Dependencies
   import DependenciesTestSupport
