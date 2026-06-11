@@ -22,6 +22,30 @@ import Testing
     #expect(count == 2)
   }
 
+  @Test func removeValue() async {
+    @Dependency(\.defaultInMemoryStorage) var storage
+
+    do {
+      @Shared(.inMemory("count")) var count = 0
+
+      #expect(count == 0)
+
+      $count.withLock { $0 += 1 }
+
+      #expect(count == 1)
+    }
+
+    do {
+      @Shared(.inMemory("count")) var count = 0
+
+      #expect(count == 1)
+
+      storage.removeValue(for: InMemoryKey<Int>.inMemory("count"), default: 0)
+
+      #expect(count == 0)
+    }
+  }
+
   @Test func referenceCounting() async throws {
     do {
       @Shared(.inMemory("count")) var count = 0
