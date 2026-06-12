@@ -210,49 +210,59 @@
 
     public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
-        try state.withValue { state in
+        // NB: The work item is scheduled _outside_ of the 'state' lock below. Were it scheduled
+        //     inside, an immediate scheduler (as used by the in-memory test storage) would run it
+        //     re-entrantly while 'state.withValue' still holds a copy of the state. The outer
+        //     scope's write-back would then clobber the 'state.workItem = nil' performed by the
+        //     re-entrant work item, permanently pinning the key in its debounced branch so that
+        //     every subsequent '.didSet' save buffers without ever persisting.
+        let workItem = try state.withValue { state -> DispatchWorkItem? in
           let data = try encode(value)
           switch context {
           case .didSet:
-            if state.workItem == nil {
-              try save(data: data, url: url, modificationDates: &state.modificationDates)
-              continuation.resume()
-              let workItem = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                self.state.withValue { state in
-                  defer {
-                    state.value = nil
-                    state.workItem = nil
-                  }
-                  guard
-                    let value = state.value,
-                    let data = try? self.encode(value)
-                  else { return }
-                  let result = Result {
-                    try self.save(
-                      data: data,
-                      url: self.url,
-                      modificationDates: &state.modificationDates
-                    )
-                  }
-                  for continuation in state.continuations {
-                    continuation.resume(with: result)
-                  }
-                  state.continuations.removeAll()
-                }
-              }
-              state.workItem = workItem
-              storage.asyncAfter(.seconds(1), workItem)
-            } else {
+            guard state.workItem == nil else {
               state.value = value
               state.continuations.append(continuation)
+              return nil
             }
+            try save(data: data, url: url, modificationDates: &state.modificationDates)
+            continuation.resume()
+            let workItem = DispatchWorkItem { [weak self] in
+              guard let self else { return }
+              self.state.withValue { state in
+                defer {
+                  state.value = nil
+                  state.workItem = nil
+                }
+                guard
+                  let value = state.value,
+                  let data = try? self.encode(value)
+                else { return }
+                let result = Result {
+                  try self.save(
+                    data: data,
+                    url: self.url,
+                    modificationDates: &state.modificationDates
+                  )
+                }
+                for continuation in state.continuations {
+                  continuation.resume(with: result)
+                }
+                state.continuations.removeAll()
+              }
+            }
+            state.workItem = workItem
+            return workItem
 
           case .userInitiated:
             state.cancelWorkItem()
             try storage.save(data, url)
             continuation.resume()
+            return nil
           }
+        }
+        if let workItem {
+          storage.asyncAfter(.seconds(1), workItem)
         }
       } catch {
         continuation.resume(throwing: error)
