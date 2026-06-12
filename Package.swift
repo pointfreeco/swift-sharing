@@ -48,9 +48,9 @@ let package = Package(
         .product(
           name: "CasePaths",
           package: "swift-case-paths",
-//          condition: .when(
-//            traits: ["CasePaths"]
-//          )
+          condition: .when(
+            traits: ["CasePaths"]
+          )
         )
       ],
       resources: [
@@ -63,6 +63,13 @@ let package = Package(
         "Sharing",
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
+        .product(
+          name: "CasePaths",
+          package: "swift-case-paths",
+          condition: .when(
+            traits: ["CasePaths"]
+          )
+        ),
       ],
       exclude: ["Sharing.xctestplan"]
     ),

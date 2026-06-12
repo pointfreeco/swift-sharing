@@ -1,4 +1,4 @@
-//#if CasePaths
+#if CasePaths
 public import CasePaths
 
 #if canImport(Combine)
@@ -211,4 +211,4 @@ extension _MutableReferenceEnumToOptionalCase: MutableReference {
   }
 }
 
-//#endif
+#endif
