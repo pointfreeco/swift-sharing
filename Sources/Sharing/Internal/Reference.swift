@@ -207,9 +207,9 @@ final class _PersistentReference<Key: SharedReaderKey>:
       guard let self else { return }
       isLoading = false
       switch result {
-      case let .failure(error):
+      case .failure(let error):
         loadError = error
-      case let .success(newValue):
+      case .success(let newValue):
         if _loadError != nil { loadError = nil }
         wrappedValue = newValue ?? initialValue
       }
@@ -410,7 +410,7 @@ extension _PersistentReference: MutableReference, Equatable where Key: SharedKey
           case .success:
             if _loadError != nil { loadError = nil }
             if _saveError != nil { saveError = nil }
-          case let .failure(error):
+          case .failure(let error):
             saveError = error
           }
         }
