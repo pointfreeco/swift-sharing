@@ -210,17 +210,12 @@
 
     public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
-        // NB: The work item is scheduled _outside_ of the 'state' lock below. Were it scheduled
-        //     inside, an immediate scheduler (as used by the in-memory test storage) would run it
-        //     re-entrantly while 'state.withValue' still holds a copy of the state. The outer
-        //     scope's write-back would then clobber the 'state.workItem = nil' performed by the
-        //     re-entrant work item, permanently pinning the key in its debounced branch so that
-        //     every subsequent '.didSet' save buffers without ever persisting.
-        let workItem = try state.withValue { state -> DispatchWorkItem? in
+        let workItem: DispatchWorkItem? = try state.withValue { state in
           let data = try encode(value)
           switch context {
           case .didSet:
-            guard state.workItem == nil else {
+            guard state.workItem == nil
+            else {
               state.value = value
               state.continuations.append(continuation)
               return nil
