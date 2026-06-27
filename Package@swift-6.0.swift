@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -17,6 +17,7 @@ let package = Package(
     )
   ],
   dependencies: [
+    .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.5.1"),
@@ -42,6 +43,15 @@ let package = Package(
         .process("PrivacyInfo.xcprivacy")
       ]
     ),
+    .testTarget(
+      name: "SharingTests",
+      dependencies: [
+        "Sharing",
+        .product(name: "CombineSchedulers", package: "combine-schedulers"),
+        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
+      ],
+      exclude: ["Sharing.xctestplan"]
+    ),
     .target(
       name: "Sharing1",
       path: "Sources/VersionMarkerModules/Sharing1"
@@ -50,5 +60,18 @@ let package = Package(
       name: "Sharing2",
       path: "Sources/VersionMarkerModules/Sharing2"
     ),
-  ]
+  ],
+  swiftLanguageModes: [.v6]
 )
+
+for target in package.targets {
+  target.swiftSettings = target.swiftSettings ?? []
+  target.swiftSettings?.append(contentsOf: [
+    .enableUpcomingFeature("ExistentialAny"),
+    .enableUpcomingFeature("ImmutableWeakCaptures"),
+    .enableUpcomingFeature("InferIsolatedConformances"),
+    .enableUpcomingFeature("InternalImportsByDefault"),
+    .enableUpcomingFeature("MemberImportVisibility"),
+    .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+  ])
+}

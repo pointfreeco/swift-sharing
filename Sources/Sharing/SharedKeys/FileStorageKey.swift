@@ -1,7 +1,6 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
-  import CombineSchedulers
-  import ConcurrencyExtras
+  public import ConcurrencyExtras
   public import Dependencies
   @preconcurrency import Dispatch
 
@@ -121,7 +120,8 @@
     }
 
     public func subscribe(
-      context _: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+      context _: LoadContext<Value>,
+      subscriber: SharedSubscriber<Value>
     ) -> SharedSubscription {
       let cancellable = Mutex<SharedSubscription?>(nil)
       @Sendable func setUpSources() {
@@ -398,14 +398,16 @@
 
     @_spi(Internals) public static func inMemory(
       fileSystem: LockIsolated<[URL: Data]>,
-      scheduler: AnySchedulerOf<DispatchQueue> = .immediate
+      async: @escaping @Sendable (DispatchWorkItem) -> Void = { $0.perform() },
+      asyncAfter: @escaping @Sendable (DispatchTimeInterval, DispatchWorkItem) -> Void = {
+        _,
+        workItem in workItem.perform()
+      }
     ) -> Self {
       return Self(
         id: AnyHashableSendable(ObjectIdentifier(fileSystem)),
-        async: { scheduler.schedule($0.perform) },
-        asyncAfter: {
-          scheduler.schedule(after: scheduler.now.advanced(by: .init($0)), $1.perform)
-        },
+        async: async,
+        asyncAfter: asyncAfter,
         attributesOfItemAtPath: { _ in [:] },
         createDirectory: { _, _ in },
         fileExists: { fileSystem.keys.contains($0) },

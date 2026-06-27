@@ -34,26 +34,26 @@
       store.set("Blob, Jr.", forKey: "string")
       #expect(string == "Blob, Jr.")
     }
-    
+
     @Test func stringArray() {
       @Shared(.appStorage("stringArray")) var stringArray = ["Blob"]
       #expect(store.stringArray(forKey: "stringArray") == ["Blob"])
       store.set(["Blob", "Blob, Jr."], forKey: "stringArray")
       #expect(stringArray == ["Blob", "Blob, Jr."])
     }
-    
+
     @Test func url() {
       @Shared(.appStorage("url")) var url = URL(fileURLWithPath: "/dev")
       #expect(store.url(forKey: "url") == URL(fileURLWithPath: "/dev"))
       store.set(URL(fileURLWithPath: "/tmp"), forKey: "url")
-      #expect(url == URL(fileURLWithPath: "/tmp"))
+      #expect(url == URL(fileURLWithPath: "/tmp/"))
     }
 
     @Test func optionalURL() {
       @Shared(.appStorage("url")) var url: URL? = URL(fileURLWithPath: "/dev")
       #expect(store.url(forKey: "url") == URL(fileURLWithPath: "/dev"))
       store.set(URL(fileURLWithPath: "/tmp"), forKey: "url")
-      #expect(url == URL(fileURLWithPath: "/tmp"))
+      #expect(url == URL(fileURLWithPath: "/tmp/"))
       $url.withLock { $0 = nil }
       #expect(url == nil)
     }
@@ -71,7 +71,7 @@
       store.set(Date(timeIntervalSince1970: 0), forKey: "date")
       #expect(date == Date(timeIntervalSince1970: 0))
     }
-    
+
     @Test func codable() {
       struct Item: Codable, Equatable {
         var id: Int

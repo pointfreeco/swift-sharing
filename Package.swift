@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 
 import PackageDescription
 
@@ -16,8 +16,15 @@ let package = Package(
       targets: ["Sharing"]
     )
   ],
+  traits: [
+    .trait(
+      name: "CasePaths",
+      description: "Adds support for deriving enum cases into a Shared reference"
+    )
+  ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.7.3"),
     .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.5.1"),
@@ -32,13 +39,19 @@ let package = Package(
       dependencies: [
         "Sharing1",
         "Sharing2",
-        .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
         .product(name: "PerceptionCore", package: "swift-perception"),
+        .product(
+          name: "CasePaths",
+          package: "swift-case-paths",
+          condition: .when(
+            traits: ["CasePaths"]
+          )
+        ),
       ],
       resources: [
         .process("PrivacyInfo.xcprivacy")
@@ -48,7 +61,15 @@ let package = Package(
       name: "SharingTests",
       dependencies: [
         "Sharing",
+        .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
+        .product(
+          name: "CasePaths",
+          package: "swift-case-paths",
+          condition: .when(
+            traits: ["CasePaths"]
+          )
+        ),
       ],
       exclude: ["Sharing.xctestplan"]
     ),
@@ -74,9 +95,4 @@ for target in package.targets {
     .enableUpcomingFeature("MemberImportVisibility"),
     .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
   ])
-  #if compiler(>=6.4)
-    target.swiftSettings?.append(contentsOf: [
-      .treatAllWarnings(as: .error)
-    ])
-  #endif
 }

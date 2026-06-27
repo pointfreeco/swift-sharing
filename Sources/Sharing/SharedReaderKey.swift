@@ -38,7 +38,8 @@ public protocol SharedReaderKey<Value>: Sendable {
   /// - Returns: A subscription to updates from an external system. If it is cancelled or
   ///   deinitialized, `subscriber` will no longer receive updates from the external system.
   func subscribe(
-    context: LoadContext<Value>, subscriber: SharedSubscriber<Value>
+    context: LoadContext<Value>,
+    subscriber: SharedSubscriber<Value>
   ) -> SharedSubscription
 }
 
@@ -61,7 +62,7 @@ public enum LoadContext<Value> {
 
   /// The value associated with ``LoadContext/initialValue(_:)``.
   public var initialValue: Value? {
-    guard case let .initialValue(value) = self else { return nil }
+    guard case .initialValue(let value) = self else { return nil }
     return value
   }
 }
@@ -115,13 +116,13 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
-  public init(_ key: (some SharedReaderKey<Value>).Default) {
+  public init<K: SharedReaderKey<Value>>(_ key: K.Default) {
     self.init(wrappedValue: key.initialValue, key.base)
   }
 
   @_disfavoredOverload
   @_documentation(visibility: private)
-  public init(_ key: (some SharedKey<Value>).Default) {
+  public init<K: SharedKey<Value>>(_ key: K.Default) {
     self.init(key)
   }
 
@@ -133,17 +134,17 @@ extension SharedReader {
   ///     shared key.
   ///   - key: A shared key associated with the shared reference. It is responsible for loading the
   ///     shared reference's value from some external source.
-  public init(
+  public init<K: SharedReaderKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedReaderKey<Value>).Default
+    _ key: K.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
 
   @_documentation(visibility: private)
-  public init(
+  public init<K: SharedKey<Value>>(
     wrappedValue: @autoclosure () -> Value,
-    _ key: (some SharedKey<Value>).Default
+    _ key: K.Default
   ) {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
@@ -203,20 +204,23 @@ extension SharedReader {
     try await self.init(require: key)
   }
 
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedReaderKey<Value>) {
-    fatalError()
-  }
+  #if compiler(<6.4)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedReaderKey<Value>) {
+      fatalError()
+    }
 
-  @_disfavoredOverload
-  @_documentation(visibility: private)
-  @available(*, unavailable, message: "Assign a default value")
-  public init(_ key: some SharedKey<Value>) {
-    fatalError()
-  }
+    @_disfavoredOverload
+    @_documentation(visibility: private)
+    @available(*, unavailable, message: "Assign a default value")
+    public init(_ key: some SharedKey<Value>) {
+      fatalError()
+    }
+  #endif
 
   private init(
-    rethrowing value: @autoclosure () throws -> Value, _ key: some SharedReaderKey<Value>,
+    rethrowing value: @autoclosure () throws -> Value,
+    _ key: some SharedReaderKey<Value>,
     skipInitialLoad: Bool
   ) rethrows {
     @Dependency(PersistentReferences.self) var persistentReferences

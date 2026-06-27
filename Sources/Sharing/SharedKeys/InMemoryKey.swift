@@ -46,7 +46,7 @@ public struct InMemoryKey<Value: Sendable>: SharedKey {
       continuation.resume(returning: store.values[key, default: initialValue])
     case .userInitiated:
       switch store.values[key] {
-      case let .some(value as Value):
+      case .some(let value as Value):
         continuation.resume(returning: value)
       default:
         continuation.resumeReturningInitialValue()
@@ -91,7 +91,7 @@ public struct InMemoryStorage: Hashable, Sendable {
     subscript<Value: Sendable>(key: String, default defaultValue: Value) -> Value {
       storage.withLock { storage in
         switch storage[key] {
-        case let .some(value as Value):
+        case .some(let value as Value):
           return value
         default:
           storage[key] = defaultValue
