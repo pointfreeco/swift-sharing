@@ -95,6 +95,15 @@
       }
     }
 
+    @Test func `consecutive writes are persisted and can be loaded`() async throws {
+      @Shared(.fileStorage(.fileURL)) var items = [Int]()
+      $items.withLock { $0.append(1) }
+      $items.withLock { $0.append(2) }
+      #expect(items == [1, 2])
+      try await $items.load()
+      #expect(items == [1, 2])
+    }
+
     @Test func multipleFiles() throws {
       try withDependencies {
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem)

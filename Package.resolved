@@ -1,5 +1,5 @@
 {
-  "originHash" : "2d35c0c3e737b76f5d253977c3cab7b3210ea33058a79bc2ee0aa80767457fbc",
+  "originHash" : "83059f52cdf577161f89370a45ecc4973ccc4f0d8507a09cc5edcca6a358386e",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "dcccb979a2183b8df3334237e3dc1ae2b4116a86",
         "version" : "1.2.0"
-      }
-    },
-    {
-      "identity" : "swift-case-paths",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-case-paths",
-      "state" : {
-        "revision" : "206cbce3882b4de9aee19ce62ac5b7306cadd45b",
-        "version" : "1.7.3"
       }
     },
     {
