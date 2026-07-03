@@ -88,19 +88,19 @@
     fileID: StaticString,
     line: UInt
   ) {
+    var message = message() ?? ""
+    if message.isEmpty {
+      message = "Issue reported"
+    }
     #if canImport(os)
       guard ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1"
       else {
-        print("🟣 \(fileID):\(line): \(message() ?? "")")
+        print("🟣 \(fileID):\(line): \(message)")
         return
       }
       let moduleName = String(
         Substring("\(fileID)".utf8.prefix(while: { $0 != UTF8.CodeUnit(ascii: "/") }))
       )
-      var message = message() ?? ""
-      if message.isEmpty {
-        message = "Issue reported"
-      }
       os_log(
         .fault,
         dso: dso,
@@ -109,10 +109,6 @@
         "\(isTesting ? "\(fileID):\(line): " : "")\(message)"
       )
     #else
-      var message = message() ?? ""
-      if message.isEmpty {
-        message = "Issue reported"
-      }
       fputs("\(message)\n", stderr)
     #endif
   }
