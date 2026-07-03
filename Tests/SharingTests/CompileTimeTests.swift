@@ -1,5 +1,4 @@
 import Foundation
-import IdentifiedCollections
 import Sharing
 
 private struct Item: Identifiable {

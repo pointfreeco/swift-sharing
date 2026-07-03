@@ -1,5 +1,6 @@
 // swift-tools-version: 6.1
 
+import Foundation
 import PackageDescription
 
 let package = Package(
@@ -19,8 +20,12 @@ let package = Package(
   traits: [
     .trait(
       name: "CasePaths",
-      description: "Adds support for deriving enum cases into a Shared reference"
-    )
+      description: "Adds support for deriving enum cases from a Shared reference"
+    ),
+    .trait(
+      name: "IdentifiedCollections",
+      description: "Adds support for deriving identified elements from a Shared reference"
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "1.0.0"),
@@ -42,7 +47,13 @@ let package = Package(
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Dependencies", package: "swift-dependencies"),
-        .product(name: "IdentifiedCollections", package: "swift-identified-collections"),
+        .product(
+          name: "IdentifiedCollections",
+          package: "swift-identified-collections",
+          condition: .when(
+            traits: ["IdentifiedCollections"]
+          )
+        ),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
         .product(name: "PerceptionCore", package: "swift-perception"),
         .product(
@@ -83,6 +94,23 @@ let package = Package(
     ),
   ],
   swiftLanguageModes: [.v6]
+)
+
+let enableAllTraits =
+  ProcessInfo.processInfo.environment["ENABLE_ALL_TRAITS"] != nil
+  // NB: https://github.com/SwiftPackageIndex/SwiftPackageIndex-Server/issues/2336
+  || ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] != nil
+
+package.traits.insert(
+  .default(
+    enabledTraits: Set(
+      enableAllTraits
+        ? package.traits.map(\.name)
+        : [
+          "IdentifiedCollections",
+        ]
+    )
+  )
 )
 
 for target in package.targets {
