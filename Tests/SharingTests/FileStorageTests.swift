@@ -20,7 +20,8 @@
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
         expectNoDifference(
-          fileSystem.value, [.fileURL: Data()]
+          fileSystem.value,
+          [.fileURL: Data()]
         )
         $users.withLock { $0.append(.blob) }
         try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
@@ -34,7 +35,8 @@
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
         expectNoDifference(
-          fileSystem.value, [.utf8StringURL: Data()]
+          fileSystem.value,
+          [.utf8StringURL: Data()]
         )
         $string.withLock { $0 = "hello" }
         expectNoDifference(

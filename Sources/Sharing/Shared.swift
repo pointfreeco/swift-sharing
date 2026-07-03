@@ -1,4 +1,3 @@
-public import CustomDump
 import Dependencies
 import Foundation
 public import Observation
@@ -473,25 +472,6 @@ extension Shared: Observable {}
 #endif
 
 extension Shared: Perceptible {}
-
-extension Shared: CustomDumpRepresentable {
-  public var customDumpValue: Any {
-    wrappedValue
-  }
-}
-
-extension Shared: _CustomDiffObject {
-  public var _customDiffValues: (Any, Any) {
-    (reference.snapshot ?? reference.wrappedValue, reference.wrappedValue)
-  }
-
-  public var _objectIdentifier: ObjectIdentifier {
-    func open(_ reference: some MutableReference<Value>) -> ObjectIdentifier {
-      reference.id
-    }
-    return open(reference)
-  }
-}
 
 #if canImport(SwiftUI)
   extension Shared: DynamicProperty {

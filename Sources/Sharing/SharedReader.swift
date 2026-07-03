@@ -1,4 +1,3 @@
-public import CustomDump
 import Foundation
 import IssueReporting
 public import Observation
@@ -344,12 +343,6 @@ extension SharedReader: Observable {}
 #endif
 
 extension SharedReader: Perceptible {}
-
-extension SharedReader: CustomDumpRepresentable {
-  public var customDumpValue: Any {
-    wrappedValue
-  }
-}
 
 #if canImport(SwiftUI)
   extension SharedReader: DynamicProperty {

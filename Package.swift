@@ -23,6 +23,10 @@ let package = Package(
       description: "Derive Shared cases from Shared enums using CasePaths"
     ),
     .trait(
+      name: "CustomDump",
+      description: "Pretty-print and diff Sharing's data types using CustomDump"
+    ),
+    .trait(
       name: "IdentifiedCollections",
       description: "Derive Shared elements from Shared collections using IdentifiedCollections"
     ),
@@ -45,7 +49,13 @@ let package = Package(
         "Sharing1",
         "Sharing2",
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
-        .product(name: "CustomDump", package: "swift-custom-dump"),
+        .product(
+          name: "CustomDump",
+          package: "swift-custom-dump",
+          condition: .when(
+            traits: ["CustomDump"]
+          )
+        ),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(
           name: "IdentifiedCollections",
@@ -73,6 +83,7 @@ let package = Package(
       dependencies: [
         "Sharing",
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
+        .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
         .product(
           name: "CasePaths",
@@ -103,6 +114,7 @@ package.traits.insert(
       enableAllTraits
         ? package.traits.map(\.name)
         : [
+          "CustomDump",
           "IdentifiedCollections",
         ]
     )
