@@ -1,24 +1,30 @@
 import Foundation
 import Sharing
 
+#if IdentifiedCollections
+  import IdentifiedCollections
+#endif
+
 private struct Item: Identifiable {
   let id = UUID()
 }
 
-extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Item>>.Default {
-  fileprivate static var items: Self {
-    Self[.inMemory("items"), default: []]
+#if IdentifiedCollections
+  extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Item>>.Default {
+    fileprivate static var items: Self {
+      Self[.inMemory("items"), default: []]
+    }
   }
-}
 
-func testIdentifiedDefaultValue() {
-  do {
-    @Shared(.items) var items = []
+  func testIdentifiedDefaultValue() {
+    do {
+      @Shared(.items) var items = []
+    }
+    do {
+      @SharedReader(.items) var items = []
+    }
   }
-  do {
-    @SharedReader(.items) var items = []
-  }
-}
+#endif
 
 func testSharedReaderInitializerOverload() async throws {
   _ = SharedReader(wrappedValue: 42, .count)

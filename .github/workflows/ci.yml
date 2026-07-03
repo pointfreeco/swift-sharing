@@ -20,7 +20,7 @@ jobs:
       matrix:
         xcode: ['26.5']
         config: ['debug', 'release']
-        traits: ['', 'CasePaths']
+        traits: ['', 'CasePaths', 'IdentifiedCollections']
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4

@@ -5,6 +5,10 @@ import PerceptionCore
 import Sharing
 import Testing
 
+#if IdentifiedCollections
+  import IdentifiedCollections
+#endif
+
 @Suite struct SharedTests {
   @Test func projectedValue() {
     @Shared(.inMemory("count")) var count = 0
@@ -160,31 +164,33 @@ import Testing
       #expect(count == 4)
     }
 
-    @Test func collection() {
-      @Shared(value: IdentifiedArray(uniqueElements: [1, 2, 3], id: \.self)) var counts
+    #if IdentifiedCollections
+      @Test func collection() {
+        @Shared(value: IdentifiedArray(uniqueElements: [1, 2, 3], id: \.self)) var counts
 
-      let sharedCounts = Array($counts)
-      @Shared var first: Int
-      _first = sharedCounts[0]
-      @Shared var second: Int
-      _second = sharedCounts[1]
-      @Shared var third: Int
-      _third = sharedCounts[2]
+        let sharedCounts = Array($counts)
+        @Shared var first: Int
+        _first = sharedCounts[0]
+        @Shared var second: Int
+        _second = sharedCounts[1]
+        @Shared var third: Int
+        _third = sharedCounts[2]
 
-      #expect(first == 1)
-      #expect(second == 2)
-      #expect(third == 3)
+        #expect(first == 1)
+        #expect(second == 2)
+        #expect(third == 3)
 
-      $counts.withLock { _ = $0.removeLast() }
+        $counts.withLock { _ = $0.removeLast() }
 
-      #expect(counts == IdentifiedArray(uniqueElements: [1, 2], id: \.self))
-      #expect(third == 3)
+        #expect(counts == IdentifiedArray(uniqueElements: [1, 2], id: \.self))
+        #expect(third == 3)
 
-      $third.withLock { $0 += 1 }
+        $third.withLock { $0 += 1 }
 
-      #expect(third == 4)
-      #expect(counts == IdentifiedArray(uniqueElements: [1, 2], id: \.self))
-    }
+        #expect(third == 4)
+        #expect(counts == IdentifiedArray(uniqueElements: [1, 2], id: \.self))
+      }
+    #endif
 
     @Test func task() async {
       @Shared(value: 0) var count
