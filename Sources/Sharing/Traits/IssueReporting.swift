@@ -1,8 +1,8 @@
 #if IssueReporting
-  import IssueReporting
+  public import IssueReporting
 
   @_transparent
-  public func reportIssue(
+  func reportIssue(
     _ message: @autoclosure () -> String? = nil,
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath,
