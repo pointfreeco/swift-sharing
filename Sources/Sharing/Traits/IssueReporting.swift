@@ -41,7 +41,7 @@
     public import os
     public import Foundation
   #else
-    import Foundation
+    @preconcurrency import Foundation
   #endif
 
   #if canImport(os)
