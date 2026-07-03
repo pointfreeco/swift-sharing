@@ -89,26 +89,28 @@
       }
     }
 
-    @Test func tracking() throws {
-      @Shared(value: Route.detail(0)) var model
-      let _detail: Shared<Int>? = $model.detail
-      let detail = try #require(_detail)
+    #if IssueReporting
+      @Test func tracking() throws {
+        @Shared(value: Route.detail(0)) var model
+        let _detail: Shared<Int>? = $model.detail
+        let detail = try #require(_detail)
 
-      withKnownIssue {
-        do {
-          let tracker = SharedChangeTracker()
-          tracker.track {
-            detail.withLock { $0 += 1 }
+        withKnownIssue {
+          do {
+            let tracker = SharedChangeTracker()
+            tracker.track {
+              detail.withLock { $0 += 1 }
+            }
           }
+        } matching: {
+          print("# " + $0.description)
+          return $0.description.hasSuffix(
+            """
+            Tracked unasserted changes to 'Shared<CasePathsTraitTests.Route>(value: SharingTests.CasePathsTraitTests.Route.detail(1))': SharingTests.CasePathsTraitTests.Route.detail(0) → SharingTests.CasePathsTraitTests.Route.detail(1)
+            """
+          )
         }
-      } matching: {
-        print("# " + $0.description)
-        return $0.description.hasSuffix(
-          """
-          Tracked unasserted changes to 'Shared<CasePathsTraitTests.Route>(value: SharingTests.CasePathsTraitTests.Route.detail(1))': SharingTests.CasePathsTraitTests.Route.detail(0) → SharingTests.CasePathsTraitTests.Route.detail(1)
-          """
-        )
       }
-    }
+    #endif
   }
 #endif

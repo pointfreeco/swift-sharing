@@ -126,6 +126,7 @@ package.traits.insert(
         : [
           "CustomDump",
           "IdentifiedCollections",
+          "IssueReporting",
         ]
     )
   )

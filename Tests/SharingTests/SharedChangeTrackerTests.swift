@@ -1,4 +1,4 @@
-#if CustomDump
+#if CustomDump && IssueReporting
   import Combine
   import CustomDump
   import PerceptionCore

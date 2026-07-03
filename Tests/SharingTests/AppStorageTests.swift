@@ -139,79 +139,81 @@
       #expect(store.value(forKey: "bool") == nil)
     }
 
-    @Test func invalidKeyWarning() async {
-      await withKnownIssue {
-        @Shared(.appStorage("co.pointfree.isEnabled")) var isEnabled = false
-        store.set(true, forKey: "co.pointfree.isEnabled")
-        await MainActor.run {
-          #expect(isEnabled)
-        }
-      } matching: {
-        $0.description.hasSuffix(
-          """
-          A Shared app storage key ("co.pointfree.isEnabled") contains an invalid character \
-          (".") for key-value observation. External updates will be \
-          observed less efficiently and accurately via notification center, instead.
+    #if IssueReporting
+      @Test func invalidKeyWarning() async {
+        await withKnownIssue {
+          @Shared(.appStorage("co.pointfree.isEnabled")) var isEnabled = false
+          store.set(true, forKey: "co.pointfree.isEnabled")
+          await MainActor.run {
+            #expect(isEnabled)
+          }
+        } matching: {
+          $0.description.hasSuffix(
+            """
+            A Shared app storage key ("co.pointfree.isEnabled") contains an invalid character \
+            (".") for key-value observation. External updates will be \
+            observed less efficiently and accurately via notification center, instead.
 
-          Please reformat this key by removing invalid characters in order to ensure efficient, \
-          cross-process observation.
+            Please reformat this key by removing invalid characters in order to ensure efficient, \
+            cross-process observation.
 
-          If you cannot control the format of this key and would like to silence this warning, \
-          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
-          your application. For example:
+            If you cannot control the format of this key and would like to silence this warning, \
+            override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
+            your application. For example:
 
-              import Dependencies
+                import Dependencies
 
-              @main
-              struct MyApp: App {
-                init() {
-                  prepareDependencies {
-                    $0.appStorageKeyFormatWarningEnabled = false
+                @main
+                struct MyApp: App {
+                  init() {
+                    prepareDependencies {
+                      $0.appStorageKeyFormatWarningEnabled = false
+                    }
+                    // ...
                   }
                   // ...
                 }
-                // ...
-              }
-          """
-        )
-      }
-
-      await withKnownIssue {
-        @Shared(.appStorage("@count")) var count = 0
-        store.set(42, forKey: "@count")
-        await MainActor.run {
-          #expect(count == 42)
+            """
+          )
         }
-      } matching: {
-        $0.description.hasSuffix(
-          """
-          A Shared app storage key ("@count") contains an invalid character \
-          ("@") for key-value observation. External updates will be \
-          observed less efficiently and accurately via notification center, instead.
 
-          Please reformat this key by removing invalid characters in order to ensure efficient, \
-          cross-process observation.
+        await withKnownIssue {
+          @Shared(.appStorage("@count")) var count = 0
+          store.set(42, forKey: "@count")
+          await MainActor.run {
+            #expect(count == 42)
+          }
+        } matching: {
+          $0.description.hasSuffix(
+            """
+            A Shared app storage key ("@count") contains an invalid character \
+            ("@") for key-value observation. External updates will be \
+            observed less efficiently and accurately via notification center, instead.
 
-          If you cannot control the format of this key and would like to silence this warning, \
-          override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
-          your application. For example:
+            Please reformat this key by removing invalid characters in order to ensure efficient, \
+            cross-process observation.
 
-              import Dependencies
+            If you cannot control the format of this key and would like to silence this warning, \
+            override the '\\.appStorageKeyFormatWarningEnabled' dependency at the entry point of \
+            your application. For example:
 
-              @main
-              struct MyApp: App {
-                init() {
-                  prepareDependencies {
-                    $0.appStorageKeyFormatWarningEnabled = false
+                import Dependencies
+
+                @main
+                struct MyApp: App {
+                  init() {
+                    prepareDependencies {
+                      $0.appStorageKeyFormatWarningEnabled = false
+                    }
+                    // ...
                   }
                   // ...
                 }
-                // ...
-              }
-          """
-        )
+            """
+          )
+        }
       }
-    }
+    #endif
 
     @Test func invalidKeyWarningSuppression() async {
       withDependencies {
@@ -250,7 +252,7 @@
       }
     }
 
-    #if DEBUG
+    #if DEBUG && IssueReporting
       @Test func suiteWarning() {
         let suiteName = NSTemporaryDirectory() + "suite-warning"
         @Shared(.appStorage("count", store: UserDefaults(suiteName: suiteName)!)) var count = 0

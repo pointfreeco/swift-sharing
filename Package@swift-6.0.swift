@@ -69,6 +69,7 @@ for target in package.targets {
   target.swiftSettings?.append(contentsOf: [
     .define("CustomDump"),
     .define("IdentifiedCollections"),
+    .define("IssueReporting"),
     .enableUpcomingFeature("ExistentialAny"),
     .enableUpcomingFeature("ImmutableWeakCaptures"),
     .enableUpcomingFeature("InferIsolatedConformances"),

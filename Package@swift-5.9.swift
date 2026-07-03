@@ -58,5 +58,6 @@ for target in package.targets {
   target.swiftSettings?.append(contentsOf: [
     .define("CustomDump"),
     .define("IdentifiedCollections"),
+    .define("IssueReporting"),
   ])
 }
