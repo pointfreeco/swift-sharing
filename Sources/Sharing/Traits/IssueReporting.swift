@@ -37,13 +37,14 @@
     )
   }
 #else
-  public import Foundation
-
   #if canImport(os)
     public import os
+    public import Foundation
   #endif
 
-  @_transparent
+  #if canImport(os)
+    @_transparent
+  #endif
   public func reportIssue(
     _ message: @autoclosure () -> String? = nil,
     fileID: StaticString = #fileID,
@@ -58,7 +59,9 @@
     )
   }
 
-  @_transparent
+  #if canImport(os)
+    @_transparent
+  #endif
   func reportIssue(
     _ error: any Error,
     _ message: @autoclosure () -> String? = nil,
@@ -74,8 +77,10 @@
     )
   }
 
-  @_transparent
-  @inlinable
+  #if canImport(os)
+    @_transparent
+    @inlinable
+  #endif
   func runtimeWarn(
     _ message: @autoclosure () -> String?,
     fileID: StaticString,
