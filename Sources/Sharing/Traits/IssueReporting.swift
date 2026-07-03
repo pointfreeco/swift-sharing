@@ -40,6 +40,8 @@
   #if canImport(os)
     public import os
     public import Foundation
+  #else
+    import Foundation
   #endif
 
   #if canImport(os)
@@ -108,7 +110,6 @@
       )
     #else
       fputs("\(message)\n", stderr)
-      printError("\(fileID):\(line): \(message() ?? "")")
     #endif
   }
 
