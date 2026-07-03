@@ -20,7 +20,7 @@ jobs:
       matrix:
         xcode: ['26.5']
         config: ['debug', 'release']
-        traits: ['', 'CasePaths', 'CustomDump', 'IdentifiedCollections']
+        traits: ['', 'CasePaths', 'CustomDump', 'IdentifiedCollections', 'IssueReporting']
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
       matrix:
         swift:
           - '6.3'
-        traits: ['', 'CasePaths', 'CustomDump', 'IdentifiedCollections']
+        traits: ['', 'CasePaths', 'CustomDump', 'IdentifiedCollections', 'IssueReporting']
     runs-on: ubuntu-latest
     container: swift:${{ matrix.swift }}
     steps:
