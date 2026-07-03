@@ -35,7 +35,7 @@ jobs:
       matrix:
         swift:
           - '6.3'
-        traits: ['', 'CasePaths']
+        traits: ['', 'CasePaths', 'CustomDump', 'IdentifiedCollections']
     runs-on: ubuntu-latest
     container: swift:${{ matrix.swift }}
     steps:
