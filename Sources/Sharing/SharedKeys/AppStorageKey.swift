@@ -1,5 +1,4 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
-  import ConcurrencyExtras
   public import Dependencies
   @preconcurrency public import Foundation
   import IssueReporting

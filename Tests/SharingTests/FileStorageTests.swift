@@ -1,16 +1,15 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
   import CombineSchedulers
-  import ConcurrencyExtras
   import CustomDump
   import Dependencies
   import DependenciesTestSupport
   import Foundation
-  @_spi(Internals) import Sharing
+  import Sharing
   import Testing
 
   @Suite struct FileStorageTests {
-    let fileSystem = LockIsolated<[URL: Data]>([:])
+    let fileSystem = Sharing.LockIsolated<[URL: Data]>([:])
     let testScheduler = DispatchQueue.test
 
     @Test func basics() throws {
@@ -20,11 +19,11 @@
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         #expect($users.loadError == nil)
         expectNoDifference(
-          fileSystem.value,
+          fileSystem.withLock(\.self),
           [.fileURL: Data()]
         )
         $users.withLock { $0.append(.blob) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
       }
     }
 
@@ -35,12 +34,12 @@
         @Shared(.utf8String) var string = ""
         #expect($string.loadError == nil)
         expectNoDifference(
-          fileSystem.value,
+          fileSystem.withLock(\.self),
           [.utf8StringURL: Data()]
         )
         $string.withLock { $0 = "hello" }
         expectNoDifference(
-          fileSystem.value[.utf8StringURL].map { String(decoding: $0, as: UTF8.self) },
+          fileSystem.withLock(\.self)[.utf8StringURL].map { String(decoding: $0, as: UTF8.self) },
           "hello"
         )
       }
@@ -51,26 +50,26 @@
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), nil)
 
         $users.withLock { $0.append(.blob) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
 
         $users.withLock { $0.append(.blobJr) }
         testScheduler.advance(by: .seconds(1) - .milliseconds(1))
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
 
         $users.withLock { $0.append(.blobSr) }
         testScheduler.advance(by: .milliseconds(1))
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob, .blobJr, .blobSr])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob, .blobJr, .blobSr])
 
         testScheduler.advance(by: .seconds(1))
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob, .blobJr, .blobSr])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob, .blobJr, .blobSr])
 
         testScheduler.advance(by: .seconds(0.5))
         $users.withLock { $0.append(.blobEsq) }
         try expectNoDifference(
-          fileSystem.value.users(for: .fileURL),
+          fileSystem.withLock(\.self).users(for: .fileURL),
           [
             .blob,
             .blobJr,
@@ -86,14 +85,14 @@
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
       } operation: {
         @Shared(.fileStorage(.fileURL)) var users = [User]()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), nil)
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), nil)
 
         $users.withLock { $0.append(.blob) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
 
         testScheduler.advance(by: .seconds(2))
         $users.withLock { $0.append(.blobJr) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob, .blobJr])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob, .blobJr])
       }
     }
 
@@ -114,17 +113,17 @@
         @Shared(.fileStorage(.anotherFileURL)) var otherUsers = [User]()
 
         $users.withLock { $0.append(.blob) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
-        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), nil)
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .anotherFileURL), nil)
 
         $otherUsers.withLock { $0.append(.blobJr) }
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
-        try expectNoDifference(fileSystem.value.users(for: .anotherFileURL), [.blobJr])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .anotherFileURL), [.blobJr])
       }
     }
 
     @Test func initialValue() async throws {
-      let fileSystem = try LockIsolated<[URL: Data]>(
+      let fileSystem = Sharing.LockIsolated<[URL: Data]>(
         [.fileURL: try JSONEncoder().encode([User.blob])]
       )
       try await withDependencies {
@@ -133,12 +132,12 @@
         @Shared(.fileStorage(.fileURL)) var users = [User]()
         _ = users
         await Task.yield()
-        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+        try expectNoDifference(fileSystem.withLock(\.self).users(for: .fileURL), [.blob])
       }
     }
 
     @Test func decodeFailure() async throws {
-      let fileSystem = LockIsolated<[URL: Data]>(
+      let fileSystem = Sharing.LockIsolated<[URL: Data]>(
         [.fileURL: Data("corrupt".utf8)]
       )
       try withDependencies {
@@ -488,7 +487,7 @@
 
   extension FileStorage {
     fileprivate static func inMemory<S: Scheduler & Sendable>(
-      fileSystem: LockIsolated<[URL: Data]>,
+      fileSystem: Sharing.LockIsolated<[URL: Data]>,
       scheduler: S
     ) -> Self where S.SchedulerTimeType == DispatchQueue.SchedulerTimeType {
       .inMemory(

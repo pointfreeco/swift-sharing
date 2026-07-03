@@ -1,6 +1,5 @@
 #if canImport(AppKit) || canImport(UIKit) || canImport(WatchKit)
   import Combine
-  public import ConcurrencyExtras
   public import Dependencies
   @preconcurrency import Dispatch
 
@@ -143,7 +142,7 @@
                   setUpSources()
                 }
               }
-              if state.withValue({ $0.workItem == nil }) {
+              if state.withLock({ $0.workItem == nil }) {
                 if fileExists {
                   subscriber.yield(with: Result { try self.decode(self.storage.load(self.url)) })
                 } else {
@@ -161,7 +160,7 @@
                 ? (try? self.storage.attributesOfItemAtPath(self.url.path)[.modificationDate]
                   as? Date)
                 : nil
-              let shouldYield = state.withValue { state in
+              let shouldYield = state.withLock { state in
                 guard fileExists
                 else {
                   state.cancelWorkItem()
@@ -210,7 +209,7 @@
 
     public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
-        let workItem: DispatchWorkItem? = try state.withValue { state in
+        let workItem: DispatchWorkItem? = try state.withLock { state in
           let data = try encode(value)
           switch context {
           case .didSet:
@@ -224,7 +223,7 @@
             continuation.resume()
             let workItem = DispatchWorkItem { [weak self] in
               guard let self else { return }
-              self.state.withValue { state in
+              self.state.withLock { state in
                 defer {
                   state.value = nil
                   state.workItem = nil
@@ -334,7 +333,7 @@
       @Sendable (URL, DispatchSource.FileSystemEvent, @escaping @Sendable () -> Void) throws ->
         SharedSubscription
     let load: @Sendable (URL) throws -> Data
-    @_spi(Internals) public let save: @Sendable (Data, URL) throws -> Void
+    public let save: @Sendable (Data, URL) throws -> Void
 
     /// File storage that interacts directly with the file system for saving, loading and listening
     /// for file changes.
@@ -391,7 +390,7 @@
       inMemory(fileSystem: LockIsolated([:]))
     }
 
-    @_spi(Internals) public static func inMemory(
+    package static func inMemory(
       fileSystem: LockIsolated<[URL: Data]>,
       async: @escaping @Sendable (DispatchWorkItem) -> Void = { $0.perform() },
       asyncAfter: @escaping @Sendable (DispatchTimeInterval, DispatchWorkItem) -> Void = {
@@ -405,14 +404,14 @@
         asyncAfter: asyncAfter,
         attributesOfItemAtPath: { _ in [:] },
         createDirectory: { _, _ in },
-        fileExists: { fileSystem.keys.contains($0) },
+        fileExists: { url in fileSystem.withLock { $0.keys.contains(url) } },
         fileSystemSource: { url, event, handler in
           guard event.contains(.write)
           else { return SharedSubscription {} }
           return SharedSubscription {}
         },
         load: {
-          guard let data = fileSystem[$0]
+          guard let data = fileSystem.withLock(\.[$0])
           else {
             struct LoadError: Error {}
             throw LoadError()
@@ -420,7 +419,7 @@
           return data
         },
         save: { data, url in
-          fileSystem.withValue { $0[url] = data }
+          fileSystem.withLock { $0[url] = data }
         }
       )
     }
