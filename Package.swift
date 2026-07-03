@@ -48,6 +48,13 @@ let package = Package(
       dependencies: [
         "Sharing1",
         "Sharing2",
+        .product(
+          name: "CasePaths",
+          package: "swift-case-paths",
+          condition: .when(
+            traits: ["CasePaths"]
+          )
+        ),
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(
           name: "CustomDump",
@@ -66,13 +73,6 @@ let package = Package(
         ),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
         .product(name: "PerceptionCore", package: "swift-perception"),
-        .product(
-          name: "CasePaths",
-          package: "swift-case-paths",
-          condition: .when(
-            traits: ["CasePaths"]
-          )
-        ),
       ],
       resources: [
         .process("PrivacyInfo.xcprivacy")
@@ -82,9 +82,6 @@ let package = Package(
       name: "SharingTests",
       dependencies: [
         "Sharing",
-        .product(name: "CombineSchedulers", package: "combine-schedulers"),
-        .product(name: "CustomDump", package: "swift-custom-dump"),
-        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
         .product(
           name: "CasePaths",
           package: "swift-case-paths",
@@ -92,6 +89,15 @@ let package = Package(
             traits: ["CasePaths"]
           )
         ),
+        .product(name: "CombineSchedulers", package: "combine-schedulers"),
+        .product(
+          name: "CustomDump",
+          package: "swift-custom-dump",
+          condition: .when(
+            traits: ["CustomDump"]
+          )
+        ),
+        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       exclude: ["Sharing.xctestplan"]
     ),
