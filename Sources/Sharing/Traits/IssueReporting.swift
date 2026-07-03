@@ -109,6 +109,10 @@
         "\(isTesting ? "\(fileID):\(line): " : "")\(message)"
       )
     #else
+      var message = message() ?? ""
+      if message.isEmpty {
+        message = "Issue reported"
+      }
       fputs("\(message)\n", stderr)
     #endif
   }
