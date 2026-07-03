@@ -30,6 +30,10 @@ let package = Package(
       name: "IdentifiedCollections",
       description: "Derive Shared elements from Shared collections using IdentifiedCollections"
     ),
+    .trait(
+      name: "IssueReporting",
+      description: "Improve test coverage by raising runtime warnings as test failures"
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "1.0.0"),
@@ -71,7 +75,13 @@ let package = Package(
             traits: ["IdentifiedCollections"]
           )
         ),
-        .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
+        .product(
+          name: "IssueReporting",
+          package: "xctest-dynamic-overlay",
+          condition: .when(
+            traits: ["IssueReporting"]
+          )
+        ),
         .product(name: "PerceptionCore", package: "swift-perception"),
       ],
       resources: [

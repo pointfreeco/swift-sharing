@@ -2,7 +2,6 @@
   import ConcurrencyExtras
   public import Dependencies
   @preconcurrency public import Foundation
-  import IssueReporting
 
   #if canImport(AppKit)
     import AppKit

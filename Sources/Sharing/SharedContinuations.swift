@@ -1,5 +1,4 @@
 import Foundation
-import IssueReporting
 
 /// A mechanism to communicate with a shared key's external system, synchronously or asynchronously.
 ///

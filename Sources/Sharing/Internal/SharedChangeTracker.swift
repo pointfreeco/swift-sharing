@@ -1,6 +1,5 @@
 public import Dependencies
 import Foundation
-public import IssueReporting
 
 @_spi(SharedChangeTracking)
 public struct SharedChangeTracker: Hashable, Sendable {

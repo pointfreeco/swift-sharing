@@ -1,6 +1,5 @@
 import Dependencies
 import Foundation
-import IssueReporting
 public import PerceptionCore
 
 #if canImport(Combine)
