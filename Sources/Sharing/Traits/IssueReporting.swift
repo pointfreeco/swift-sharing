@@ -114,17 +114,19 @@
   }
 
   @usableFromInline nonisolated(unsafe) let dso: UnsafeRawPointer = {
-    let count = _dyld_image_count()
-    for i in 0..<count {
-      if let name = _dyld_get_image_name(i) {
-        let swiftString = String(cString: name)
-        if swiftString.hasSuffix("/SwiftUI") {
-          if let header = _dyld_get_image_header(i) {
-            return UnsafeRawPointer(header)
+    #if canImport(os)
+      let count = _dyld_image_count()
+      for i in 0..<count {
+        if let name = _dyld_get_image_name(i) {
+          let swiftString = String(cString: name)
+          if swiftString.hasSuffix("/SwiftUI") {
+            if let header = _dyld_get_image_header(i) {
+              return UnsafeRawPointer(header)
+            }
           }
         }
       }
-    }
+    #endif
     return #dsohandle
   }()
 
