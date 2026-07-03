@@ -90,13 +90,7 @@ let package = Package(
           )
         ),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
-        .product(
-          name: "CustomDump",
-          package: "swift-custom-dump",
-          condition: .when(
-            traits: ["CustomDump"]
-          )
-        ),
+        .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       exclude: ["Sharing.xctestplan"]
