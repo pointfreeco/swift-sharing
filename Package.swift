@@ -20,11 +20,11 @@ let package = Package(
   traits: [
     .trait(
       name: "CasePaths",
-      description: "Adds support for deriving enum cases from a Shared reference"
+      description: "Derive Shared cases from Shared enums using CasePaths"
     ),
     .trait(
       name: "IdentifiedCollections",
-      description: "Adds support for deriving identified elements from a Shared reference"
+      description: "Derive Shared elements from Shared collections using IdentifiedCollections"
     ),
   ],
   dependencies: [
