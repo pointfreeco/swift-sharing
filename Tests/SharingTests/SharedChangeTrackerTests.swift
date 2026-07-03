@@ -1,153 +1,155 @@
-import Combine
-import CustomDump
-import PerceptionCore
-@_spi(SharedChangeTracking) import Sharing
-import Testing
+#if CustomDump
+  import Combine
+  import CustomDump
+  import PerceptionCore
+  @_spi(SharedChangeTracking) import Sharing
+  import Testing
 
-@Suite struct SharedChangeTrackingTests {
-  @Test func basics() {
-    @Shared(value: 0) var count
+  @Suite struct SharedChangeTrackingTests {
+    @Test func basics() {
+      @Shared(value: 0) var count
 
-    let tracker = SharedChangeTracker()
-    tracker.track {
-      $count.withLock { $0 += 1 }
+      let tracker = SharedChangeTracker()
+      tracker.track {
+        $count.withLock { $0 += 1 }
+      }
+
+      tracker.assert {
+        #expect($count != $count)
+        #expect(
+          diff($count, $count) == """
+            - #1 0
+            + #1 1
+            """
+        )
+
+        $count.withLock { $0 = 1 }
+
+        #expect($count == $count)
+      }
     }
 
-    tracker.assert {
-      #expect($count != $count)
-      #expect(
-        diff($count, $count) == """
-          - #1 0
-          + #1 1
-          """
-      )
+    @Test func independentShareds() {
+      @Shared(value: 0) var count1
+      @Shared(value: 0) var count2
 
-      $count.withLock { $0 = 1 }
-
-      #expect($count == $count)
-    }
-  }
-
-  @Test func independentShareds() {
-    @Shared(value: 0) var count1
-    @Shared(value: 0) var count2
-
-    #expect($count1 == $count2)
-
-    let tracker = SharedChangeTracker()
-    tracker.track {
-      $count1.withLock { $0 += 1 }
-    }
-
-    tracker.assert {
-      #expect($count1 != $count1)
       #expect($count1 == $count2)
-      #expect($count2 == $count2)
 
-      $count1.withLock { $0 = 1 }
+      let tracker = SharedChangeTracker()
+      tracker.track {
+        $count1.withLock { $0 += 1 }
+      }
 
-      #expect($count1 == $count1)
-      #expect($count1 != $count2)
-    }
-  }
+      tracker.assert {
+        #expect($count1 != $count1)
+        #expect($count1 == $count2)
+        #expect($count2 == $count2)
 
-  @Test func differentProjections() {
-    struct Stats: Equatable {
-      var bool1 = false
-      var bool2 = false
-    }
-    @Shared(value: Stats()) var stats
+        $count1.withLock { $0 = 1 }
 
-    #expect($stats.bool1 == $stats.bool2)
-
-    let tracker = SharedChangeTracker()
-    tracker.track {
-      $stats.bool1.withLock { $0.toggle() }
+        #expect($count1 == $count1)
+        #expect($count1 != $count2)
+      }
     }
 
-    tracker.assert {
-      #expect($stats.bool1 != $stats.bool1)
+    @Test func differentProjections() {
+      struct Stats: Equatable {
+        var bool1 = false
+        var bool2 = false
+      }
+      @Shared(value: Stats()) var stats
+
       #expect($stats.bool1 == $stats.bool2)
-      #expect($stats.bool2 == $stats.bool2)
 
-      $stats.bool1.withLock { $0.toggle() }
-
-      #expect($stats.bool1 == $stats.bool1)
-      #expect($stats.bool1 != $stats.bool2)
-
-      #expect($stats == $stats)
-    }
-  }
-
-  @Test func assertedChanges() {
-    @Shared(value: 0) var count
-
-    let counts = Mutex<[Int]>([])
-    let cancellable = $count.publisher.sink { @Sendable value in
-      counts.withLock { $0.append(value) }
-    }
-    defer { _ = cancellable }
-
-    let tracker = SharedChangeTracker()
-    tracker.track {
-      $count.withLock { $0 += 1 }
-    }
-
-    tracker.assert {
-      #expect($count != $count)
-
-      $count.withLock { $0 = 1 }
-
-      #expect($count == $count)
-      #expect(counts.withLock(\.self) == [0, 1])
-    }
-  }
-
-  @Test func unassertedChanges() {
-    @Shared(value: 0) var count
-
-    withKnownIssue {
-      do {
-        let tracker = SharedChangeTracker()
-        tracker.track {
-          $count.withLock { $0 += 1 }
-        }
+      let tracker = SharedChangeTracker()
+      tracker.track {
+        $stats.bool1.withLock { $0.toggle() }
       }
-    } matching: {
-      $0.description.hasSuffix(
-        """
-        Tracked unasserted changes to 'Shared<Int>(value: 1)': 0 → 1
-        """
-      )
-    }
-  }
 
-  @Test func unreportedChanges() {
-    @Shared(value: 0) var count
+      tracker.assert {
+        #expect($stats.bool1 != $stats.bool1)
+        #expect($stats.bool1 == $stats.bool2)
+        #expect($stats.bool2 == $stats.bool2)
 
-    let tracker = SharedChangeTracker(reportUnassertedChanges: false)
-    tracker.track {
-      $count.withLock { $0 += 1 }
-    }
-  }
+        $stats.bool1.withLock { $0.toggle() }
 
-  @Test func unwrappedShared() {
-    let optionalShared = Shared<Int?>(value: 1)
-    let unwrappedShared = Shared(optionalShared)!
+        #expect($stats.bool1 == $stats.bool1)
+        #expect($stats.bool1 != $stats.bool2)
 
-    withKnownIssue {
-      do {
-        let tracker = SharedChangeTracker()
-        tracker.track {
-          unwrappedShared.withLock { $0 += 1 }
-        }
+        #expect($stats == $stats)
       }
-    } matching: {
-      $0.description.hasSuffix(
-        """
-        Tracked unasserted changes to 'Shared<Int?>(value: Optional(2))': Optional(1) → Optional(2)
-        """
-      )
+    }
+
+    @Test func assertedChanges() {
+      @Shared(value: 0) var count
+
+      let counts = Mutex<[Int]>([])
+      let cancellable = $count.publisher.sink { @Sendable value in
+        counts.withLock { $0.append(value) }
+      }
+      defer { _ = cancellable }
+
+      let tracker = SharedChangeTracker()
+      tracker.track {
+        $count.withLock { $0 += 1 }
+      }
+
+      tracker.assert {
+        #expect($count != $count)
+
+        $count.withLock { $0 = 1 }
+
+        #expect($count == $count)
+        #expect(counts.withLock(\.self) == [0, 1])
+      }
+    }
+
+    @Test func unassertedChanges() {
+      @Shared(value: 0) var count
+
+      withKnownIssue {
+        do {
+          let tracker = SharedChangeTracker()
+          tracker.track {
+            $count.withLock { $0 += 1 }
+          }
+        }
+      } matching: {
+        $0.description.hasSuffix(
+          """
+          Tracked unasserted changes to 'Shared<Int>(value: 1)': 0 → 1
+          """
+        )
+      }
+    }
+
+    @Test func unreportedChanges() {
+      @Shared(value: 0) var count
+
+      let tracker = SharedChangeTracker(reportUnassertedChanges: false)
+      tracker.track {
+        $count.withLock { $0 += 1 }
+      }
+    }
+
+    @Test func unwrappedShared() {
+      let optionalShared = Shared<Int?>(value: 1)
+      let unwrappedShared = Shared(optionalShared)!
+
+      withKnownIssue {
+        do {
+          let tracker = SharedChangeTracker()
+          tracker.track {
+            unwrappedShared.withLock { $0 += 1 }
+          }
+        }
+      } matching: {
+        $0.description.hasSuffix(
+          """
+          Tracked unasserted changes to 'Shared<Int?>(value: Optional(2))': Optional(1) → Optional(2)
+          """
+        )
+      }
     }
   }
-}
+#endif
