@@ -96,11 +96,7 @@ let package = Package(
   swiftLanguageModes: [.v6]
 )
 
-let enableAllTraits =
-  ProcessInfo.processInfo.environment["ENABLE_ALL_TRAITS"] != nil
-  // NB: https://github.com/SwiftPackageIndex/SwiftPackageIndex-Server/issues/2336
-  || ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] != nil
-
+let enableAllTraits = ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] != nil
 package.traits.insert(
   .default(
     enabledTraits: Set(
