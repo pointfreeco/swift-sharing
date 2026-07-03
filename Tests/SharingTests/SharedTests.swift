@@ -1,11 +1,12 @@
-import CustomDump
 import Dependencies
 import Foundation
-import IdentifiedCollections
 import PerceptionCore
 import Sharing
 import Testing
 
+#if CustomDump
+  import CustomDump
+#endif
 #if IdentifiedCollections
   import IdentifiedCollections
 #endif
@@ -278,53 +279,55 @@ import Testing
       #expect($count.description == #"Shared<Int>(.inMemory("count"))"#)
     }
 
-    @Test func customDump() {
-      @Shared(value: 0) var count
+    #if CustomDump
+      @Test func customDump() {
+        @Shared(value: 0) var count
 
-      #expect(String(customDumping: $count) == "#1 0")
-      #expect(
-        String(customDumping: [$count, $count]) == """
-          [
-            [0]: #1 0,
-            [1]: #1 Int(↩︎)
-          ]
-          """
-      )
+        #expect(String(customDumping: $count) == "#1 0")
+        #expect(
+          String(customDumping: [$count, $count]) == """
+            [
+              [0]: #1 0,
+              [1]: #1 Int(↩︎)
+            ]
+            """
+        )
 
-      @Shared(value: 0) var anotherCount
-      #expect(
-        String(customDumping: [$count, $anotherCount, $count, $anotherCount]) == """
-          [
-            [0]: #1 0,
-            [1]: #2 0,
-            [2]: #1 Int(↩︎),
-            [3]: #2 Int(↩︎)
-          ]
-          """
-      )
-    }
-
-    @Test func customDumpWithProjection() {
-      struct Stats {
-        var count = 0
+        @Shared(value: 0) var anotherCount
+        #expect(
+          String(customDumping: [$count, $anotherCount, $count, $anotherCount]) == """
+            [
+              [0]: #1 0,
+              [1]: #2 0,
+              [2]: #1 Int(↩︎),
+              [3]: #2 Int(↩︎)
+            ]
+            """
+        )
       }
-      struct State {
-        @Shared var count: Int
-        @Shared var stats: Stats
+
+      @Test func customDumpWithProjection() {
+        struct Stats {
+          var count = 0
+        }
+        struct State {
+          @Shared var count: Int
+          @Shared var stats: Stats
+        }
+        @Shared(value: Stats()) var stats
+        #expect(
+          String(customDumping: State(count: $stats.count, stats: $stats)) == """
+            SharedTests.StringRepresentations.State(
+              _count: #1 0,
+              _stats: #1 SharedTests.StringRepresentations.Stats(↩︎)
+            )
+            """,
+          """
+          This test shows that the custom dump behavior identifying by root object identifier is not \
+          ideal: it causes a larger dump to be truncated if a smaller slice of it was dumped earlier.
+          """
+        )
       }
-      @Shared(value: Stats()) var stats
-      #expect(
-        String(customDumping: State(count: $stats.count, stats: $stats)) == """
-          SharedTests.StringRepresentations.State(
-            _count: #1 0,
-            _stats: #1 SharedTests.StringRepresentations.Stats(↩︎)
-          )
-          """,
-        """
-        This test shows that the custom dump behavior identifying by root object identifier is not \
-        ideal: it causes a larger dump to be truncated if a smaller slice of it was dumped earlier.
-        """
-      )
-    }
+    #endif
   }
 }
