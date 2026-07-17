@@ -74,9 +74,12 @@ let package = Package(
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
         .product(name: "PerceptionCore", package: "swift-perception"),
       ],
+      exclude: [
+        "Documentation.docc",
+      ],
       resources: [
-        .process("PrivacyInfo.xcprivacy")
-      ]
+        .process("PrivacyInfo.xcprivacy"),
+      ],
     ),
     .testTarget(
       name: "SharingTests",
