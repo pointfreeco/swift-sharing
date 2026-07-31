@@ -1,3 +1,4 @@
+import ConcurrencyExtras
 import Sharing
 import Testing
 
@@ -149,6 +150,85 @@ import Testing
       #expect(count == 3)
       #expect(countReader == 3)
     }
+
+    @Test func loadDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "loadDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      @SharedReader(value: 0) var value
+      try await $value.load(defaultKey)
+      @SharedReader(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
+
+    @Test func requireDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "requireDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      let value = try await SharedReader(require: defaultKey)
+      @SharedReader(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
+
+    @Test func sharedLoadDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "sharedLoadDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      @Shared(value: 0) var value
+      try await $value.load(defaultKey)
+      @Shared(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
+
+    @Test func sharedRequireDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "sharedRequireDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      let value = try await Shared(require: defaultKey)
+      @Shared(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
+  }
+}
+
+private struct SubscriptionCountingKey: SharedKey {
+  let id: String
+  let subscriptionCount: LockIsolated<Int>
+
+  func load(context: LoadContext<Int>, continuation: LoadContinuation<Int>) {
+    continuation.resume(returning: 0)
+  }
+
+  func subscribe(
+    context: LoadContext<Int>,
+    subscriber: SharedSubscriber<Int>
+  ) -> SharedSubscription {
+    subscriptionCount.withValue { $0 += 1 }
+    return SharedSubscription {}
+  }
+
+  func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
+    continuation.resume()
   }
 }
 
