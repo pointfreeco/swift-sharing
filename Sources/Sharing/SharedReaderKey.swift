@@ -153,6 +153,10 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
+  public func load<K: SharedReaderKey<Value>>(_ key: K.Default) async throws {
+    try await load(key.base)
+  }
+
   public func load(_ key: some SharedReaderKey<Value>) async throws {
     @Dependency(PersistentReferences.self) var persistentReferences
     SharedPublisherLocals.$isLoading.withValue(true) {
@@ -184,6 +188,10 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
+  public init<K: SharedReaderKey<Value>>(require key: K.Default) async throws {
+    try await self.init(require: key.base)
+  }
+
   public init(require key: some SharedReaderKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
       key.load(
