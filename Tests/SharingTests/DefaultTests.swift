@@ -179,10 +179,39 @@ import Testing
 
       #expect(subscriptionCount.value == 1)
     }
+
+    @Test func sharedLoadDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "sharedLoadDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      @Shared(value: 0) var value
+      try await $value.load(defaultKey)
+      @Shared(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
+
+    @Test func sharedRequireDefaultKeyUsesBaseReference() async throws {
+      let subscriptionCount = LockIsolated(0)
+      let key = SubscriptionCountingKey(
+        id: "sharedRequireDefaultKeyUsesBaseReference",
+        subscriptionCount: subscriptionCount
+      )
+      let defaultKey = SubscriptionCountingKey.Default[key, default: 0]
+
+      let value = try await Shared(require: defaultKey)
+      @Shared(defaultKey) var otherValue
+
+      #expect(subscriptionCount.value == 1)
+    }
   }
 }
 
-private struct SubscriptionCountingKey: SharedReaderKey {
+private struct SubscriptionCountingKey: SharedKey {
   let id: String
   let subscriptionCount: LockIsolated<Int>
 
@@ -196,6 +225,10 @@ private struct SubscriptionCountingKey: SharedReaderKey {
   ) -> SharedSubscription {
     subscriptionCount.withValue { $0 += 1 }
     return SharedSubscription {}
+  }
+
+  func save(_ value: Int, context: SaveContext, continuation: SaveContinuation) {
+    continuation.resume()
   }
 }
 
