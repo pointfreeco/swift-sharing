@@ -149,14 +149,16 @@ extension SharedReader {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
 
-  /// Replaces a shared reference's key and attempts to load its value.
-  ///
-  /// - Parameter key: A shared key associated with the shared reference. It is responsible for
-  ///   loading the shared reference's value from some external source.
+  /// Replaces a shared reference's key with a shared key that provides a default value and
+  /// attempts to load its value.
   public func load<K: SharedReaderKey<Value>>(_ key: K.Default) async throws {
     try await load(key.base)
   }
 
+  /// Replaces a shared reference's key and attempts to load its value.
+  ///
+  /// - Parameter key: A shared key associated with the shared reference. It is responsible for
+  ///   loading the shared reference's value from some external source.
   public func load(_ key: some SharedReaderKey<Value>) async throws {
     @Dependency(PersistentReferences.self) var persistentReferences
     SharedPublisherLocals.$isLoading.withValue(true) {
@@ -177,6 +179,12 @@ extension SharedReader {
     try await load(key)
   }
 
+  /// Creates a shared reference from a shared key that provides a default value by loading it from
+  /// its external source.
+  public init<K: SharedReaderKey<Value>>(require key: K.Default) async throws {
+    try await self.init(require: key.base)
+  }
+
   /// Creates a shared reference to a read-only value using a shared key by loading it from its
   /// external source.
   ///
@@ -188,10 +196,6 @@ extension SharedReader {
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
   ///   loading the shared reference's value from some external source.
-  public init<K: SharedReaderKey<Value>>(require key: K.Default) async throws {
-    try await self.init(require: key.base)
-  }
-
   public init(require key: some SharedReaderKey<Value>) async throws {
     let value = try await withUnsafeThrowingContinuation { continuation in
       key.load(
