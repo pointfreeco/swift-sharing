@@ -163,9 +163,7 @@ import Testing
       try await $value.load(defaultKey)
       @SharedReader(defaultKey) var otherValue
 
-      withExtendedLifetime(($value, $otherValue)) {
-        #expect(subscriptionCount.value == 1)
-      }
+      #expect(subscriptionCount.value == 1)
     }
 
     @Test func requireDefaultKeyUsesBaseReference() async throws {
@@ -179,9 +177,7 @@ import Testing
       let value = try await SharedReader(require: defaultKey)
       @SharedReader(defaultKey) var otherValue
 
-      withExtendedLifetime((value, $otherValue)) {
-        #expect(subscriptionCount.value == 1)
-      }
+      #expect(subscriptionCount.value == 1)
     }
   }
 }
