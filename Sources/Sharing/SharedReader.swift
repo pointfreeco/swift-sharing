@@ -92,6 +92,7 @@ public struct SharedReader<Value> {
   /// ```
   ///
   /// - Parameter base: A read-only shared reference to an optional value.
+  @_disfavoredOverload
   public init?(_ base: Shared<Value?>) {
     self.init(SharedReader<Value?>(base))
   }
@@ -107,6 +108,7 @@ public struct SharedReader<Value> {
   /// ```
   ///
   /// - Parameter base: A read-only shared reference to an optional value.
+  @_disfavoredOverload
   public init?(_ base: SharedReader<Value?>) {
     guard let initialValue = base.wrappedValue else { return nil }
     func open(_ reference: some Reference<Value?>) -> any Reference<Value> {
