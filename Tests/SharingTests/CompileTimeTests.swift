@@ -32,8 +32,16 @@ func testSharedReaderInitializerOverload() async throws {
 
 func testSharedReaderOptionalInitializerOverload() {
   @Shared(value: 42) var count: Int?
-  let reader = SharedReader($count)
-  let _: SharedReader<Int?> = reader
+  let optionalReader = SharedReader($count)
+  let _: SharedReader<Int?> = optionalReader
+
+  if let reader = SharedReader(unwrapping: $count) {
+    let _: SharedReader<Int> = reader
+  }
+
+  if let reader = SharedReader(unwrapping: optionalReader) {
+    let _: SharedReader<Int> = reader
+  }
 }
 
 func testSharedReaderLoadOverload() async throws {

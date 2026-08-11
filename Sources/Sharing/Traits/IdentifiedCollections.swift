@@ -48,7 +48,7 @@
       let value = shared.wrappedValue
       self.reserveCapacity(value.count)
       for id in value.ids {
-        self.append(SharedReader(shared[id: id])!)
+        self.append(SharedReader(unwrapping: shared[id: id])!)
       }
     }
   }

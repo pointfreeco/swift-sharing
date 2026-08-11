@@ -84,17 +84,22 @@ public struct SharedReader<Value> {
   /// Unwraps a read-only shared reference to an optional value.
   ///
   /// ```swift
-  /// @SharedReader(.currentUser) var currentUser: User?
+  /// @Shared(.currentUser) var currentUser: User?
   ///
-  /// if let sharedUnwrappedUser = SharedReader($currentUser) {
+  /// if let sharedUnwrappedUser = SharedReader(unwrapping: $currentUser) {
   ///   sharedUnwrappedUser  // SharedReader<User>
   /// }
   /// ```
   ///
-  /// - Parameter base: A read-only shared reference to an optional value.
+  /// - Parameter base: A shared reference to an optional value.
+  public init?(unwrapping base: Shared<Value?>) {
+    self.init(unwrapping: SharedReader<Value?>(base))
+  }
+
+  @available(*, deprecated, renamed: "init(unwrapping:)")
   @_disfavoredOverload
   public init?(_ base: Shared<Value?>) {
-    self.init(SharedReader<Value?>(base))
+    self.init(unwrapping: base)
   }
 
   /// Unwraps a read-only shared reference to an optional value.
@@ -102,19 +107,24 @@ public struct SharedReader<Value> {
   /// ```swift
   /// @SharedReader(.currentUser) var currentUser: User?
   ///
-  /// if let sharedUnwrappedUser = SharedReader($currentUser) {
+  /// if let sharedUnwrappedUser = SharedReader(unwrapping: $currentUser) {
   ///   sharedUnwrappedUser  // SharedReader<User>
   /// }
   /// ```
   ///
   /// - Parameter base: A read-only shared reference to an optional value.
-  @_disfavoredOverload
-  public init?(_ base: SharedReader<Value?>) {
+  public init?(unwrapping base: SharedReader<Value?>) {
     guard let initialValue = base.wrappedValue else { return nil }
     func open(_ reference: some Reference<Value?>) -> any Reference<Value> {
       _OptionalReference(base: reference, initialValue: initialValue)
     }
     self.init(reference: open(base.reference))
+  }
+
+  @available(*, deprecated, renamed: "init(unwrapping:)")
+  @_disfavoredOverload
+  public init?(_ base: SharedReader<Value?>) {
+    self.init(unwrapping: base)
   }
 
   /// Creates a read-only shared reference from another read-only shared reference.

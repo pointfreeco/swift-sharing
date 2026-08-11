@@ -68,6 +68,7 @@ if remoteConfig.isToggleEnabled {
 
 - ``subscript(dynamicMember:)``
 - ``init(_:)``
+- ``init(unwrapping:)``
 
 ### Reading the value
 

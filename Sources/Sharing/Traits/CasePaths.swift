@@ -33,7 +33,7 @@
             base: reference, keyPath: keyPath.unsafeSendable())
         )
       }
-      return SharedReader<Member>(open(reference))
+      return SharedReader<Member>(unwrapping: open(reference))
     }
   }
 
