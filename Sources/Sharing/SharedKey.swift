@@ -82,6 +82,12 @@ extension Shared {
     self.init(wrappedValue: wrappedValue(), key.base)
   }
 
+  /// Replaces a shared reference's key with a shared key that provides a default value and
+  /// attempts to load its value.
+  public func load<K: SharedKey<Value>>(_ key: K.Default) async throws {
+    try await load(key.base)
+  }
+
   /// Replaces a shared reference's key and attempts to load its value.
   ///
   /// - Parameter key: A shared key associated with the shared reference. It is responsible for
@@ -98,6 +104,12 @@ extension Shared {
       )
     }
     try await load()
+  }
+
+  /// Creates a shared reference from a shared key that provides a default value by loading it
+  /// from its external source.
+  public init<K: SharedKey<Value>>(require key: K.Default) async throws {
+    try await self.init(require: key.base)
   }
 
   /// Creates a shared reference to a value using a shared key by loading it from its external
