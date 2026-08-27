@@ -8,7 +8,7 @@
   extension Shared {
     @_disfavoredOverload
     public subscript<Member>(
-      dynamicMember keyPath: KeyPath<Value.AllCasePaths, AnyCasePath<Value, Member>>
+      dynamicMember keyPath: KeyPath<Value.AllCasePaths, some CasePath<Value, Member> & Sendable>
     ) -> Shared<Member>?
     where Value: CasePathable {
       func open(_ reference: some MutableReference<Value>) -> Shared<Member?> {
@@ -24,7 +24,7 @@
   extension SharedReader {
     @_disfavoredOverload
     public subscript<Member>(
-      dynamicMember keyPath: KeyPath<Value.AllCasePaths, AnyCasePath<Value, Member>>
+      dynamicMember keyPath: KeyPath<Value.AllCasePaths, some CasePath<Value, Member> & Sendable>
     ) -> SharedReader<Member>?
     where Value: CasePathable {
       func open(_ reference: some Reference<Value>) -> SharedReader<Member?> {
@@ -37,15 +37,15 @@
     }
   }
 
-  private final class _ReferenceEnumToOptionalCase<Base: Reference, Case>
-  where Base.Value: CasePathable {
-    typealias Value = Case?
+  private final class _ReferenceEnumToOptionalCase<Base: Reference, Path: CasePath & Sendable>
+  where Base.Value: CasePathable, Path.Root == Base.Value {
+    typealias Value = Path.Value?
     let base: Base
-    let keyPath: _SendableKeyPath<Base.Value.AllCasePaths, AnyCasePath<Base.Value, Case>>
-    let casePath: AnyCasePath<Base.Value, Case>
+    let keyPath: _SendableKeyPath<Base.Value.AllCasePaths, Path>
+    let casePath: Path
 
     init(
-      base: Base, keyPath: _SendableKeyPath<Base.Value.AllCasePaths, AnyCasePath<Base.Value, Case>>
+      base: Base, keyPath: _SendableKeyPath<Base.Value.AllCasePaths, Path>
     ) {
       self.base = base
       self.keyPath = keyPath
@@ -102,15 +102,15 @@
     #endif
   }
 
-  private final class _MutableReferenceEnumToOptionalCase<Base: MutableReference, Case>
-  where Base.Value: CasePathable {
-    typealias Value = Case?
+  private final class _MutableReferenceEnumToOptionalCase<Base: MutableReference, Path: CasePath & Sendable>
+  where Base.Value: CasePathable, Path.Root == Base.Value {
+    typealias Value = Path.Value?
     let base: Base
-    let keyPath: _SendableKeyPath<Base.Value.AllCasePaths, AnyCasePath<Base.Value, Case>>
-    let casePath: AnyCasePath<Base.Value, Case>
+    let keyPath: _SendableKeyPath<Base.Value.AllCasePaths, Path>
+    let casePath: Path
 
     init(
-      base: Base, keyPath: _SendableKeyPath<Base.Value.AllCasePaths, AnyCasePath<Base.Value, Case>>
+      base: Base, keyPath: _SendableKeyPath<Base.Value.AllCasePaths, Path>
     ) {
       self.base = base
       self.keyPath = keyPath
