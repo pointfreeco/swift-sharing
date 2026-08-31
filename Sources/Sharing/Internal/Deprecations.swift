@@ -1,5 +1,5 @@
 #if canImport(Foundation)
-  package import Foundation
+  package import Foundation.NSData
 #endif
 
 // NB: Deprecated after 2.5.2
