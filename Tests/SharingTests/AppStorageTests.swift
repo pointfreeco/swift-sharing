@@ -94,6 +94,26 @@
       #expect(id == ID(rawValue: 1729))
     }
 
+    @Test func rawRepresentableDouble() {
+      struct ID: RawRepresentable {
+        var rawValue: Double
+      }
+      @Shared(.appStorage("raw-representable-double")) var id = ID(rawValue: 4.2)
+      #expect(store.double(forKey: "raw-representable-double") == 4.2)
+      store.set(172.9, forKey: "raw-representable-double")
+      #expect(id == ID(rawValue: 172.9))
+    }
+
+    @Test func rawRepresentableFloat() {
+      struct ID: RawRepresentable {
+        var rawValue: Float
+      }
+      @Shared(.appStorage("raw-representable-float")) var id = ID(rawValue: 4.2)
+      #expect(store.float(forKey: "raw-representable-float") == 4.2)
+      store.set(Float(172.9), forKey: "raw-representable-float")
+      #expect(id == ID(rawValue: 172.9))
+    }
+
     @Test func rawRepresentableString() {
       struct ID: RawRepresentable {
         var rawValue: String
