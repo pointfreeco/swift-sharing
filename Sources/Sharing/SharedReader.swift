@@ -16,9 +16,6 @@ public import PerceptionCore
 public struct SharedReader<Value> {
   let box: Box
   #if canImport(SwiftUI)
-    // Stored as a plain `State` rather than `@State private var generation = 0`: Swift 6.4 (Xcode 27)
-    // does not emit the initializer of a private macro-backed `@State` in non-WMO builds, so
-    // initializers declared in other files fail to link.
     private var _generation = State(initialValue: 0)
   #endif
 
