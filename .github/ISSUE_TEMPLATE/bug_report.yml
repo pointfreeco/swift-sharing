@@ -5,22 +5,34 @@ body:
 - type: markdown
   attributes:
     value: |
-      Thank you for contributing to the Sharing!
+      Thank you for contributing to Sharing!
 
-      Before you submit your issue, please complete each text area below with the relevant details for your bug, and complete the steps in the checklist
+      > [!IMPORTANT]
+      > We do not accept AI-generated or AI-rewritten issues. Write the issue yourself, in your own words.
+
+      Keep the report as short as possible and focused only on the problem at hand. Do not include background, speculation, proposed solutions, or other unrelated details.
+
+      Every bug report must include a complete, minimal SPM package or Xcode project that reproduces the problem. Attach the project to the **Reproducing project** field below.
 - type: textarea
   attributes:
     label: Description
     description: |
-      A short description of the incorrect behavior.
+      Briefly describe the incorrect behavior. Include only the details needed to understand the problem.
 
       If you think this issue has been recently introduced and did not occur in an earlier version, please note that. If possible, include the last version that the behavior was correct in addition to your current version.
+    placeholder: A concise description of the problem.
   validations:
     required: true
 - type: checkboxes
   attributes:
     label: Checklist
     options:
+    - label: I wrote this issue myself, in my own words, without AI-generated or AI-rewritten text.
+      required: true
+    - label: I have kept this report focused on the issue at hand and removed all unrelated details.
+      required: true
+    - label: I have attached a complete, minimal SPM package or Xcode project that reproduces the problem.
+      required: true
     - label: I have determined whether this bug is also reproducible in a vanilla SwiftUI project.
       required: false
     - label: If possible, I've reproduced the issue using the `main` branch of this package.
@@ -43,13 +55,13 @@ body:
   attributes:
     label: Reproducing project
     description: |
-      Provide a full SPM package or Xcode project that demonstrates the problem you are seeing. If you cannot reproduce the problem in a standalone project, then provide a detailed explanation of how to reproduce the incorrect behavior.
+      Attach a complete, minimal SPM package or Xcode project that demonstrates the problem. Remove all code and dependencies that are not needed to reproduce it.
 
-      Note that without a project that reproduces the problem we are likely to close this issue and convert it to a discussion until more details are provided.
+      Bug reports without an attached reproducing project will be closed.
     placeholder: |
-      Drag and drop a full SPM package or Xcode project into this text field that demonstrates the problem you are seeing.
+      Drag and drop a zipped SPM package or Xcode project into this field.
   validations:
-    required: false
+    required: true
 - type: input
   attributes:
     label: Sharing version information
