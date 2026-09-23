@@ -16,7 +16,7 @@ public import PerceptionCore
 public struct SharedReader<Value> {
   let box: Box
   #if canImport(SwiftUI)
-    @State private var generation = 0
+    private var generation = State(wrappedValue: 0)
   #endif
 
   var reference: any Reference<Value> {
@@ -347,7 +347,7 @@ extension SharedReader: Perceptible {}
 #if canImport(SwiftUI)
   extension SharedReader: DynamicProperty {
     public func update() {
-      box.subscribe(state: _generation)
+      box.subscribe(state: generation)
     }
   }
 #endif
