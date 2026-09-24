@@ -8,11 +8,11 @@ body:
       Thank you for contributing to Sharing!
 
       > [!IMPORTANT]
-      > We do not accept AI-generated or AI-rewritten issues. Write the issue yourself, in your own words.
+      > While we accept using AI to assist you in investigating an issue, we do not accept AI-rewritten issues. Write the issue yourself, in your own words.
 
       Keep the report as short as possible and focused only on the problem at hand. Do not include background, speculation, proposed solutions, or other unrelated details.
 
-      Every bug report must include a complete, minimal SPM package or Xcode project that reproduces the problem. Attach the project to the **Reproducing project** field below.
+      Every bug report should include a complete, minimal SPM package or Xcode project that reproduces the problem. Attach the project to the **Reproducing project** field below.
 - type: textarea
   attributes:
     label: Description
@@ -31,8 +31,8 @@ body:
       required: true
     - label: I have kept this report focused on the issue at hand and removed all unrelated details.
       required: true
-    - label: I have attached a complete, minimal SPM package or Xcode project that reproduces the problem.
-      required: true
+    - label: I have attempted to create a complete, minimal SPM package or Xcode project that reproduces the problem.
+      required: false
     - label: I have determined whether this bug is also reproducible in a vanilla SwiftUI project.
       required: false
     - label: If possible, I've reproduced the issue using the `main` branch of this package.
@@ -61,7 +61,7 @@ body:
     placeholder: |
       Drag and drop a zipped SPM package or Xcode project into this field.
   validations:
-    required: true
+    required: false
 - type: input
   attributes:
     label: Sharing version information
