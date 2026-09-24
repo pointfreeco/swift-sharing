@@ -32,7 +32,7 @@ body:
     - label: I have kept this report focused on the issue at hand and removed all unrelated details.
       required: true
     - label: I have attempted to create a complete, minimal SPM package or Xcode project that reproduces the problem.
-      required: false
+      required: true
     - label: I have determined whether this bug is also reproducible in a vanilla SwiftUI project.
       required: false
     - label: If possible, I've reproduced the issue using the `main` branch of this package.
