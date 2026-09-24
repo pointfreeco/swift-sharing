@@ -56,8 +56,6 @@ body:
     label: Reproducing project
     description: |
       Attach a complete, minimal SPM package or Xcode project that demonstrates the problem. Remove all code and dependencies that are not needed to reproduce it.
-
-      Bug reports without an attached reproducing project will be closed.
     placeholder: |
       Drag and drop a zipped SPM package or Xcode project into this field.
   validations:
