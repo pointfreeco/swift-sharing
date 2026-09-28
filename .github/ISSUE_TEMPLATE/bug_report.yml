@@ -8,7 +8,7 @@ body:
       Thank you for contributing to Sharing!
 
       > [!IMPORTANT]
-      > While we accept using AI to assist you in investigating an issue, we do not accept AI-rewritten issues. Write the issue yourself, in your own words.
+      > While we accept the use of AI to assist you in investigating an issue, we do not issues written (or rewritten) by AI. Write the issue yourself, in your own words.
 
       Keep the report as short as possible and focused only on the problem at hand. Do not include background, speculation, proposed solutions, or other unrelated details.
 
@@ -64,12 +64,12 @@ body:
   attributes:
     label: Sharing version information
     description: The version of Sharing used to reproduce this issue.
-    placeholder: "'1.0.0' for example, or a commit hash"
+    placeholder: "'2.0.0' for example, or a commit hash"
 - type: input
   attributes:
     label: Destination operating system
     description: The OS running your application.
-    placeholder: "'iOS 18' for example"
+    placeholder: "'iOS 27' for example"
 - type: input
   attributes:
     label: Xcode version information
