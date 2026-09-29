@@ -155,10 +155,11 @@ final class _BoxReference<Value>: MutableReference, Observable, Perceptible, @un
       if Thread.isMainThread {
         return try _$perceptionRegistrar.withMutation(of: self, keyPath: keyPath, mutation)
       } else {
+        let result = try mutation()
         DispatchQueue.main.async {
           self._$perceptionRegistrar.withMutation(of: self, keyPath: keyPath) {}
         }
-        return try mutation()
+        return result
       }
     #endif
   }
@@ -339,10 +340,11 @@ final class _PersistentReference<Key: SharedReaderKey>:
       if Thread.isMainThread {
         return try _$perceptionRegistrar.withMutation(of: self, keyPath: keyPath, mutation)
       } else {
+        let result = try mutation()
         DispatchQueue.main.async {
           self._$perceptionRegistrar.withMutation(of: self, keyPath: keyPath) {}
         }
-        return try mutation()
+        return result
       }
     #endif
   }
