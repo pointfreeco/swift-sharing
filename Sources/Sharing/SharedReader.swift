@@ -150,8 +150,9 @@ public struct SharedReader<Value> {
       return self
     }
     nonmutating set {
-      reference.touch()
+      let oldReference = reference
       reference = newValue.reference
+      oldReference.touch()
     }
   }
 
