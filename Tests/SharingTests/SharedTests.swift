@@ -283,12 +283,12 @@ import Testing
       @Test func customDump() {
         @Shared(value: 0) var count
 
-        #expect(String(customDumping: $count) == "#1 0")
+        #expect(String(customDumping: $count) == "0")
         #expect(
           String(customDumping: [$count, $count]) == """
             [
-              [0]: #1 0,
-              [1]: #1 Int(↩︎)
+              [0]: 0,
+              [1]: Int(↩︎)
             ]
             """
         )
@@ -297,10 +297,10 @@ import Testing
         #expect(
           String(customDumping: [$count, $anotherCount, $count, $anotherCount]) == """
             [
-              [0]: #1 0,
-              [1]: #2 0,
-              [2]: #1 Int(↩︎),
-              [3]: #2 Int(↩︎)
+              [0]: 0,
+              [1]: #1 0,
+              [2]: Int(↩︎),
+              [3]: #1 Int(↩︎)
             ]
             """
         )
@@ -318,8 +318,8 @@ import Testing
         #expect(
           String(customDumping: State(count: $stats.count, stats: $stats)) == """
             SharedTests.StringRepresentations.State(
-              _count: #1 0,
-              _stats: #1 SharedTests.StringRepresentations.Stats(↩︎)
+              _count: 0,
+              _stats: SharedTests.StringRepresentations.Stats(↩︎)
             )
             """,
           """
