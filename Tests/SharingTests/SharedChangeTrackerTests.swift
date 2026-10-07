@@ -18,8 +18,8 @@
         #expect($count != $count)
         #expect(
           diff($count, $count) == """
-            - #1 0
-            + #1 1
+            - 0
+            + 1
             """
         )
 
