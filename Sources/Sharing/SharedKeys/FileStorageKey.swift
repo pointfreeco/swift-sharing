@@ -211,16 +211,17 @@
     public func save(_ value: Value, context: SaveContext, continuation: SaveContinuation) {
       do {
         let workItem: DispatchWorkItem? = try state.withValue { state in
-          let data = try encode(value)
           switch context {
           case .didSet:
             guard state.workItem == nil
             else {
+              // NB: Only the latest value is written when the throttle fires, so defer encoding
+              //     until then instead of paying for a full encode on every mutation.
               state.value = value
               state.continuations.append(continuation)
               return nil
             }
-            try save(data: data, url: url, modificationDates: &state.modificationDates)
+            try save(data: encode(value), url: url, modificationDates: &state.modificationDates)
             continuation.resume()
             let workItem = DispatchWorkItem { [weak self] in
               guard let self else { return }
@@ -229,13 +230,11 @@
                   state.value = nil
                   state.workItem = nil
                 }
-                guard
-                  let value = state.value,
-                  let data = try? self.encode(value)
+                guard let value = state.value
                 else { return }
                 let result = Result {
                   try self.save(
-                    data: data,
+                    data: self.encode(value),
                     url: self.url,
                     modificationDates: &state.modificationDates
                   )
@@ -250,6 +249,7 @@
             return workItem
 
           case .userInitiated:
+            let data = try encode(value)
             state.cancelWorkItem()
             try storage.save(data, url)
             continuation.resume()

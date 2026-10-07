@@ -81,6 +81,68 @@
       }
     }
 
+    @Test func throttledMutationsEncodeOnlyWhenWritten() throws {
+      let encodeCount = LockIsolated(0)
+      try withDependencies {
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
+      } operation: {
+        @Shared(
+          .fileStorage(
+            .fileURL,
+            decode: { @Sendable data in try JSONDecoder().decode([User].self, from: data) },
+            encode: { @Sendable users in
+              encodeCount.withValue { $0 += 1 }
+              return try JSONEncoder().encode(users)
+            }
+          )
+        )
+        var users = [User]()
+
+        $users.withLock { $0.append(.blob) }
+        #expect(encodeCount.value == 1)
+
+        $users.withLock { $0.append(.blobJr) }
+        $users.withLock { $0.append(.blobSr) }
+        $users.withLock { $0.append(.blobEsq) }
+        #expect(encodeCount.value == 1)
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+
+        testScheduler.advance(by: .seconds(1))
+        #expect(encodeCount.value == 2)
+        try expectNoDifference(
+          fileSystem.value.users(for: .fileURL),
+          [.blob, .blobJr, .blobSr, .blobEsq]
+        )
+      }
+    }
+
+    @Test func throttledEncodeFailureIsReported() throws {
+      struct EncodeFailure: Error {}
+      try withDependencies {
+        $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
+      } operation: {
+        @Shared(
+          .fileStorage(
+            .fileURL,
+            decode: { @Sendable data in try JSONDecoder().decode([User].self, from: data) },
+            encode: { @Sendable users in
+              guard !users.contains(.blobSr) else { throw EncodeFailure() }
+              return try JSONEncoder().encode(users)
+            }
+          )
+        )
+        var users = [User]()
+
+        $users.withLock { $0.append(.blob) }
+        $users.withLock { $0.append(.blobSr) }
+        #expect($users.saveError == nil)
+
+        testScheduler.advance(by: .seconds(1))
+        #expect($users.saveError is EncodeFailure)
+        try expectNoDifference(fileSystem.value.users(for: .fileURL), [.blob])
+      }
+    }
+
     @Test func noThrottling() throws {
       try withDependencies {
         $0.defaultFileStorage = .inMemory(fileSystem: fileSystem, scheduler: testScheduler)
