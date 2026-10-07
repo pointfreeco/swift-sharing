@@ -215,8 +215,6 @@
           case .didSet:
             guard state.workItem == nil
             else {
-              // NB: Only the latest value is written when the throttle fires, so defer encoding
-              //     until then instead of paying for a full encode on every mutation.
               state.value = value
               state.continuations.append(continuation)
               return nil
