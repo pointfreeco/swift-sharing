@@ -259,6 +259,7 @@ available to enhance your applications:
   * [SharingFirestore](https://github.com/bitkey-oss/sharing-firestore): Real-time synchronization and real-time queries powered by Firebase's Firestore.
   * [SharingRemoteConfig](https://github.com/zunda-pixel/sharing-remoteconfig): Real-time Remote Config via Firebase.
   * [SwiftOperation](https://github.com/mhayes853/swift-operation): Flexible async state management supporting pagination, retries, deduplication, backoff, and more.
+  * [SecureSharing](https://github.com/Brennanium/secure-sharing): Encrypted shared data using UserDefaults and Keychain
 
 If you'd like to contribute a library, please [open a PR][library-pr] with a link to it!
 
