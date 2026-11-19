@@ -171,7 +171,7 @@
                 guard
                   !state.modificationDates.contains(modificationDate)
                 else {
-                  state.modificationDates.removeAll(where: { $0 <= modificationDate })
+                  state.modificationDates.removeAll(where: { $0.timeIntervalSince(modificationDate) <= 0 })
                   return false
                 }
                 return state.workItem == nil
