@@ -250,6 +250,27 @@
       }
     }
 
+    @Test func inMemoryReadAfterWriteUnderParallelSuites() async {
+      let staleReads = await withTaskGroup(of: Int.self) { group in
+        for _ in 0..<8 {
+          group.addTask {
+            let store = UserDefaults.inMemory
+            var stale = 0
+            for round in 0..<2_000 {
+              let value = Double(round + 1)
+              store.set(value, forKey: "key")
+              if store.object(forKey: "key") as? Double != value {
+                stale += 1
+              }
+            }
+            return stale
+          }
+        }
+        return await group.reduce(0, +)
+      }
+      #expect(staleReads == 0)
+    }
+
     #if DEBUG
       @Test func suiteWarning() {
         let suiteName = NSTemporaryDirectory() + "suite-warning"
