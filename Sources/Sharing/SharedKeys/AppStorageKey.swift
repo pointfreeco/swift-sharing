@@ -627,16 +627,21 @@
 
   extension UserDefaults {
     public static var inMemory: UserDefaults {
-      let suiteName: String
-      // NB: Due to a bug in iOS 16 and lower, UserDefaults does not observe changes when using
-      //     file-based suites. Go back to using temporary directory always when we drop iOS 16
-      //     support.
-      if #unavailable(iOS 17, macOS 14, tvOS 17, watchOS 10, visionOS 1) {
-        suiteName = "co.pointfree.Sharing.\(UUID().uuidString)"
-      } else {
-        suiteName = "\(NSTemporaryDirectory())co.pointfree.Sharing.\(UUID().uuidString)"
-      }
-      return UserDefaults(suiteName: suiteName)!
+      InMemoryUserDefaults(suiteName: "co.pointfree.Sharing.\(UUID().uuidString)")!
+    }
+  }
+
+  private final class InMemoryUserDefaults: UserDefaults, @unchecked Sendable {
+    private let suiteName: String
+
+    override init?(suiteName: String?) {
+      guard let suiteName else { return nil }
+      self.suiteName = suiteName
+      super.init(suiteName: suiteName)
+    }
+
+    deinit {
+      self.removePersistentDomain(forName: self.suiteName)
     }
   }
 
